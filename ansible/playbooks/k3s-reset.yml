@@ -1,0 +1,26 @@
+---
+- name: Reset K3s Cluster
+  hosts: all
+  become: yes
+  tasks:
+    - name: Run K3s uninstall scripts
+      shell: |
+        if [ -f /usr/local/bin/k3s-killall.sh ]; then
+          /usr/local/bin/k3s-killall.sh
+        fi
+        if [ -f /usr/local/bin/k3s-uninstall.sh ]; then
+          /usr/local/bin/k3s-uninstall.sh
+        fi
+        if [ -f /usr/local/bin/k3s-agent-uninstall.sh ]; then
+          /usr/local/bin/k3s-agent-uninstall.sh
+        fi
+      ignore_errors: yes
+
+    - name: Remove K3s directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/rancher
+        - /var/lib/rancher
+        - /var/lib/kubelet

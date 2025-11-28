@@ -1,0 +1,78 @@
+---
+- name: Prepare all nodes
+  hosts: all
+  gather_facts: yes
+  become: yes
+  tasks:
+    - name: Wait for system to be ready
+      wait_for_connection:
+        timeout: 60
+
+    - name: Gather facts
+      setup:
+
+- name: Install K3s Control Plane
+  hosts: control_plane
+  become: yes
+  tasks:
+    - name: Install K3s on control plane
+      shell: |
+        curl -sfL https://get.k3s.io | sh -s - server \
+          --write-kubeconfig-mode 644 \
+          --disable traefik \
+          --flannel-iface lima0 \
+          --node-ip {{ ansible_facts['lima0']['ipv4']['address'] }} \
+          --node-external-ip {{ ansible_facts['lima0']['ipv4']['address'] }} \
+          --node-name {{ inventory_hostname }}
+      args:
+        creates: /usr/local/bin/k3s
+
+    - name: Wait for K3s to be ready
+      wait_for:
+        path: /var/lib/rancher/k3s/server/node-token
+        state: present
+        timeout: 120
+
+    - name: Get node token
+      slurp:
+        src: /var/lib/rancher/k3s/server/node-token
+      register: node_token
+
+    - name: Set control plane IP fact
+      set_fact:
+        control_plane_ip: "{{ ansible_facts['lima0']['ipv4']['address'] }}"
+
+- name: Install K3s Workers
+  hosts: workers
+  become: yes
+  tasks:
+    - name: Install K3s agent
+      shell: |
+        curl -sfL https://get.k3s.io | K3S_URL=https://{{ hostvars[groups['control_plane'][0]]['control_plane_ip'] }}:6443 \
+          K3S_TOKEN={{ hostvars[groups['control_plane'][0]]['node_token']['content'] | b64decode | trim }} \
+          sh -s - agent \
+          --flannel-iface lima0 \
+          --node-ip {{ ansible_facts['lima0']['ipv4']['address'] }} \
+          --node-external-ip {{ ansible_facts['lima0']['ipv4']['address'] }} \
+          --node-name {{ inventory_hostname }}
+      args:
+        creates: /usr/local/bin/k3s
+
+- name: Verify Cluster
+  hosts: control_plane
+  become: yes
+  tasks:
+    - name: Wait for nodes
+      shell: kubectl get nodes --no-headers | grep " Ready" | wc -l
+      register: ready_nodes
+      until: ready_nodes.stdout | int == groups['all'] | length
+      retries: 20
+      delay: 10
+
+    - name: Show cluster status
+      shell: kubectl get nodes -o wide
+      register: cluster_status
+
+    - name: Display cluster
+      debug:
+        var: cluster_status.stdout_lines
