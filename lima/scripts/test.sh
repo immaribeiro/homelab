@@ -11,6 +11,19 @@ KUBECTL=$(command -v kubectl || true)
 if [ -z "$PYTHON" ] || [ -z "$PIP" ]; then
   echo "python3 or pip3 not found. Please install Python 3 and pip3 (Homebrew: brew install python)" >&2
 fi
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Checking environment..."
+PYTHON=$(command -v python3 || true)
+PIP=$(command -v pip3 || true)
+YAMLLINT=$(command -v yamllint || true)
+ANSIBLE_LINT=$(command -v ansible-lint || true)
+KUBECTL=$(command -v kubectl || true)
+
+if [ -z "$PYTHON" ] || [ -z "$PIP" ]; then
+  echo "python3 or pip3 not found. Please install Python 3 and pip3 (Homebrew: brew install python)" >&2
+fi
 
 # Install yamllint if missing
 if [ -z "$YAMLLINT" ]; then
@@ -37,12 +50,7 @@ echo
 echo "Running yamllint..."
 # collect files
 FILES=()
-for f in 
-  ansible/*.yml \
-  ansible/playbooks/*.yml \
-  ansible/group_vars/*.yml \
-  lima/templates/*.yaml \
-  k8s/manifests/*.yml; do
+for f in ansible/*.yml ansible/playbooks/*.yml ansible/group_vars/*.yml lima/templates/*.yaml k8s/manifests/*.yml; do
   for g in $f; do
     [ -f "$g" ] || continue
     FILES+=("$g")
@@ -52,7 +60,11 @@ done
 if [ ${#FILES[@]} -eq 0 ]; then
   echo "No YAML files found for yamllint."
 else
-  "$YAMLLINT" "${FILES[@]}" || true
+  if [ -n "$YAMLLINT" ]; then
+    "$YAMLLINT" "${FILES[@]}" || true
+  else
+    echo "yamllint not available; skipping yamllint run."
+  fi
 fi
 
 # Run ansible-lint on playbooks
@@ -64,7 +76,11 @@ for p in "${PLAYBOOKS[@]}"; do
   [ -f "$p" ] && EXIST=1 || true
 done
 if [ $EXIST -eq 1 ]; then
-  "$ANSIBLE_LINT" ansible/playbooks || true
+  if [ -n "$ANSIBLE_LINT" ]; then
+    "$ANSIBLE_LINT" ansible/playbooks || true
+  else
+    echo "ansible-lint not available; skipping ansible-lint run."
+  fi
 else
   echo "No playbooks found for ansible-lint."
 fi
@@ -88,4 +104,3 @@ echo "Linters run complete. Summary:"
 if [ -n "$YAMLLINT" ]; then echo "- yamllint ran on ${#FILES[@]} file(s)"; fi
 if [ -n "$ANSIBLE_LINT" ]; then echo "- ansible-lint ran (see output above)"; fi
 if [ -n "$KUBECTL" ]; then echo "- kubectl dry-run validations attempted"; else echo "- kubectl validation skipped"; fi
-'
