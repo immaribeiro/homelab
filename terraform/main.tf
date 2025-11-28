@@ -12,11 +12,19 @@ resource "null_resource" "create_vms" {
   provisioner "local-exec" {
     command = "bash ${path.module}/../lima/scripts/create-vms.sh ${var.control_plane_count} ${var.worker_count}"
   }
+}
 
+# Note: destroy-time provisioners cannot reference variables; create a separate resource
+# whose destroy provisioner runs the general destroy script without interpolating vars.
+resource "null_resource" "destroy_vms" {
+  # Run this script at destroy time. The script will auto-detect VMs to delete.
   provisioner "local-exec" {
-    when    = destroy
-    command = "bash ${path.module}/../lima/scripts/destroy-vms.sh ${var.control_plane_count} ${var.worker_count}"
+    when    = "destroy"
+    command = "bash ${path.module}/../lima/scripts/destroy-vms.sh"
   }
+
+  # Ensure this resource exists after create_vms so its destroy provisioner runs on destroy
+  depends_on = [null_resource.create_vms]
 }
 
 # Wait for VMs to be ready
