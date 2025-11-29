@@ -33,7 +33,7 @@ ssh:
   loadDotSSHPubKeys: true
   forwardAgent: false
 
-# Provisioning
+# Provisioning (combined)
 provision:
   - mode: system
     script: |
@@ -59,8 +59,6 @@ provision:
       # Set hostname
       hostnamectl set-hostname k3s-control-1
 
-# Kernel modules for K8s
-provision:
   - mode: system
     script: |
       #!/bin/bash

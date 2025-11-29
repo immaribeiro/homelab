@@ -34,7 +34,7 @@ ssh:
   loadDotSSHPubKeys: true
   forwardAgent: false
 
-# Provisioning
+# Provisioning (combined)
 provision:
   - mode: system
     script: |
@@ -60,7 +60,6 @@ provision:
       # Set hostname (will be overridden by script)
       hostnamectl set-hostname k3s-worker-1
 
-provision:
   - mode: system
     script: |
       #!/bin/bash
