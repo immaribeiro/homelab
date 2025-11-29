@@ -1,5 +1,8 @@
 # Troubleshooting Guide
 
+## Networking: VMs can't reach each other
+
+
 Common issues and their solutions.
 
 ## socket_vmnet Issues
@@ -16,6 +19,27 @@ SOCKET_VERSION=$(ls /opt/homebrew/Cellar/socket_vmnet/ | head -1)
 
 # Create directory and copy binary
 sudo mkdir -p /opt/socket_vmnet/bin
+- Symptom: Workers fail to join; `curl` to control plane `:6443` from workers times out; `ping` to `192.168.5.x` shows "Destination Host Unreachable"; `ip neigh show dev eth0` shows `FAILED` for peer IPs.
+- Root cause: Lima `shared` (socket_vmnet) does not bridge `eth0` VM-to-VM on `192.168.5.0/24`. DHCP may also assign the same IP to multiple VMs.
+- Fix:
+   - Use `lima0` network (`192.168.105.x`) for K3s cluster communication.
+   - Set K3s flags to use `lima0`: `--flannel-iface lima0`, `--node-ip <lima0-ip>`, `--node-external-ip <lima0-ip>`.
+   - Agents: set `K3S_AGENT_BOOTSTRICT_MODE=false` to bypass localhost-only supervisor bootstrap.
+   - Inventory: keep Ansible over `127.0.0.1:<port>` forwarded SSH; include `node_ip` as the `lima0` IP per host.
+
+### Verify
+
+```bash
+# From macOS host
+bash lima/scripts/cluster-status.sh
+
+# From worker VM, reach control plane over lima0
+limactl shell k3s-worker-1 ping -c 2 192.168.105.2
+```
+
+### References
+
+- `SETUP.md` → Networking section for the working topology and commands.
 sudo cp /opt/homebrew/Cellar/socket_vmnet/$SOCKET_VERSION/bin/socket_vmnet /opt/socket_vmnet/bin/socket_vmnet
 
 # Verify

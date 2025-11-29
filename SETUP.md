@@ -153,6 +153,19 @@ limactl shell k3s-worker-1 ip -4 addr show lima0 | grep inet
 limactl shell k3s-worker-2 ip -4 addr show lima0 | grep inet
 ```
 
+## Networking
+
+- Ansible SSH: Uses `127.0.0.1:<port>` forwarded by Lima per VM. See `ansible/inventory-static-ip.yml` for `ansible_host` and `ansible_port`.
+- Cluster IPs: K3s uses `lima0` network (`192.168.105.x`) for node-to-node communication. These IPs are routable between VMs and stable per MAC.
+- Lima `shared`/socket_vmnet: Does not bridge `eth0` VM-to-VM on `192.168.5.0/24` (ARP fails). Do not use `eth0` for K3s networking.
+- K3s flags: Server/agents run with `--flannel-iface lima0`, `--node-ip` and `--node-external-ip` set to the `lima0` IP. Agents set `K3S_AGENT_BOOTSTRICT_MODE=false` to bypass localhost-only supervisor bootstrap.
+
+Quick sanity check:
+
+```bash
+bash lima/scripts/cluster-status.sh
+```
+
 ## Installing K3s
 
 ### Generate Ansible Inventory

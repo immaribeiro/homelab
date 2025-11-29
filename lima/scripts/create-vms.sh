@@ -48,6 +48,10 @@ for i in $(seq 1 $WORKER_COUNT); do
     MAC_SUFFIX=$(printf "%02d" $((10 + i)))
     sed -i '' "s/52:55:55:00:00:02/52:55:55:00:00:$MAC_SUFFIX/g" "/tmp/$VM_NAME.yaml"
     
+    # Update static IP address (192.168.5.11, 192.168.5.12, etc.)
+    WORKER_IP="192.168.5.$((10 + i))"
+    sed -i '' "s/192.168.5.11/$WORKER_IP/g" "/tmp/$VM_NAME.yaml"
+    
     # Create VM
     limactl start --name="$VM_NAME" "/tmp/$VM_NAME.yaml"
     

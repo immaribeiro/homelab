@@ -39,6 +39,35 @@ provision:
       #!/bin/bash
       set -eux -o pipefail
       
+      # Create ubuntu user if it doesn't exist
+      if ! id -u ubuntu &>/dev/null; then
+        useradd -m -s /bin/bash -G sudo ubuntu
+        echo "ubuntu:ubuntu" | chpasswd
+      fi
+      
+      # Configure static IP on eth0
+      cat <<EOF > /etc/netplan/51-static-eth0.yaml
+      network:
+        version: 2
+        renderer: networkd
+        ethernets:
+          eth0:
+            addresses:
+              - 192.168.5.10/24
+            routes:
+              - to: default
+                via: 192.168.5.2
+            nameservers:
+              addresses:
+                - 8.8.8.8
+                - 8.8.4.4
+      EOF
+      chmod 600 /etc/netplan/51-static-eth0.yaml
+      netplan apply
+      
+      # Wait for network to stabilize
+      sleep 3
+      
       # Update system
       apt-get update
       apt-get install -y curl vim net-tools

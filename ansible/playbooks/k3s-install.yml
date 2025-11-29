@@ -1,8 +1,8 @@
 ---
 - name: Prepare all nodes
   hosts: all
-  gather_facts: yes
-  become: yes
+  gather_facts: true
+  become: true
   tasks:
     - name: Wait for system to be ready
       wait_for_connection:
@@ -13,16 +13,20 @@
 
 - name: Install K3s Control Plane
   hosts: control_plane
-  become: yes
+  become: true
   tasks:
+    # node_ip is now defined in inventory as the lima0 IP
+
     - name: Install K3s on control plane
       shell: |
         curl -sfL https://get.k3s.io | sh -s - server \
           --write-kubeconfig-mode 644 \
           --disable traefik \
           --flannel-iface lima0 \
-          --node-ip {{ ansible_facts['lima0']['ipv4']['address'] }} \
-          --node-external-ip {{ ansible_facts['lima0']['ipv4']['address'] }} \
+          --node-ip {{ node_ip }} \
+          --node-external-ip {{ node_ip }} \
+          --advertise-address {{ node_ip }} \
+          --tls-san {{ node_ip }} \
           --node-name {{ inventory_hostname }}
       args:
         creates: /usr/local/bin/k3s
@@ -40,27 +44,30 @@
 
     - name: Set control plane IP fact
       set_fact:
-        control_plane_ip: "{{ ansible_facts['lima0']['ipv4']['address'] }}"
+        control_plane_ip: "{{ node_ip }}"
 
 - name: Install K3s Workers
   hosts: workers
-  become: yes
+  become: true
   tasks:
+    # node_ip is now defined in inventory as the lima0 IP
+
     - name: Install K3s agent
       shell: |
         curl -sfL https://get.k3s.io | K3S_URL=https://{{ hostvars[groups['control_plane'][0]]['control_plane_ip'] }}:6443 \
           K3S_TOKEN={{ hostvars[groups['control_plane'][0]]['node_token']['content'] | b64decode | trim }} \
+          K3S_AGENT_BOOTSTRAP_STRICT_MODE=false \
           sh -s - agent \
           --flannel-iface lima0 \
-          --node-ip {{ ansible_facts['lima0']['ipv4']['address'] }} \
-          --node-external-ip {{ ansible_facts['lima0']['ipv4']['address'] }} \
+          --node-ip {{ node_ip }} \
+          --node-external-ip {{ node_ip }} \
           --node-name {{ inventory_hostname }}
       args:
         creates: /usr/local/bin/k3s
 
 - name: Verify Cluster
   hosts: control_plane
-  become: yes
+  become: true
   tasks:
     - name: Wait for nodes
       shell: kubectl get nodes --no-headers | grep " Ready" | wc -l
