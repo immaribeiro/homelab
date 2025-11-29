@@ -1,8 +1,9 @@
 # VM type
 vmType: "vz"
-rosetta:
-  enabled: false
-  binfmt: false
+vmOpts:
+  vz:
+    rosetta:
+      enabled: false
 
 # CPU and Memory
 cpus: 2
@@ -24,8 +25,6 @@ networks:
 mounts:
   - location: "~"
     writable: false
-  - location: "/tmp/lima"
-    writable: true
 
 # SSH
 ssh:

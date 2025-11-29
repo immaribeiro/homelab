@@ -2,6 +2,19 @@
 
 Complete Infrastructure-as-Code setup for a K3s cluster using Lima, Terraform, and Ansible with proper networking.
 
+## Quick Start
+
+```bash
+# Run automated setup
+bash setup.sh
+
+# Then create VMs and install K3s
+cd terraform && terraform init && terraform apply
+cd ../ansible && ansible-playbook -i inventory.yml playbooks/k3s-install.yml
+```
+
+See [SETUP.md](./SETUP.md) for detailed instructions and [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for common issues.
+
 ## Prerequisites
 
 ```bash
@@ -11,6 +24,15 @@ brew install lima terraform ansible
 # Install socket_vmnet for proper VM networking (REQUIRED for K3s)
 brew install socket_vmnet
 sudo brew services start socket_vmnet
+
+# Copy socket_vmnet binary to location where Lima expects it
+SOCKET_VERSION=$(ls /opt/homebrew/Cellar/socket_vmnet/ | head -1)
+sudo mkdir -p /opt/socket_vmnet/bin
+sudo cp /opt/homebrew/Cellar/socket_vmnet/$SOCKET_VERSION/bin/socket_vmnet /opt/socket_vmnet/bin/socket_vmnet
+
+# Configure sudoers for Lima (required for VM management)
+limactl sudoers > /tmp/etc_sudoers.d_lima
+sudo install -o root /tmp/etc_sudoers.d_lima "/private/etc/sudoers.d/lima"
 
 # Verify socket_vmnet is running
 sudo brew services list | grep socket_vmnet
@@ -61,9 +83,9 @@ k3s-homelab/
 ```yaml
 # VM type
 vmType: "vz"
-rosetta:
-  enabled: false
-  binfmt: false
+vmOpts:
+  vz:
+    rosetta: false
 
 # CPU and Memory
 cpus: 2
@@ -85,8 +107,6 @@ networks:
 mounts:
   - location: "~"
     writable: false
-  - location: "/tmp/lima"
-    writable: true
 
 # SSH
 ssh:
@@ -141,9 +161,9 @@ containerd:
 ```yaml
 # VM type
 vmType: "vz"
-rosetta:
-  enabled: false
-  binfmt: false
+vmOpts:
+  vz:
+    rosetta: false
 
 # CPU and Memory
 cpus: 2
@@ -166,8 +186,6 @@ networks:
 mounts:
   - location: "~"
     writable: false
-  - location: "/tmp/lima"
-    writable: true
 
 # SSH
 ssh:
@@ -607,24 +625,33 @@ pipelining = True
 brew install lima terraform ansible socket_vmnet
 sudo brew services start socket_vmnet
 
-# 2. Make scripts executable
+# 2. Copy socket_vmnet binary to standard location
+SOCKET_VERSION=$(ls /opt/homebrew/Cellar/socket_vmnet/ | head -1)
+sudo mkdir -p /opt/socket_vmnet/bin
+sudo cp /opt/homebrew/Cellar/socket_vmnet/$SOCKET_VERSION/bin/socket_vmnet /opt/socket_vmnet/bin/socket_vmnet
+
+# 3. Configure sudoers for Lima
+limactl sudoers > /tmp/etc_sudoers.d_lima
+sudo install -o root /tmp/etc_sudoers.d_lima "/private/etc/sudoers.d/lima"
+
+# 4. Make scripts executable
 chmod +x lima/scripts/*.sh
 
-# 3. Create VMs and generate inventory
+# 5. Create VMs and generate inventory
 cd terraform
 terraform init
 terraform apply
 
-# 4. Install K3s cluster
+# 6. Install K3s cluster
 cd ../ansible
 ansible-playbook -i inventory.yml playbooks/k3s-install.yml
 
-# 5. Get kubeconfig
+# 7. Get kubeconfig
 CONTROL_IP=$(terraform output -json control_plane_ips | jq -r '.[0]')
 limactl shell k3s-control-1 sudo cat /etc/rancher/k3s/k3s.yaml > ~/.kube/config
 sed -i '' "s/127.0.0.1/$CONTROL_IP/g" ~/.kube/config
 
-# 6. Verify
+# 8. Verify
 kubectl get nodes -o wide
 ```
 
