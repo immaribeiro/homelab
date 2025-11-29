@@ -327,6 +327,43 @@ bash lima/scripts/destroy-vms.sh 1 2
 rm -rf ~/.lima/k3s-*
 ```
 
+## Reset & Reinstall (From Scratch)
+
+Use these steps to completely remove and reinstall the cluster.
+
+### One-shot Teardown
+
+```bash
+# From repo root
+bash lima/scripts/teardown.sh
+```
+
+Flags (environment variables):
+- `UNINSTALL_K3S=0` to skip K3s uninstall via Ansible.
+- `CLEAN_KUBECONFIG=0` to keep `~/.kube/config`.
+- `DEEP_CLEAN=1` to also remove `~/.lima/k3s-*`.
+
+### Fresh Install
+
+```bash
+# 1) Ensure prerequisites
+bash setup.sh
+
+# 2) Create VMs
+bash lima/scripts/create-vms.sh 1 2
+
+# 3) Generate inventory from current limactl state
+bash lima/scripts/generate-inventory-from-limactl.sh > ansible/inventory-static-ip.yml
+
+# 4) Install K3s using forwarded SSH and lima0 node_ip
+cd ansible
+ansible-playbook -i inventory-static-ip.yml playbooks/k3s-install.yml
+
+# 5) Verify
+cd ..
+bash lima/scripts/cluster-status.sh
+```
+
 ## Troubleshooting
 
 See [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for detailed troubleshooting steps.
