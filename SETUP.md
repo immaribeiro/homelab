@@ -142,6 +142,15 @@ limactl list
 # k3s-worker-2     Running    127.0.0.1:...  vz        aarch64    2       3GiB      15GiB
 ```
 
+### Bootstrap SSH access on VMs
+
+Before running Ansible, install your SSH public key and enable passwordless sudo on each VM:
+
+```bash
+# Uses ~/.ssh/id_ed25519.pub by default (set PUBKEY_PATH to override)
+bash lima/scripts/bootstrap-ssh.sh k3s-control-1 k3s-worker-1 k3s-worker-2
+```
+
 ### Check VM IPs
 
 ```bash
@@ -173,8 +182,8 @@ bash lima/scripts/cluster-status.sh
 If you used Terraform, the inventory is automatically generated. If not:
 
 ```bash
-# Manually create inventory based on VM IPs
-# Edit ansible/inventory.yml with your VM IPs
+# Generate inventory from current Lima state (forwarded SSH + lima0 IPs)
+bash lima/scripts/generate-inventory-from-limactl.sh > ansible/inventory-static-ip.yml
 ```
 
 ### Install K3s Cluster
@@ -183,7 +192,7 @@ If you used Terraform, the inventory is automatically generated. If not:
 cd ansible
 
 # Run the K3s installation playbook
-ansible-playbook -i inventory.yml playbooks/k3s-install.yml
+ansible-playbook -i inventory-static-ip.yml playbooks/k3s-install.yml
 
 # This will:
 # 1. Prepare all nodes (install prerequisites)

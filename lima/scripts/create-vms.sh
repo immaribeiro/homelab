@@ -27,8 +27,8 @@ for i in $(seq 1 $CONTROL_PLANE_COUNT); do
     MAC_SUFFIX=$(printf "%02d" $i)
     sed -i '' "s/52:55:55:00:00:01/52:55:55:00:00:$MAC_SUFFIX/g" "/tmp/$VM_NAME.yaml"
     
-    # Create VM
-    limactl start --name="$VM_NAME" "/tmp/$VM_NAME.yaml"
+    # Create VM (non-interactive)
+    limactl start -y --name="$VM_NAME" "/tmp/$VM_NAME.yaml"
     
     echo "$VM_NAME created successfully"
 done
@@ -52,8 +52,8 @@ for i in $(seq 1 $WORKER_COUNT); do
     WORKER_IP="192.168.5.$((10 + i))"
     sed -i '' "s/192.168.5.11/$WORKER_IP/g" "/tmp/$VM_NAME.yaml"
     
-    # Create VM
-    limactl start --name="$VM_NAME" "/tmp/$VM_NAME.yaml"
+    # Create VM (non-interactive)
+    limactl start -y --name="$VM_NAME" "/tmp/$VM_NAME.yaml"
     
     echo "$VM_NAME created successfully"
 done
@@ -82,5 +82,11 @@ done
 
 echo ""
 echo "Next steps:"
-echo "1. Generate Ansible inventory: cd ../terraform && terraform apply"
-echo "2. Install K3s: cd ../ansible && ansible-playbook -i inventory.yml playbooks/k3s-install.yml"
+echo "1. Generate Ansible inventory (localhost SSH + lima0 IPs):"
+echo "   bash lima/scripts/generate-inventory-from-limactl.sh > ansible/inventory-static-ip.yml"
+echo "2. Bootstrap SSH keys + passwordless sudo on VMs:"
+echo "   bash lima/scripts/bootstrap-ssh.sh k3s-control-1 k3s-worker-1 k3s-worker-2"
+echo "3. Install K3s using the generated inventory:"
+echo "   cd ansible && ansible-playbook -i inventory-static-ip.yml playbooks/k3s-install.yml"
+echo "4. Verify cluster status:"
+echo "   bash ../lima/scripts/cluster-status.sh"
