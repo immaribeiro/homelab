@@ -119,6 +119,10 @@ main() {
     
     chmod +x "$SCRIPT_DIR/lima/scripts/create-vms.sh"
     chmod +x "$SCRIPT_DIR/lima/scripts/destroy-vms.sh"
+    # Optional cluster status helper
+    if [ -f "$SCRIPT_DIR/lima/scripts/cluster-status.sh" ]; then
+        chmod +x "$SCRIPT_DIR/lima/scripts/cluster-status.sh"
+    fi
     print_success "Lima scripts are executable"
     
     # Print summary
@@ -128,7 +132,8 @@ main() {
     echo "Next steps:"
     echo "1. Review the SETUP.md file for detailed instructions"
     echo "2. Create VMs:  cd terraform && terraform init && terraform apply"
-    echo "3. Install K3s: cd ../ansible && ansible-playbook -i inventory.yml playbooks/k3s-install.yml"
+    echo "3. Install K3s: cd ../ansible && ansible-playbook -i inventory-static-ip.yml playbooks/k3s-install.yml"
+    echo "   (Ansible uses localhost forwarded SSH; cluster uses lima0 IPs)"
     echo ""
     echo "For troubleshooting, see TROUBLESHOOTING.md"
     echo ""
