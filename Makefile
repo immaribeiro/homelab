@@ -136,6 +136,29 @@ backup:
 	 rm -rf $$OUT_DIR/home-assistant-config $$OUT_DIR/plex-config; \
 	 echo "Backup complete: $$OUT_DIR"
 
+.PHONY: metrics
+metrics:
+	@echo "[metrics] Installing kube-prometheus-stack with Helm"
+	@if ! command -v helm >/dev/null 2>&1; then echo "Error: helm not installed"; exit 1; fi
+	@kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
+	@echo "[metrics] Creating grafana-admin secret"
+	@GRAFANA_USER=$${GRAFANA_ADMIN_USER:-admin}; \
+	 GRAFANA_PASS=$${GRAFANA_ADMIN_PASSWORD:-admin}; \
+	 kubectl -n monitoring delete secret grafana-admin --ignore-not-found; \
+	 kubectl -n monitoring create secret generic grafana-admin \
+	   --from-literal=admin-user=$$GRAFANA_USER \
+	   --from-literal=admin-password=$$GRAFANA_PASS
+	@echo "[metrics] Adding prometheus-community Helm repo"
+	@helm repo add prometheus-community https://prometheus-community.github.io/helm-charts 2>/dev/null || true
+	@helm repo update prometheus-community
+	@echo "[metrics] Installing/Upgrading kube-prometheus-stack"
+	@helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+	  --namespace monitoring \
+	  --values k8s/monitoring/values.yaml \
+	  --wait --timeout 10m
+	@echo "[metrics] Deployment complete. Check: kubectl -n monitoring get pods"
+	@echo "[metrics] Grafana available at https://grafana.immas.org (after DNS route)"
+
 
 SHELL := /bin/zsh
 

@@ -20,6 +20,8 @@ data:
         service: http://plex.plex.svc.cluster.local:32400
       - hostname: qb.immas.org
         service: http://qbittorrent.qbittorrent.svc.cluster.local:8080
+      - hostname: grafana.immas.org
+        service: http://monitoring-grafana.monitoring.svc.cluster.local:80
       - service: http_status:404
 ---
 apiVersion: apps/v1
