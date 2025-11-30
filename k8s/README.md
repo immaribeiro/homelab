@@ -39,7 +39,7 @@ Add a new namespace by including `metadata.namespace` in your manifest or creati
 8. App manifests (`manifests/`)
 
 ## Wildcard TLS
-The certificate secret `wildcard-lab-immas-org-tls` is reusable by Ingresses in the same namespace. For a different namespace, create an additional `Certificate` resource or copy the secret (not recommended; prefer new Certificate).
+The certificate secret `wildcard-immas-org-tls` is reusable by Ingresses in the same namespace. For a different namespace, create an additional `Certificate` resource or copy the secret (not recommended; prefer new Certificate).
 
 ## Adding a New App
 1. Create Deployment + Service in `manifests/`.

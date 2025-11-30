@@ -95,7 +95,7 @@ make status
 The status target runs `lima/scripts/cluster-status.sh` to print `kubectl get nodes -o wide` and `kubectl get pods -A` from the control plane VM.
 
 ## Cloudflare Tunnel DNS Setup
-To access apps (e.g. `hello.lab.immas.org`) from any device without `/etc/hosts` hacks:
+To access apps (e.g. `hello.immas.org`) from any device without `/etc/hosts` hacks:
 
 1. Create tunnel locally:
   ```sh
@@ -105,9 +105,9 @@ To access apps (e.g. `hello.lab.immas.org`) from any device without `/etc/hosts`
   ```
 2. Add DNS route (automatic CNAME creation):
   ```sh
-  cloudflared tunnel route dns homelab hello.lab.immas.org
+  cloudflared tunnel route dns homelab hello.immas.org
   # Or wildcard:
-  cloudflared tunnel route dns homelab '*.lab.immas.org'
+  cloudflared tunnel route dns homelab '*.immas.org'
   ```
 3. Deploy tunnel in cluster (from repo root):
   ```sh
@@ -121,11 +121,11 @@ To access apps (e.g. `hello.lab.immas.org`) from any device without `/etc/hosts`
   ```
 5. Test external access (from a different network/device):
   ```sh
-  curl -I https://hello.lab.immas.org
+  curl -I https://hello.immas.org
   ```
 
 Notes:
-- Wildcard CNAME (`*.lab.immas.org`) lets you map multiple subdomains using one Tunnel.
+- Wildcard CNAME (`*.immas.org`) lets you map multiple subdomains using one Tunnel.
 - Ingress rules are defined in `k8s/cloudflared/tunnel.yaml` ConfigMap; add new hostnames under `ingress:` list.
 - Keep a final catch-all rule: `- service: http_status:404`.
 - SSL termination still handled by NGINX Ingress with your wildcard Let’s Encrypt certificate.

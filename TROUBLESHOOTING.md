@@ -65,15 +65,15 @@ kubectl -n cert-manager logs deploy/cert-manager | grep -i cloudflare
 - Symptom: ACME error: authorization failed.
 - Checks: Validate TXT record externally:
 ```bash
-dig -t txt _acme-challenge.lab.immas.org
+dig -t txt _acme-challenge.immas.org
 ```
 - Fix: Ensure no conflicting CNAME at apex; token not scoped to single zone unless intended.
 
 ## Tunnel Hostnames Not Resolving
-- Symptom: `NXDOMAIN` for `hello.lab.immas.org`.
+- Symptom: `NXDOMAIN` for `hello.immas.org`.
 - Checks:
 ```bash
-dig +short hello.lab.immas.org
+dig +short hello.immas.org
 ```
 - Fix: Add wildcard CNAME `*.lab` -> `<TUNNEL_ID>.cfargotunnel.com` OR explicit host route via `cloudflared tunnel route dns`.
 

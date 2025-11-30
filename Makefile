@@ -85,7 +85,7 @@ tunnel:
 	@echo "Applying cloudflared deployment and config..."
 	kubectl apply -f k8s/cloudflared/tunnel.yaml
 	kubectl -n cloudflared get deploy,po
-	@echo "Cloudflare Tunnel applied. Ensure DNS: hello.lab.immas.org CNAME -> $(TUNNEL_ID).cfargotunnel.com"
+	@echo "Cloudflare Tunnel applied. Ensure DNS: hello.immas.org CNAME -> $(TUNNEL_ID).cfargotunnel.com"
 
 .PHONY: ingress-nginx
 ingress-nginx:

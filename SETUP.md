@@ -251,8 +251,8 @@ Certificate lifecycle:
 
 Checks:
 ```bash
-kubectl describe certificate wildcard-lab-immas-org-tls
-kubectl get secret wildcard-lab-immas-org-tls
+kubectl describe certificate wildcard-immas-org-tls
+kubectl get secret wildcard-immas-org-tls
 ```
 
 If pending:
