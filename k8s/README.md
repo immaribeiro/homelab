@@ -24,7 +24,6 @@ Cluster workloads are isolated by namespace for clearer lifecycle management and
 | `plex` | Media server | Plex Deployment, PVC, Service | `manifests/plex.yml` |
 | `qbittorrent` | Torrent client | qBittorrent Deployment, PVC, Service | `manifests/qbittorrent.yml` |
 | `monitoring` | Metrics collection & visualization | kube-prometheus-stack: Prometheus, Alertmanager, Grafana, exporters | Helm chart (Makefile `metrics` target) + `monitoring/values.yaml` + dashboards YAML |
-| `default` | General / legacy resources (cert placeholder) | Wildcard certificate for default namespace (if used) | `cert-manager/certificate-wildcard-default-namespace.yaml` |
 
 Add a new namespace by including `metadata.namespace` in your manifest or creating a Namespace object explicitly for advanced policies.
 
@@ -32,7 +31,7 @@ Add a new namespace by including `metadata.namespace` in your manifest or creati
 1. MetalLB controller (remote manifest) + `metallb/metallb-config.yaml`
 2. cert-manager core manifest (remote) + `cert-manager/clusterissuers.yaml`
 3. Cloudflare API token secret (Makefile target `cf-secret`)
-4. Wildcard certificate request (`certificate-wildcard-default-namespace.yaml`)
+4. Wildcard certificate request (`certificate-wildcard.yaml` in cert-manager namespace)
 5. Ingress controller (NGINX) – remote manifest
 6. Tunnel (`cloudflared/tunnel.yaml`)
 7. Monitoring stack (`make metrics`) – installs Prometheus/Grafana (optional position; can be later)
