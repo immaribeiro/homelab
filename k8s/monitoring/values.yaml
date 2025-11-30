@@ -60,6 +60,14 @@ grafana:
   # Set initial password via environment or use Grafana's default (admin/admin)
   # Password changes persist in /var/lib/grafana/grafana.db
   adminUser: admin
+  # Security context to fix permission issues with persistent storage
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 472
+    runAsGroup: 472
+    fsGroup: 472
+  initChownData:
+    enabled: false
   service:
     type: ClusterIP
     port: 80
