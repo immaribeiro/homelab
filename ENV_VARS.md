@@ -25,8 +25,6 @@ These variables are read by the Makefile and used in commands:
 | `K3S_CONTROL_PLANE_IP` | Fetch kubeconfig from control plane | `make kubeconfig` |
 | `TUNNEL_ID` | Cloudflare Tunnel UUID for deployment | `make tunnel` / `make tunnel-setup` |
 | `TUNNEL_CRED_FILE` | Path to tunnel credentials JSON | `make tunnel` / `make tunnel-setup` |
-| `GRAFANA_ADMIN_USER` | Grafana admin username (defaults to admin) | `make metrics` |
-| `GRAFANA_ADMIN_PASSWORD` | Grafana admin password (defaults to admin) | `make metrics` |
 
 ### Documentation Only (Hardcoded in YAML)
 
@@ -98,11 +96,18 @@ kubectl create secret generic tunnel-token \
 make cf-secret  # Automatically uses CLOUDFLARE_ZONE_API_TOKEN from .env
 ```
 
-### Grafana Admin Credentials (optional override before metrics install)
+### Grafana Credentials
+Grafana uses default credentials on first install:
+- Username: `admin`
+- Password: `admin`
+
+Change the password on first login via Grafana UI. The new password persists in the Grafana database.
+
+To reset password if needed:
 ```bash
-export GRAFANA_ADMIN_USER=admin
-export GRAFANA_ADMIN_PASSWORD=changeMe123
-make metrics
+kubectl -n monitoring exec -it deploy/kube-prometheus-stack-grafana -- \
+  grafana-cli admin reset-admin-password newpassword
+kubectl -n monitoring rollout restart deploy/kube-prometheus-stack-grafana
 ```
 
 ## Future Enhancements

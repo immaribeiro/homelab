@@ -153,24 +153,41 @@ kubectl rollout restart deploy/homepage -n homepage
 - User accounts and organizations
 - Plugins
 - Alerting rules
+- **Admin password** (stored in grafana.db)
 
 **Location:** `/var/lib/grafana` in container  
 **PVC:** Automatically created by Helm chart as `kube-prometheus-stack-grafana`
 
-**Admin password:**
-- Stored in `grafana-admin` secret
-- Set via `GRAFANA_ADMIN_USER` and `GRAFANA_ADMIN_PASSWORD` in `.env`
-- Applied during `make metrics`
+**Initial login:**
+- Default username: `admin`
+- Default password: `admin`
+- You'll be prompted to change on first login
+- New password persists in the PVC
 
 **Reset admin password:**
 ```bash
-# Method 1: Update secret and restart
-kubectl -n monitoring delete secret grafana-admin
-export GRAFANA_ADMIN_PASSWORD="newpassword"
-make metrics  # Recreates secret and updates deployment
+# Using grafana-cli (recommended - persists in database)
+kubectl -n monitoring exec -it deploy/kube-prometheus-stack-grafana -- \
+  grafana-cli admin reset-admin-password newpassword
 
-# Method 2: Direct in Grafana database
-kubectl -n monitoring exec -it deploy/kube-prometheus-stack-grafana -- grafana-cli admin reset-admin-password newpassword
+# Restart to apply
+kubectl -n monitoring rollout restart deploy/kube-prometheus-stack-grafana
+
+# Verify persistence
+kubectl -n monitoring rollout restart deploy/kube-prometheus-stack-grafana
+# Login with new password - it persists!
+```
+
+**Change admin username:**
+```bash
+# Connect to Grafana database
+kubectl -n monitoring exec -it deploy/kube-prometheus-stack-grafana -- sqlite3 /var/lib/grafana/grafana.db
+
+# In sqlite prompt:
+UPDATE user SET login='newadmin' WHERE login='admin';
+.quit
+
+# Restart
 kubectl -n monitoring rollout restart deploy/kube-prometheus-stack-grafana
 ```
 

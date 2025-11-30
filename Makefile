@@ -141,13 +141,6 @@ metrics:
 	@echo "[metrics] Installing kube-prometheus-stack with Helm"
 	@if ! command -v helm >/dev/null 2>&1; then echo "Error: helm not installed"; exit 1; fi
 	@kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
-	@echo "[metrics] Creating grafana-admin secret"
-	@GRAFANA_USER=$${GRAFANA_ADMIN_USER:-admin}; \
-	 GRAFANA_PASS=$${GRAFANA_ADMIN_PASSWORD:-admin}; \
-	 kubectl -n monitoring delete secret grafana-admin --ignore-not-found; \
-	 kubectl -n monitoring create secret generic grafana-admin \
-	   --from-literal=admin-user=$$GRAFANA_USER \
-	   --from-literal=admin-password=$$GRAFANA_PASS
 	@echo "[metrics] Adding prometheus-community Helm repo"
 	@helm repo add prometheus-community https://prometheus-community.github.io/helm-charts 2>/dev/null || true
 	@helm repo update prometheus-community
@@ -157,7 +150,8 @@ metrics:
 	  --values k8s/monitoring/values.yaml \
 	  --wait --timeout 10m
 	@echo "[metrics] Deployment complete. Check: kubectl -n monitoring get pods"
-	@echo "[metrics] Grafana available at https://grafana.immas.org (after DNS route)"
+	@echo "[metrics] Grafana available at https://grafana.immas.org"
+	@echo "[metrics] Default credentials: admin / admin (change on first login)"
 
 
 SHELL := /bin/zsh

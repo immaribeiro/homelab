@@ -56,10 +56,10 @@ thanosRuler:
 
 grafana:
   enabled: true
-  admin:
-    existingSecret: grafana-admin
-    userKey: admin-user
-    passwordKey: admin-password
+  # Removed admin secret reference to allow password persistence in Grafana DB
+  # Set initial password via environment or use Grafana's default (admin/admin)
+  # Password changes persist in /var/lib/grafana/grafana.db
+  adminUser: admin
   service:
     type: ClusterIP
     port: 80
