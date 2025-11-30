@@ -20,6 +20,8 @@ certmgr:
 	@echo "Installing cert-manager..."
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.3/cert-manager.yaml
 	kubectl -n cert-manager rollout status deploy/cert-manager --timeout=180s || true
+	kubectl -n cert-manager rollout status deploy/cert-manager-webhook --timeout=180s || true
+	kubectl -n cert-manager rollout status deploy/cert-manager-cainjector --timeout=180s || true
 
 cf-secret:
 	@if [ -z "$(CLOUDFLARE_ZONE_API_TOKEN)" ]; then echo "Error: set CLOUDFLARE_ZONE_API_TOKEN in .env"; exit 1; fi
@@ -33,15 +35,14 @@ issuers:
 	kubectl get clusterissuers
 
 wildcard:
-	@echo "Applying wildcard certificate for *.lab.immas.org..."
+	@echo "Applying wildcard certificate for *.immas.org..."
 	kubectl apply -f k8s/cert-manager/certificate-wildcard.yaml
-	kubectl -n cert-manager get secret wildcard-lab-immas-org-tls || true
+	kubectl -n cert-manager get secret wildcard-immas-org-tls || true
 
 deploy-home:
-	@echo "Applying home app and ingress..."
+	@echo "Applying home app..."
 	kubectl apply -f k8s/manifests/home.yml
-	kubectl apply -f k8s/manifests/home-ingress.yaml
-	kubectl get ingress
+	kubectl -n default get pods,svc
 
 ## Kubeconfig convenience
 .PHONY: kubeconfig
@@ -97,6 +98,13 @@ ingress-nginx:
 addons-status: addons status-all
 	@echo "Add-ons installed and cluster status displayed."
 
+.PHONY: tunnel-setup
+tunnel-setup:
+	@echo "[tunnel-setup] Creating or reusing Cloudflare Tunnel and updating .env"
+	@chmod +x scripts/cloudflared-setup.sh
+	@ENV_FILE=.env scripts/cloudflared-setup.sh homelab
+	@echo "[tunnel-setup] Done. Verify TUNNEL_ID and TUNNEL_CRED_FILE in .env."
+
 
 SHELL := /bin/zsh
 
@@ -105,7 +113,10 @@ CONTROL ?= 1
 WORKERS ?= 2
 VM_NAMES ?= k3s-control-1 k3s-worker-1 k3s-worker-2
 
-.PHONY: setup create bootstrap inventory install status teardown reset clean
+.PHONY: setup create bootstrap inventory install status teardown reset clean cluster-setup
+
+cluster-setup: create bootstrap inventory install
+	@echo "✅ Cluster setup complete! Run 'make kubeconfig' to fetch kubeconfig, then 'make addons'"
 
 setup:
 	@echo "[setup] Installing prerequisites and configuring services"
@@ -120,13 +131,13 @@ bootstrap:
 	@bash lima/scripts/bootstrap-ssh.sh $(VM_NAMES)
 
 inventory:
-	@echo "[inventory] Generating ansible/inventory-static-ip.yml"
-	@bash lima/scripts/generate-inventory-from-limactl.sh > ansible/inventory-static-ip.yml
-	@echo "[inventory] Done: ansible/inventory-static-ip.yml"
+	@echo "[inventory] Generating ansible/inventory.yml"
+	@bash lima/scripts/generate-inventory-from-limactl.sh > ansible/inventory.yml
+	@echo "[inventory] Done: ansible/inventory.yml"
 
 install:
 	@echo "[install] Running K3s install via Ansible"
-	@cd ansible && ansible-playbook -i inventory-static-ip.yml playbooks/k3s-install.yml
+	@cd ansible && ansible-playbook playbooks/k3s-install.yml
 
 status:
 	@echo "[status] Cluster nodes and pods"
@@ -140,4 +151,4 @@ reset: teardown create bootstrap inventory install status
 
 clean:
 	@echo "[clean] Removing generated inventory"
-	@rm -f ansible/inventory-static-ip.yml
+	@rm -f ansible/inventory.yml

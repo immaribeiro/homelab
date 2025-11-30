@@ -132,7 +132,7 @@ main() {
     echo "Next steps:"
     echo "1. Review the SETUP.md file for detailed instructions"
     echo "2. Create VMs:  cd terraform && terraform init && terraform apply"
-    echo "3. Install K3s: cd ../ansible && ansible-playbook -i inventory-static-ip.yml playbooks/k3s-install.yml"
+    echo "3. Install K3s: cd ../ansible && ansible-playbook -i inventory.yml playbooks/k3s-install.yml"
     echo "   (Ansible uses localhost forwarded SSH; cluster uses lima0 IPs)"
     echo ""
     echo "For troubleshooting, see TROUBLESHOOTING.md"

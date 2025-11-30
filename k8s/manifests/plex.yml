@@ -1,0 +1,117 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: plex
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: plex-config
+  namespace: plex
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plex
+  namespace: plex
+  labels:
+    app: plex
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: plex
+  template:
+    metadata:
+      labels:
+        app: plex
+    spec:
+      containers:
+      - name: plex
+        image: plexinc/pms-docker:latest
+        ports:
+        - containerPort: 32400
+          name: http
+        env:
+        - name: TZ
+          value: "Europe/Lisbon"
+        - name: PLEX_CLAIM
+          value: "claim-your-token-here"
+        - name: ADVERTISE_IP
+          value: "https://plex.immas.org:443"
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: transcode
+          mountPath: /transcode
+        - name: media
+          mountPath: /data
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: plex-config
+      - name: transcode
+        emptyDir: {}
+      - name: media
+        hostPath:
+          # This path must exist on the Mac and be within the mounted directories (e.g. ~/)
+          # By default, Lima mounts ~ read-only.
+          path: /Users/imma/plex
+          type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: plex
+  namespace: plex
+  labels:
+    app: plex
+spec:
+  type: ClusterIP
+  ports:
+  - port: 32400
+    targetPort: 32400
+    protocol: TCP
+    name: http
+  selector:
+    app: plex
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: plex
+  namespace: plex
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: plex.immas.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: plex
+            port:
+              number: 32400

@@ -7,8 +7,8 @@ print() { echo "[teardown] $1"; }
 if [[ "${UNINSTALL_K3S:-1}" == "1" ]]; then
   if [[ -d "${PWD}/../ansible" ]]; then
     print "Uninstalling K3s via Ansible (if inventory available)"
-    if [[ -f "${PWD}/../ansible/inventory-static-ip.yml" ]]; then
-      (cd ../ansible && ansible-playbook -i inventory-static-ip.yml playbooks/k3s-reset.yml || true)
+    if [[ -f "${PWD}/../ansible/inventory.yml" ]]; then
+      (cd ../ansible && ansible-playbook playbooks/k3s-reset.yml || true)
     elif [[ -f "${PWD}/../ansible/inventory.yml" ]]; then
       (cd ../ansible && ansible-playbook -i inventory.yml playbooks/k3s-reset.yml || true)
     else

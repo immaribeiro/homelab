@@ -24,7 +24,7 @@ networks:
 # Mounts
 mounts:
   - location: "~"
-    writable: false
+    writable: true
 
 # SSH
 ssh:

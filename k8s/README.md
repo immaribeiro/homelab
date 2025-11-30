@@ -3,7 +3,7 @@
 This directory contains layered manifests and component-specific configuration applied to the K3s cluster.
 
 ## Structure
-- `manifests/` – Application-level resources (Deployments, Services, Ingress). Example: `home.yml`, `home-ingress.yaml`.
+- `manifests/` – Application-level resources (Deployments, Services). Example: `home.yml`, `home-assistant.yml`, `plex.yml`.
 - `metallb/` – MetalLB address pool + L2 advertisement (`metallb-config.yaml`).
 - `cert-manager/` – ACME ClusterIssuers and wildcard certificates.
 - `cloudflared/` – Cloudflare Tunnel Deployment, ConfigMap, and README.
@@ -67,7 +67,8 @@ http:
 
 ### Home App
 Simple nginx for testing:
-- **Manifest:** `manifests/home.yml`, `manifests/home-ingress.yaml`
+- **Manifest:** `manifests/home.yml`
+- **Routing:** Cloudflare Tunnel routes `home.immas.org` directly to service
 - **Access:** https://home.immas.org
 - **Deploy:** `make deploy-home`
 

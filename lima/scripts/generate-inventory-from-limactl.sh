@@ -4,7 +4,7 @@ set -euo pipefail
 set -euo pipefail
 
 # Generate inventory with forwarded SSH and lima0 node_ip
-# Usage: bash generate-inventory-from-limactl.sh > ../ansible/inventory-static-ip.yml
+# Usage: bash generate-inventory-from-limactl.sh > ../ansible/inventory.yml
 
 get_port() {
   local name="$1"

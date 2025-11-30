@@ -35,6 +35,27 @@ spec:
       labels:
         app: home-assistant
     spec:
+      initContainers:
+      - name: ensure-http-settings
+        image: alpine:3.20
+        command:
+          - /bin/sh
+          - -c
+        args:
+          - |
+            CFG=/config/configuration.yaml
+            if ! grep -q '^http:' "$CFG"; then
+              cat >> "$CFG" <<'EOF'
+            http:
+              use_x_forwarded_for: true
+              trusted_proxies:
+                - 10.42.0.0/16
+                - 10.43.0.0/16
+            EOF
+            fi
+        volumeMounts:
+        - name: config
+          mountPath: /config
       containers:
       - name: home-assistant
         image: ghcr.io/home-assistant/home-assistant:stable
@@ -44,6 +65,13 @@ spec:
         env:
         - name: TZ
           value: "Europe/Lisbon"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
         volumeMounts:
         - name: config
           mountPath: /config
