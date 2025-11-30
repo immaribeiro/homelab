@@ -105,6 +105,37 @@ tunnel-setup:
 	@ENV_FILE=.env scripts/cloudflared-setup.sh homelab
 	@echo "[tunnel-setup] Done. Verify TUNNEL_ID and TUNNEL_CRED_FILE in .env."
 
+.PHONY: release
+release:
+	@if [ -z "$(VERSION)" ]; then echo "Usage: make release VERSION=v0.x.y"; exit 1; fi
+	@if git rev-parse "$(VERSION)" >/dev/null 2>&1; then echo "Tag $(VERSION) already exists"; exit 1; fi
+	@echo "Tagging release $(VERSION)"
+	@git tag -a $(VERSION) -m "Release $(VERSION)"
+	@git push origin $(VERSION)
+	@if command -v gh >/dev/null 2>&1; then \
+	  echo "Creating GitHub release $(VERSION)"; \
+	  gh release create $(VERSION) -t "$(VERSION) Homelab" -n "Automated release $(VERSION)\nSee DEPLOYMENT.md for deployment steps."; \
+	else \
+	  echo "gh CLI not installed; create release manually in the GitHub UI."; \
+	fi
+
+.PHONY: backup
+backup:
+	@OUT_DIR=backups/$(shell date +%Y%m%d-%H%M%S); \
+	 echo "Creating backup in $$OUT_DIR"; \
+	 mkdir -p $$OUT_DIR; \
+	 echo "Backing up Home Assistant config..."; \
+	 HA_POD=$$(kubectl -n home-assistant get pod -l app=home-assistant -o jsonpath='{.items[0].metadata.name}'); \
+	 kubectl -n home-assistant cp $$HA_POD:/config $$OUT_DIR/home-assistant-config; \
+	 echo "Backing up Plex config..."; \
+	 PLEX_POD=$$(kubectl -n plex get pod -l app=plex -o jsonpath='{.items[0].metadata.name}'); \
+	 kubectl -n plex cp $$PLEX_POD:/config $$OUT_DIR/plex-config; \
+	 echo "Creating tarballs"; \
+	 tar -czf $$OUT_DIR/home-assistant-config.tgz -C $$OUT_DIR home-assistant-config; \
+	 tar -czf $$OUT_DIR/plex-config.tgz -C $$OUT_DIR plex-config; \
+	 rm -rf $$OUT_DIR/home-assistant-config $$OUT_DIR/plex-config; \
+	 echo "Backup complete: $$OUT_DIR"
+
 
 SHELL := /bin/zsh
 
