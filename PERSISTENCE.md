@@ -153,42 +153,48 @@ kubectl rollout restart deploy/homepage -n homepage
 - User accounts and organizations
 - Plugins
 - Alerting rules
-- **Admin password** (stored in grafana.db)
 
 **Location:** `/var/lib/grafana` in container  
 **PVC:** Automatically created by Helm chart as `kube-prometheus-stack-grafana`
 
 **Initial login:**
-- Default username: `admin`
-- Default password: `admin`
-- You'll be prompted to change on first login
-- New password persists in the PVC
+- Username: `admin`
+- Password: `admin` (set in `k8s/monitoring/values.yaml`)
+- Change on first login via Grafana UI
+- Password stored in Kubernetes secret `kube-prometheus-stack-grafana`
 
-**Reset admin password:**
+**Reset/change admin password:**
+
+*Method 1: Update values.yaml and redeploy (recommended)*
 ```bash
-# Using grafana-cli (recommended - persists in database)
-kubectl -n monitoring exec -it deploy/kube-prometheus-stack-grafana -- \
-  grafana-cli admin reset-admin-password newpassword
+# Edit k8s/monitoring/values.yaml
+# Change: adminPassword: yournewpassword
+
+make metrics
+# Login with new password
+```
+
+*Method 2: Update secret directly*
+```bash
+# Set new password in secret
+kubectl -n monitoring patch secret kube-prometheus-stack-grafana \
+  -p '{"data":{"admin-password":"'$(echo -n "yournewpassword" | base64)'"}}}'
 
 # Restart to apply
 kubectl -n monitoring rollout restart deploy/kube-prometheus-stack-grafana
-
-# Verify persistence
-kubectl -n monitoring rollout restart deploy/kube-prometheus-stack-grafana
-# Login with new password - it persists!
 ```
 
-**Change admin username:**
+*Method 3: Using grafana-cli (temporary - reverts on pod restart)*
 ```bash
-# Connect to Grafana database
-kubectl -n monitoring exec -it deploy/kube-prometheus-stack-grafana -- sqlite3 /var/lib/grafana/grafana.db
+# This changes password in DB but will be overridden by secret on restart
+kubectl -n monitoring exec -it deploy/kube-prometheus-stack-grafana -- \
+  grafana-cli admin reset-admin-password newpassword
+```
 
-# In sqlite prompt:
-UPDATE user SET login='newadmin' WHERE login='admin';
-.quit
-
-# Restart
-kubectl -n monitoring rollout restart deploy/kube-prometheus-stack-grafana
+**Get current password:**
+```bash
+kubectl -n monitoring get secret kube-prometheus-stack-grafana \
+  -o jsonpath='{.data.admin-password}' | base64 -d && echo
 ```
 
 **Access Grafana config:**

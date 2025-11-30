@@ -56,10 +56,9 @@ thanosRuler:
 
 grafana:
   enabled: true
-  # Removed admin secret reference to allow password persistence in Grafana DB
-  # Set initial password via environment or use Grafana's default (admin/admin)
-  # Password changes persist in /var/lib/grafana/grafana.db
+  # Set known admin credentials (stored in auto-generated secret)
   adminUser: admin
+  adminPassword: admin
   # Security context to fix permission issues with persistent storage
   securityContext:
     runAsNonRoot: true

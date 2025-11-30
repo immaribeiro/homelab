@@ -97,17 +97,18 @@ make cf-secret  # Automatically uses CLOUDFLARE_ZONE_API_TOKEN from .env
 ```
 
 ### Grafana Credentials
-Grafana uses default credentials on first install:
+Grafana credentials are set in `k8s/monitoring/values.yaml`:
 - Username: `admin`
-- Password: `admin`
+- Password: `admin` (default)
 
-Change the password on first login via Grafana UI. The new password persists in the Grafana database.
+To change the password permanently:
+1. Edit `k8s/monitoring/values.yaml` and change `adminPassword: admin` to your desired password
+2. Run `make metrics` to apply
 
-To reset password if needed:
+Or get the current password:
 ```bash
-kubectl -n monitoring exec -it deploy/kube-prometheus-stack-grafana -- \
-  grafana-cli admin reset-admin-password newpassword
-kubectl -n monitoring rollout restart deploy/kube-prometheus-stack-grafana
+kubectl -n monitoring get secret kube-prometheus-stack-grafana \
+  -o jsonpath='{.data.admin-password}' | base64 -d && echo
 ```
 
 ## Future Enhancements
