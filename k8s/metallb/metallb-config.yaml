@@ -5,6 +5,7 @@ metadata:
   namespace: metallb-system
 spec:
   addresses:
+    # From .env: METALLB_IP_RANGE
     - 192.168.105.50-192.168.105.99
 ---
 apiVersion: metallb.io/v1beta1

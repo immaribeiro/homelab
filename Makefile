@@ -1,4 +1,10 @@
 ## Add-ons automation
+# Load .env if it exists
+ifneq (,$(wildcard .env))
+    include .env
+    export
+endif
+
 .PHONY: addons metallb certmgr cf-secret issuers wildcard deploy-home
 
 addons: metallb certmgr cf-secret issuers wildcard
@@ -16,10 +22,10 @@ certmgr:
 	kubectl -n cert-manager rollout status deploy/cert-manager --timeout=180s || true
 
 cf-secret:
-	@if [ -z "$(CLOUDFLARE_API_TOKEN)" ]; then echo "Error: set CLOUDFLARE_API_TOKEN env var"; exit 1; fi
+	@if [ -z "$(CLOUDFLARE_ZONE_API_TOKEN)" ]; then echo "Error: set CLOUDFLARE_ZONE_API_TOKEN in .env"; exit 1; fi
 	kubectl create namespace cert-manager --dry-run=client -o yaml | kubectl apply -f -
 	kubectl -n cert-manager delete secret cloudflare-api-token-secret --ignore-not-found
-	kubectl -n cert-manager create secret generic cloudflare-api-token-secret --from-literal=api-token=$(CLOUDFLARE_API_TOKEN)
+	kubectl -n cert-manager create secret generic cloudflare-api-token-secret --from-literal=api-token=$(CLOUDFLARE_ZONE_API_TOKEN)
 
 issuers:
 	@echo "Applying ClusterIssuers..."
@@ -42,7 +48,8 @@ deploy-home:
 
 kubeconfig:
 	@echo "Fetching and patching kubeconfig from control plane..."
-	bash lima/scripts/fetch-kubeconfig.sh k3s-control-1 192.168.105.2
+	@if [ -z "$(K3S_CONTROL_PLANE_IP)" ]; then echo "Error: set K3S_CONTROL_PLANE_IP in .env"; exit 1; fi
+	bash lima/scripts/fetch-kubeconfig.sh k3s-control-1 $(K3S_CONTROL_PLANE_IP)
 
 ## Status helpers
 .PHONY: status-all
