@@ -5,9 +5,21 @@ metadata:
   name: homepage
 ---
 apiVersion: v1
-kind: ConfigMap
+kind: PersistentVolumeClaim
 metadata:
   name: homepage-config
+  namespace: homepage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage-config-defaults
   namespace: homepage
 data:
   settings.yaml: |
@@ -170,12 +182,20 @@ spec:
             - -c
             - |
               set -e
-              echo "Contents of /config-ro:" && ls -la /config-ro || true
-              mkdir -p /app/config
-              cp -RL /config-ro/. /app/config/ || true
+              echo "Initializing homepage config..."
+              # Only copy defaults if config directory is empty (first run)
+              if [ ! -f /app/config/settings.yaml ]; then
+                echo "First run detected - copying default configs"
+                mkdir -p /app/config
+                cp -v /config-defaults/*.yaml /app/config/ || true
+                echo "Default configs copied. You can now customize them."
+              else
+                echo "Existing config found - preserving user settings"
+              fi
+              ls -la /app/config
           volumeMounts:
-            - name: config-ro
-              mountPath: /config-ro
+            - name: config-defaults
+              mountPath: /config-defaults
             - name: config
               mountPath: /app/config
       containers:
@@ -203,10 +223,11 @@ spec:
               memory: 256Mi
       volumes:
         - name: config
-          emptyDir: {}
-        - name: config-ro
+          persistentVolumeClaim:
+            claimName: homepage-config
+        - name: config-defaults
           configMap:
-            name: homepage-config
+            name: homepage-config-defaults
 ---
 apiVersion: v1
 kind: Service

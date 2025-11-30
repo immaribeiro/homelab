@@ -13,7 +13,7 @@ cd terraform && terraform init && terraform apply
 cd ../ansible && ansible-playbook -i inventory.yml playbooks/k3s-install.yml
 ```
 
-See [SETUP.md](./SETUP.md) for detailed instructions, [k8s/README.md](./k8s/README.md) for manifest conventions, [lima/README.md](./lima/README.md) for VM environment, [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for common issues, and [RECOVERY.md](./RECOVERY.md) for server restart procedures.
+See [SETUP.md](./SETUP.md) for detailed instructions, [k8s/README.md](./k8s/README.md) for manifest conventions, [lima/README.md](./lima/README.md) for VM environment, [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for common issues, [RECOVERY.md](./RECOVERY.md) for server restart procedures, and [PERSISTENCE.md](./PERSISTENCE.md) for storage and backup management.
 
 ## Architecture Overview
 
