@@ -17,24 +17,32 @@ See [SETUP.md](./SETUP.md) for detailed instructions, [k8s/README.md](./k8s/READ
 
 ## Architecture Overview
 
-Components:
+Core + Add-on Components:
 - Lima VMs (control-plane + workers) on `lima0` network.
 - K3s lightweight Kubernetes distribution.
-- MetalLB for LoadBalancer IP assignment (pool 192.168.105.50-99).
+- MetalLB for LoadBalancer IP assignment (pool `192.168.105.50-99`).
 - cert-manager with Cloudflare DNS-01 for wildcard TLS.
-- NGINX Ingress Controller for HTTP routing.
-- Cloudflare Tunnel for secure external access (no inbound ports).
+- NGINX Ingress Controller for HTTP routing (when hostnames are terminated internally).
+- Cloudflare Tunnel for outbound-only external access (no inbound firewall/NAT required).
+- Monitoring stack: Prometheus, Alertmanager, Grafana (`monitoring` namespace).
+- Central dashboard: Homepage (`homepage` namespace) aggregating links & widgets.
+- Media & apps: Plex (`plex`), Home Assistant (`home-assistant`), qBittorrent (`qbittorrent`).
 - Application manifests under `k8s/manifests/` using shared wildcard TLS secret.
 
-Flow:
-Client → Cloudflare (wildcard CNAME) → Cloudflare Tunnel → NGINX Ingress → Service → Pod.
+Namespace inventory with purposes is documented in `k8s/README.md`.
 
-## Add-ons Automation
+Default Flow (Tunnel mapping to Cluster):
+Client → Cloudflare (wildcard CNAME) → Cloudflare Tunnel → (Ingress-NGINX or direct Service) → Pod
+
+Monitoring (Grafana) is exposed through the Tunnel; Prometheus/Alertmanager remain internal unless explicitly routed.
+
+## Add-ons & Operations Automation
 ```bash
 make addons          # MetalLB + cert-manager + issuers + wildcard cert
 make ingress-nginx   # Install ingress controller
 make deploy-home     # Deploy home app + ingress
 make tunnel          # Deploy cloudflared (requires env vars)
+make metrics         # Install kube-prometheus-stack (Prometheus/Grafana)
 ```
 
 Verify:
@@ -800,8 +808,9 @@ limactl shell k3s-control-1 sudo iptables -L -n -v
 
 ## Next Steps
 
-- Add monitoring (Prometheus/Grafana)
-- Set up ingress controller
-- Configure persistent volumes
-- Add cert-manager for TLS
-- Implement GitOps with ArgoCD/Flux
+- Extend monitoring with alert / recording rules & SLO dashboards
+- Add dynamic storage (e.g., Longhorn) for PVC provisioning
+- Implement GitOps (ArgoCD or Flux) for manifests & Helm releases
+- Introduce secret management (Sealed Secrets / External Secrets)
+- Harden Tunnel routing & add Zero Trust access policies
+- Enhance Homepage with authenticated widgets (Prometheus, Grafana, Home Assistant APIs)

@@ -14,6 +14,8 @@ Common issues and their solutions.
 6. [Tunnel Hostnames Not Resolving](#tunnel-hostnames-not-resolving)
 7. [Tunnel Pod CrashLoopBackOff](#tunnel-pod-crashloopbackoff)
 8. [Ansible SSH Failures](#ansible-ssh-failures)
+9. [Homepage Dashboard Issues](#homepage-dashboard-issues)
+10. [Monitoring Stack Issues](#monitoring-stack-issues)
 
 ## Networking / Lima
 - Symptom: Pods cannot reach services on `192.168.5.x` / `eth0`.
@@ -93,6 +95,22 @@ kubectl -n cloudflared logs deploy/cloudflared --tail=50
    - Inventory host/port matches `limactl list` forwarded port.
    - SSH key installed via `bootstrap-ssh.sh`.
 - Fix: Re-run bootstrap, ensure correct user (`ubuntu`), and remove stale known_hosts entries.
+
+## Homepage Dashboard Issues
+- 500 error (EACCES / EROFS): ConfigMap volume is read-only. Confirm initContainer copies config into `emptyDir` at `/app/config` (see `k8s/manifests/home.yml`).
+- Host validation failed: Set env `HOMEPAGE_ALLOWED_HOSTS=home.immas.org` in Deployment.
+- Empty services/groups: Ensure `services.yaml` is a top-level list of groups (not nested under a `services:` key). Restart Deployment.
+- Weather widget stuck on “Updating”: Verify latitude/longitude and label in `widgets.yaml`; restart Deployment.
+
+## Monitoring Stack Issues
+- Grafana login fails: Check `grafana-admin` Secret exists: `kubectl -n monitoring get secret grafana-admin` (created by `make metrics`).
+- Prometheus targets down: Port-forward and open `/targets` to inspect label matching.
+```bash
+kubectl -n monitoring port-forward svc/kube-prometheus-stack-prometheus 9090:9090
+open http://localhost:9090/targets
+```
+- Alertmanager empty: Verify rules loaded: `kubectl -n monitoring get prometheusrules`; add alerting rules via Helm values.
+- High resource usage: Lower scrape interval or disable exporters in `monitoring/values.yaml`.
 
 ## socket_vmnet Issues
 

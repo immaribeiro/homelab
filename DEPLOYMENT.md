@@ -70,6 +70,15 @@ kubectl apply -f k8s/manifests/plex.yml
 
 # Deploy Home Assistant (if not already deployed)
 kubectl apply -f k8s/manifests/home-assistant.yml
+
+# Deploy qBittorrent
+kubectl apply -f k8s/manifests/qbittorrent.yml
+
+# Deploy Homepage dashboard
+make deploy-home
+
+# (Optional) Install monitoring stack (Prometheus, Grafana, Alertmanager)
+make metrics
 ```
 
 ### 9. Verify Deployment
@@ -125,14 +134,22 @@ make clean
 
 ## Accessing Services
 
-- **Via Cloudflare Tunnel (external):**
-  - Home Assistant: `https://ha.immas.org`
-  - Plex: `https://plex.immas.org`
-  - Home: `https://home.immas.org`
+External (Cloudflare Tunnel):
+- Homepage: `https://home.immas.org`
+- Home Assistant: `https://ha.immas.org`
+- Plex: `https://plex.immas.org`
+- qBittorrent: `https://qb.immas.org`
+- Grafana: `https://grafana.immas.org`
 
-- **Via Local Network:**
-  - Get MetalLB IP: `kubectl -n ingress-nginx get svc`
-  - Access via `http://<metallb-ip>`
+Internal Cluster-only (default):
+- Prometheus: `http://monitoring-prometheus.monitoring.svc.cluster.local:9090`
+- Alertmanager: `http://monitoring-alertmanager.monitoring.svc.cluster.local:9093`
+
+Local network (load balancer IP) access for ingress-nginx:
+```bash
+kubectl -n ingress-nginx get svc ingress-nginx-controller
+# Use http://<EXTERNAL-IP> for direct cluster ingress testing
+```
 
 ## Troubleshooting
 
@@ -149,6 +166,19 @@ kubectl -n cert-manager describe certificate wildcard-immas-org
 Wait 2-5 minutes for DNS-01 challenge to complete.
 
 ### VMs Not Responding
+### Homepage Dashboard Issues
+- 500 error with EROFS writes: ConfigMap was mounted read-only; ensure initContainer copies files into `emptyDir` at `/app/config` (see `k8s/manifests/home.yml`).
+- Host validation failed: Set env `HOMEPAGE_ALLOWED_HOSTS=home.immas.org` in Deployment.
+- Services blank: `services.yaml` must be a top-level list of groups, not nested under a `services:` key.
+
+### Monitoring Stack Issues
+- Grafana login fails: Verify `grafana-admin` Secret (created by `make metrics`). Re-run target if missing.
+- Prometheus targets down: Port-forward and inspect `/targets` to confirm ServiceMonitor selectors.
+```bash
+kubectl -n monitoring port-forward svc/kube-prometheus-stack-prometheus 9090:9090
+open http://localhost:9090/targets
+```
+- Alertmanager empty: Check loaded rules `kubectl -n monitoring get prometheusrules`; add alerting / recording rules via values overrides.
 ```bash
 limactl list
 limactl shell <vm-name>

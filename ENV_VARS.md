@@ -23,6 +23,10 @@ These variables are read by the Makefile and used in commands:
 |----------|-------|--------------|
 | `CLOUDFLARE_ZONE_API_TOKEN` | Create Kubernetes secret for cert-manager | `make cf-secret` |
 | `K3S_CONTROL_PLANE_IP` | Fetch kubeconfig from control plane | `make kubeconfig` |
+| `TUNNEL_ID` | Cloudflare Tunnel UUID for deployment | `make tunnel` / `make tunnel-setup` |
+| `TUNNEL_CRED_FILE` | Path to tunnel credentials JSON | `make tunnel` / `make tunnel-setup` |
+| `GRAFANA_ADMIN_USER` | Grafana admin username (defaults to admin) | `make metrics` |
+| `GRAFANA_ADMIN_PASSWORD` | Grafana admin password (defaults to admin) | `make metrics` |
 
 ### Documentation Only (Hardcoded in YAML)
 
@@ -37,6 +41,8 @@ These variables document the values used in static YAML files. To change them, y
 | `CLOUDFLARE_TUNNEL_TOKEN` | `kubectl create secret` | Token for Cloudflare Tunnel auth |
 | `HOME_ASSISTANT_STORAGE_SIZE` | `k8s/manifests/home-assistant.yml` | PVC size for Home Assistant |
 | `HOME_ASSISTANT_TIMEZONE` | `k8s/manifests/home-assistant.yml` | Timezone env var |
+| `HOMEPAGE_ALLOWED_HOSTS` | `k8s/manifests/home.yml` | Allowed host(s) for Homepage domain validation |
+| `HOMEPAGE_VAR_TITLE` | `k8s/manifests/home.yml` | Dashboard title override |
 
 ### Reference Only
 
@@ -90,6 +96,13 @@ kubectl create secret generic tunnel-token \
 ### Cloudflare API Token (for cert-manager)
 ```bash
 make cf-secret  # Automatically uses CLOUDFLARE_ZONE_API_TOKEN from .env
+```
+
+### Grafana Admin Credentials (optional override before metrics install)
+```bash
+export GRAFANA_ADMIN_USER=admin
+export GRAFANA_ADMIN_PASSWORD=changeMe123
+make metrics
 ```
 
 ## Future Enhancements
