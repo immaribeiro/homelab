@@ -52,8 +52,15 @@ grafana:
       root_url: https://grafana.immas.org
       serve_from_sub_path: false
   defaultDashboardsTimezone: browser
+  defaultDashboardsEnabled: true
   plugins:
     - grafana-piechart-panel
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: ALL
   resources:
     requests:
       cpu: 100m
@@ -62,7 +69,6 @@ grafana:
       cpu: 500m
       memory: 512Mi
   persistence:
-    enabled: true
-    size: 2Gi
+    enabled: false
   ingress:
     enabled: false
