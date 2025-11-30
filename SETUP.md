@@ -14,6 +14,11 @@ This guide walks you through setting up a complete K3s cluster on macOS using Li
 8. [Add-ons & Ingress](#add-ons--ingress)
 9. [TLS & Certificates](#tls--certificates)
 10. [Cloudflare Tunnel & DNS](#cloudflare-tunnel--dns)
+11. [Monitoring & Dashboards](#monitoring--dashboards)
+12. [Homepage Dashboard](#homepage-dashboard)
+13. [Post-Install Validation](#post-install-validation)
+14. [Backup & Maintenance](#backup--maintenance)
+15. [Next Steps](#next-steps)
 
 ## Prerequisites
 
@@ -94,6 +99,9 @@ cat /private/etc/sudoers.d/lima
 ### 6. Make Scripts Executable
 
 ```bash
+chmod +x lima/scripts/*.sh scripts/*.sh
+```
+
 ## Creating VMs
 
 ### Option 1: Using Terraform (Recommended)
@@ -205,35 +213,41 @@ limactl shell k3s-control-1 sudo journalctl -u k3s -f
 
 ## Add-ons & Ingress
 
-Install networking and certificate components:
+Install networking, certificates, and optional dashboard/monitoring components via Make targets:
 
 ```bash
-make addons
-make ingress-nginx
-make deploy-home   # deploy home app + ingress
+make addons          # MetalLB + cert-manager + issuers + wildcard cert
+make ingress-nginx   # Ingress controller (LoadBalancer)
+make tunnel-setup    # Create/reuse Cloudflare Tunnel and update .env
+make tunnel          # Apply cloudflared deployment + config (after env set)
+make deploy-home     # Homepage dashboard deployment
+make metrics         # Prometheus / Grafana / Alertmanager stack
 ```
 
-What this applies:
-- MetalLB controller + `k8s/metallb/metallb-config.yaml`
-- cert-manager core controllers (v1.15.3)
+Applied resources:
+- MetalLB controller + address pool (`k8s/metallb/metallb-config.yaml`)
+- cert-manager controllers (v1.15.3) + ClusterIssuers + wildcard certificate for `*.immas.org`
 - Cloudflare API token secret (`cloudflare-api-token-secret`)
-- ClusterIssuers (staging & prod)
-- Wildcard Certificate for `*.lab.immas.org`
-- NGINX Ingress Controller
+- NGINX ingress controller (namespace `ingress-nginx`)
+- Cloudflare Tunnel deployment + routing ConfigMap (`k8s/cloudflared/tunnel.yaml`)
+- Homepage dashboard (`k8s/manifests/home.yml`)
+- Monitoring stack (Helm: kube-prometheus-stack) with custom values (`k8s/monitoring/values.yaml`)
 
-Verify readiness:
+Readiness checks:
 ```bash
 kubectl -n metallb-system get pods
 kubectl -n cert-manager get pods
 kubectl -n ingress-nginx get svc ingress-nginx-controller
+kubectl -n cloudflared get deploy,po
+kubectl -n monitoring get pods
 ```
 
 ## TLS & Certificates
 
 Certificate lifecycle:
-1. Secret with Cloudflare API token.
-2. ClusterIssuer performs DNS-01 challenge for wildcard.
-3. ACME Order + Challenge resources succeed; secret `wildcard-lab-immas-org-tls` created.
+1. Secret with Cloudflare API token (`make cf-secret`).
+2. ClusterIssuer (prod & staging) performs DNS-01 for wildcard.
+3. ACME Order + Challenge succeed; secret `wildcard-immas-org-tls` created (referenced by Ingress or Tunnel routes where TLS termination occurs).
 
 Checks:
 ```bash
@@ -257,7 +271,7 @@ export TUNNEL_CRED_FILE=~/path/to/<id>.json
 make tunnel
 ```
 
-Add wildcard DNS (Cloudflare dashboard): CNAME `*.lab` -> `<TUNNEL_ID>.cfargotunnel.com`.
+Add wildcard DNS (Cloudflare dashboard): CNAME `*.immas.org` -> `<TUNNEL_ID>.cfargotunnel.com`.
 
 Verify:
 ```bash
@@ -429,6 +443,38 @@ cd ..
 bash lima/scripts/cluster-status.sh
 ```
 
+## Monitoring & Dashboards
+
+Install the metrics stack (Prometheus, Alertmanager, Grafana) after base add-ons:
+```bash
+make metrics
+```
+Grafana admin credentials are stored in the `grafana-admin` secret (override with `GRAFANA_ADMIN_USER` / `GRAFANA_ADMIN_PASSWORD` in `.env` before running `make metrics`).
+
+Access:
+- Grafana: `https://grafana.immas.org`
+- Prometheus (internal): `http://monitoring-prometheus.monitoring.svc.cluster.local:9090`
+- Alertmanager (internal): `http://monitoring-alertmanager.monitoring.svc.cluster.local:9093`
+
+Basic validation:
+```bash
+kubectl -n monitoring get pods
+kubectl -n monitoring get prometheusrules
+kubectl -n monitoring port-forward svc/kube-prometheus-stack-prometheus 9090:9090 &
+open http://localhost:9090/targets
+```
+
+## Homepage Dashboard
+
+Deploy central dashboard aggregating links and widgets:
+```bash
+make deploy-home
+```
+Key notes:
+- Writable config achieved via `emptyDir` + initContainer (see `k8s/manifests/home.yml`).
+- Set `HOMEPAGE_ALLOWED_HOSTS=home.immas.org` in Deployment env for host validation.
+- Update services/widgets/settings in the ConfigMap then restart: `kubectl rollout restart deployment/homepage -n homepage`.
+
 ## Deploying Applications
 
 ### Environment Variables
@@ -471,10 +517,46 @@ curl -I https://ha.immas.org
 
 ### Deploy Additional Apps
 Follow the pattern in `k8s/README.md`:
-1. Create Deployment + Service + Ingress manifests
-2. Add public hostname to Cloudflare Tunnel dashboard
-3. Apply: `kubectl apply -f k8s/manifests/<app>.yml`
-4. Test: `curl -I https://<subdomain>.immas.org`
+1. Create Deployment + Service (Ingress optional if using tunnel direct service route)
+2. Add hostname route in `k8s/cloudflared/tunnel.yaml` ConfigMap
+3. Apply manifest: `kubectl apply -f k8s/manifests/<app>.yml`
+4. Test external access: `curl -I https://<subdomain>.immas.org`
+
+## Post-Install Validation
+
+Run these checks after initial setup + add-ons:
+```bash
+kubectl get nodes -o wide
+kubectl get pods -A | grep -v Running | grep -v Completed || echo "All pods healthy"
+kubectl get svc -A | grep LoadBalancer || true
+kubectl -n cert-manager get certificate
+kubectl -n cloudflared logs deploy/cloudflared --tail=30 | grep -i connected || echo "Tunnel logs OK"
+kubectl -n monitoring get pods | grep grafana && echo "Monitoring stack present"
+curl -I https://home.immas.org
+```
+
+## Backup & Maintenance
+
+Use the built-in backup target to snapshot key app configs (Home Assistant, Plex):
+```bash
+make backup
+```
+Outputs are placed under `backups/<timestamp>/`. Tarballs contain application configuration for offline storage.
+
+Regular tasks:
+- Rotate API tokens & credentials in `.env`.
+- Update Helm chart versions (`make metrics` after `helm repo update`).
+- Review Cloudflare Tunnel routes for unused hosts.
+
+## Next Steps
+
+Enhance the platform:
+- Add dynamic storage (Longhorn) for PVC provisioning.
+- Introduce GitOps (ArgoCD or Flux) for declarative app lifecycle.
+- Add secret management (Sealed Secrets / External Secrets Operator).
+- Harden access with Cloudflare Zero Trust policies.
+- Extend alerting & recording rules for SLO-based monitoring.
+- Enrich Homepage with authenticated widgets (Prometheus/Grafana/Home Assistant APIs).
 
 ## Troubleshooting
 
