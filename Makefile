@@ -206,3 +206,60 @@ reset: teardown create bootstrap inventory install status
 clean:
 	@echo "[clean] Removing generated inventory"
 	@rm -f ansible/inventory.yml
+
+## Server Restart & Recovery
+.PHONY: start-vms stop-vms restart-vms verify-cluster post-reboot
+
+start-vms:
+	@echo "[start-vms] Starting all K3s VMs..."
+	@for vm in $(VM_NAMES); do \
+		echo "Starting $$vm..."; \
+		limactl start $$vm 2>/dev/null || echo "$$vm already running or failed"; \
+	done
+	@echo "[start-vms] Waiting for VMs to initialize (15s)..."
+	@sleep 15
+	@limactl list
+
+stop-vms:
+	@echo "[stop-vms] Stopping all K3s VMs gracefully..."
+	@for vm in $(VM_NAMES); do \
+		echo "Stopping $$vm..."; \
+		limactl stop $$vm 2>/dev/null || echo "$$vm already stopped"; \
+	done
+	@limactl list
+
+restart-vms: stop-vms
+	@echo "[restart-vms] Waiting 5s before restart..."
+	@sleep 5
+	@$(MAKE) start-vms
+
+verify-cluster:
+	@echo "[verify-cluster] Checking cluster health..."
+	@echo "\n=== Nodes ==="
+	@kubectl get nodes -o wide || echo "⚠️  Cannot reach cluster. Run: make kubeconfig"
+	@echo "\n=== System Pods ==="
+	@kubectl get pods -n kube-system || true
+	@echo "\n=== MetalLB ==="
+	@kubectl get pods -n metallb-system || true
+	@echo "\n=== cert-manager ==="
+	@kubectl get pods -n cert-manager || true
+	@echo "\n=== Cloudflare Tunnel ==="
+	@kubectl get pods -n cloudflared || true
+	@echo "\n=== LoadBalancer Services ==="
+	@kubectl get svc -A | grep LoadBalancer || echo "No LoadBalancer services found"
+	@echo "\n=== Certificates ==="
+	@kubectl get certificates -A || true
+
+post-reboot: start-vms
+	@echo "[post-reboot] VMs started. Fetching kubeconfig..."
+	@sleep 10
+	@$(MAKE) kubeconfig || echo "⚠️  Kubeconfig fetch failed. VMs may still be initializing."
+	@echo "[post-reboot] Waiting for K3s to stabilize (30s)..."
+	@sleep 30
+	@$(MAKE) verify-cluster
+	@echo "\n✅ Post-reboot recovery complete!"
+	@echo "\nIf services are not responding:"
+	@echo "  1. Check tunnel: kubectl -n cloudflared logs deploy/cloudflared --tail=50"
+	@echo "  2. Restart tunnel: kubectl -n cloudflared rollout restart deploy/cloudflared"
+	@echo "  3. Verify DNS: dig +short home.immas.org"
+	@echo "  4. Check app pods: kubectl get pods -A | grep -v Running"
