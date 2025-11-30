@@ -14,6 +14,8 @@ data:
     tunnel: 7725b3d6-e5e5-46b8-932a-e8f1478158ae
     credentials-file: /etc/cloudflared/cred/tunnel.json
     ingress:
+      - hostname: home.immas.org
+        service: http://homepage.homepage.svc.cluster.local:3000
       - hostname: ha.immas.org
         service: http://home-assistant.home-assistant.svc.cluster.local:8123
       - hostname: plex.immas.org

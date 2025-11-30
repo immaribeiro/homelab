@@ -1,35 +1,248 @@
 ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: homepage
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage-config
+  namespace: homepage
+data:
+  settings.yaml: |
+    title: Homelab Dashboard
+    favicon: https://gethomepage.dev/img/favicon.ico
+    theme: dark
+    color: slate
+    headerStyle: boxed
+    hideVersion: true
+    layout:
+      Media:
+        style: row
+        columns: 2
+      Apps:
+        style: row
+        columns: 2
+      Infrastructure:
+        style: row
+        columns: 3
+  
+  widgets.yaml: |
+    - search:
+        provider: google
+        target: _blank
+    
+    - datetime:
+        text_size: xl
+        format:
+          timeStyle: short
+          dateStyle: long
+    
+    - openmeteo:
+        label: Lisbon
+        latitude: 38.7223
+        longitude: -9.1393
+        units: metric
+        cache: 5
+    
+    - kubernetes:
+        cluster:
+          show: true
+          cpu: true
+          memory: true
+          showLabel: true
+          label: "Cluster"
+        nodes:
+          show: true
+          cpu: true
+          memory: true
+          showLabel: true
+  
+  services.yaml: |
+    - Media:
+        - Plex:
+            icon: plex.png
+            href: https://plex.immas.org
+            description: Media Server
+            widget:
+              type: plex
+              url: http://plex.plex.svc.cluster.local:32400
+        
+        - qBittorrent:
+            icon: qbittorrent.png
+            href: https://qb.immas.org
+            description: Torrent Client
+            widget:
+              type: qbittorrent
+              url: http://qbittorrent.qbittorrent.svc.cluster.local:8080
+    
+    - Apps:
+        - Home Assistant:
+            icon: home-assistant.png
+            href: https://ha.immas.org
+            description: Home Automation
+            widget:
+              type: homeassistant
+              url: http://home-assistant.home-assistant.svc.cluster.local:8123
+    
+    - Infrastructure:
+        - Grafana:
+            icon: grafana.png
+            href: https://grafana.immas.org
+            description: Metrics & Dashboards
+            widget:
+              type: grafana
+              url: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local:80
+              username: admin
+              password: admin
+        
+        - Prometheus:
+            icon: prometheus.png
+            href: http://monitoring-prometheus.monitoring.svc.cluster.local:9090
+            description: Metrics Collection
+            widget:
+              type: prometheus
+              url: http://monitoring-prometheus.monitoring.svc.cluster.local:9090
+        
+        - Alertmanager:
+            icon: alertmanager.png
+            href: http://monitoring-alertmanager.monitoring.svc.cluster.local:9093
+            description: Alert Management
+  
+  bookmarks.yaml: |
+    - Developer:
+        - GitHub:
+            - icon: github.png
+              href: https://github.com/immaribeiro/homelab
+        - Cloudflare:
+            - icon: cloudflare.png
+              href: https://dash.cloudflare.com
+    
+    - Documentation:
+        - Kubernetes:
+            - icon: kubernetes.png
+              href: https://kubernetes.io/docs/
+        - Homepage:
+            - icon: homepage.png
+              href: https://gethomepage.dev/
+  
+  kubernetes.yaml: |
+    mode: cluster
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: homepage
+  namespace: homepage
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: homepage
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+      - pods
+      - nodes
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - metrics.k8s.io
+    resources:
+      - nodes
+      - pods
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - get
+      - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: homepage
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: homepage
+subjects:
+  - kind: ServiceAccount
+    name: homepage
+    namespace: homepage
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: home-nginx
+  name: homepage
+  namespace: homepage
   labels:
-    app: home-nginx
+    app: homepage
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: home-nginx
+      app: homepage
   template:
     metadata:
       labels:
-        app: home-nginx
+        app: homepage
     spec:
+      serviceAccountName: homepage
       containers:
-        - name: nginx
-          image: nginx:stable
+        - name: homepage
+          image: ghcr.io/gethomepage/homepage:latest
           ports:
-            - containerPort: 80
+            - containerPort: 3000
+              name: http
+          env:
+            - name: HOMEPAGE_ALLOWED_HOSTS
+              value: "home.immas.org"
+            - name: HOMEPAGE_VAR_TITLE
+              value: "Homelab"
+            - name: HOMEPAGE_VAR_SEARCH_PROVIDER
+              value: "google"
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+            - name: logs
+              mountPath: /app/config/logs
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+      volumes:
+        - name: config
+          configMap:
+            name: homepage-config
+        - name: logs
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: home-nginx
+  name: homepage
+  namespace: homepage
+  labels:
+    app: homepage
 spec:
-  selector:
-    app: home-nginx
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
   type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+      name: http
+  selector:
+    app: homepage
+
