@@ -1,18 +1,19 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: example-nginx
+  name: home-nginx
   labels:
-    app: example-nginx
+    app: home-nginx
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: example-nginx
+      app: home-nginx
   template:
     metadata:
       labels:
-        app: example-nginx
+        app: home-nginx
     spec:
       containers:
         - name: nginx
@@ -23,10 +24,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: example-nginx
+  name: home-nginx
 spec:
   selector:
-    app: example-nginx
+    app: home-nginx
   ports:
     - protocol: TCP
       port: 80

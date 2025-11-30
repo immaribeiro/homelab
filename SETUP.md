@@ -11,6 +11,9 @@ This guide walks you through setting up a complete K3s cluster on macOS using Li
 5. [Installing K3s](#installing-k3s)
 6. [Accessing Your Cluster](#accessing-your-cluster)
 7. [Verification](#verification)
+8. [Add-ons & Ingress](#add-ons--ingress)
+9. [TLS & Certificates](#tls--certificates)
+10. [Cloudflare Tunnel & DNS](#cloudflare-tunnel--dns)
 
 ## Prerequisites
 
@@ -45,9 +48,6 @@ If you prefer to set up manually, follow these steps:
 
 ### 1. Install Homebrew (if not already installed)
 
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
 
 ### 2. Install Required Tools
 
@@ -70,8 +70,6 @@ Lima looks for socket_vmnet at `/opt/socket_vmnet/bin/socket_vmnet`, but Homebre
 
 ```bash
 # Find socket_vmnet version
-SOCKET_VERSION=$(ls /opt/homebrew/Cellar/socket_vmnet/ | head -1)
-
 # Create destination directory and copy
 sudo mkdir -p /opt/socket_vmnet/bin
 sudo cp /opt/homebrew/Cellar/socket_vmnet/$SOCKET_VERSION/bin/socket_vmnet /opt/socket_vmnet/bin/socket_vmnet
@@ -96,10 +94,6 @@ cat /private/etc/sudoers.d/lima
 ### 6. Make Scripts Executable
 
 ```bash
-chmod +x lima/scripts/create-vms.sh
-chmod +x lima/scripts/destroy-vms.sh
-```
-
 ## Creating VMs
 
 ### Option 1: Using Terraform (Recommended)
@@ -207,6 +201,68 @@ ansible-playbook -i inventory-static-ip.yml playbooks/k3s-install.yml
 ```bash
 # In another terminal, watch K3s logs
 limactl shell k3s-control-1 sudo journalctl -u k3s -f
+```
+
+## Add-ons & Ingress
+
+Install networking and certificate components:
+
+```bash
+make addons
+make ingress-nginx
+make deploy-home   # deploy home app + ingress
+```
+
+What this applies:
+- MetalLB controller + `k8s/metallb/metallb-config.yaml`
+- cert-manager core controllers (v1.15.3)
+- Cloudflare API token secret (`cloudflare-api-token-secret`)
+- ClusterIssuers (staging & prod)
+- Wildcard Certificate for `*.lab.immas.org`
+- NGINX Ingress Controller
+
+Verify readiness:
+```bash
+kubectl -n metallb-system get pods
+kubectl -n cert-manager get pods
+kubectl -n ingress-nginx get svc ingress-nginx-controller
+```
+
+## TLS & Certificates
+
+Certificate lifecycle:
+1. Secret with Cloudflare API token.
+2. ClusterIssuer performs DNS-01 challenge for wildcard.
+3. ACME Order + Challenge resources succeed; secret `wildcard-lab-immas-org-tls` created.
+
+Checks:
+```bash
+kubectl describe certificate wildcard-lab-immas-org-tls
+kubectl get secret wildcard-lab-immas-org-tls
+```
+
+If pending:
+```bash
+kubectl -n cert-manager logs deploy/cert-manager | grep -i cloudflare
+```
+
+## Cloudflare Tunnel & DNS
+
+Prerequisites: created tunnel ID + credentials JSON via `cloudflared tunnel create` locally.
+
+Deploy tunnel:
+```bash
+export TUNNEL_ID=<id>
+export TUNNEL_CRED_FILE=~/path/to/<id>.json
+make tunnel
+```
+
+Add wildcard DNS (Cloudflare dashboard): CNAME `*.lab` -> `<TUNNEL_ID>.cfargotunnel.com`.
+
+Verify:
+```bash
+dig +short hello.lab.immas.org
+curl -I https://hello.lab.immas.org
 ```
 
 ## Accessing Your Cluster
@@ -372,6 +428,53 @@ ansible-playbook -i inventory-static-ip.yml playbooks/k3s-install.yml
 cd ..
 bash lima/scripts/cluster-status.sh
 ```
+
+## Deploying Applications
+
+### Environment Variables
+Copy `.env.example` to `.env` and fill in your actual values:
+```bash
+cp .env.example .env
+# Edit .env with your credentials
+```
+
+**Important:** Never commit `.env` to version control!
+
+### Deploy Home Assistant
+```bash
+# Apply manifest
+kubectl apply -f k8s/manifests/home-assistant.yml
+
+# Wait for pod to be ready
+kubectl -n home-assistant get pods -w
+
+# Configure trusted proxies (after first start)
+kubectl -n home-assistant exec deploy/home-assistant -- sh -c 'cat > /config/configuration.yaml << EOF
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 10.42.0.0/16
+    - 10.43.0.0/16
+EOF'
+
+# Restart to apply config
+kubectl -n home-assistant rollout restart deployment/home-assistant
+
+# Add to Cloudflare Tunnel dashboard:
+# - Subdomain: ha
+# - Domain: immas.org
+# - Service: http://192.168.105.51:80
+
+# Test access
+curl -I https://ha.immas.org
+```
+
+### Deploy Additional Apps
+Follow the pattern in `k8s/README.md`:
+1. Create Deployment + Service + Ingress manifests
+2. Add public hostname to Cloudflare Tunnel dashboard
+3. Apply: `kubectl apply -f k8s/manifests/<app>.yml`
+4. Test: `curl -I https://<subdomain>.immas.org`
 
 ## Troubleshooting
 

@@ -28,5 +28,4 @@ for vm in "$@"; do
     chmod 0440 /etc/sudoers.d/ubuntu \
   " < "$PUBKEY_PATH"
   echo "OK: SSH key installed and sudoers configured"
-Done
 done

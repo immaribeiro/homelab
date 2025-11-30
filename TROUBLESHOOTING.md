@@ -5,6 +5,95 @@
 
 Common issues and their solutions.
 
+## Contents
+1. [Networking / Lima](#networking--lima)
+2. [MetalLB IP Not Assigned](#metallb-ip-not-assigned)
+3. [Ingress 404 or Default Backend](#ingress-404-or-default-backend)
+4. [Wildcard Certificate Pending](#wildcard-certificate-pending)
+5. [Cloudflare DNS-01 Failures](#cloudflare-dns-01-failures)
+6. [Tunnel Hostnames Not Resolving](#tunnel-hostnames-not-resolving)
+7. [Tunnel Pod CrashLoopBackOff](#tunnel-pod-crashloopbackoff)
+8. [Ansible SSH Failures](#ansible-ssh-failures)
+
+## Networking / Lima
+- Symptom: Pods cannot reach services on `192.168.5.x` / `eth0`.
+- Cause: Lima + socket_vmnet isolates `eth0`; ARP does not work VM-to-VM.
+- Fix: Use `lima0` network only. Ensure K3s flags `--flannel-iface lima0` and inventory uses `lima0` IPs.
+
+## MetalLB IP Not Assigned
+- Symptom: `EXTERNAL-IP` shows `<pending>` for LoadBalancer service.
+- Checks:
+```bash
+kubectl -n metallb-system get pods
+kubectl describe ipaddresspool -n metallb-system
+kubectl get l2advertisements -n metallb-system
+```
+- Common causes:
+   - IP pool overlaps with node IPs.
+   - Missing L2Advertisement or wrong interface (should be lima0).
+- Fix: Adjust `k8s/metallb/metallb-config.yaml`; reapply and check logs.
+
+## Ingress 404 or Default Backend
+- Symptom: HTTPS returns default backend 404.
+- Checks:
+```bash
+kubectl -n ingress-nginx get pods
+kubectl get ingress -A
+kubectl describe ingress home
+```
+- Causes:
+   - Host mismatch.
+   - TLS secret in wrong namespace.
+   - Service name / port mismatch.
+- Fix: Align Ingress host with DNS, ensure backend service exists, secret is in same namespace.
+
+## Wildcard Certificate Pending
+- Symptom: `kubectl describe certificate` shows challenge stuck.
+- Checks:
+```bash
+kubectl -n cert-manager get challenges.acme.cert-manager.io
+kubectl -n cert-manager logs deploy/cert-manager | grep -i cloudflare
+```
+- Causes:
+   - Missing Zone.Zone:Read permission on API token.
+   - DNS propagation delay.
+- Fix: Recreate token with `Zone.DNS` + `Zone.Zone` for the zone; wait or add recursive nameservers flag to deployment.
+
+## Cloudflare DNS-01 Failures
+- Symptom: ACME error: authorization failed.
+- Checks: Validate TXT record externally:
+```bash
+dig -t txt _acme-challenge.lab.immas.org
+```
+- Fix: Ensure no conflicting CNAME at apex; token not scoped to single zone unless intended.
+
+## Tunnel Hostnames Not Resolving
+- Symptom: `NXDOMAIN` for `hello.lab.immas.org`.
+- Checks:
+```bash
+dig +short hello.lab.immas.org
+```
+- Fix: Add wildcard CNAME `*.lab` -> `<TUNNEL_ID>.cfargotunnel.com` OR explicit host route via `cloudflared tunnel route dns`.
+
+## Tunnel Pod CrashLoopBackOff
+- Symptom: `kubectl -n cloudflared get pods` shows restarting.
+- Checks:
+```bash
+kubectl -n cloudflared logs deploy/cloudflared --tail=50
+```
+- Causes:
+   - Wrong credentials JSON.
+   - Missing `TUNNEL_ID` env.
+   - Malformed ConfigMap.
+- Fix: Recreate secret from correct file; verify ConfigMap keys `tunnel` and `credentials-file`.
+
+## Ansible SSH Failures
+- Symptom: Timeout or permission denied.
+- Checks:
+   - Inventory host/port matches `limactl list` forwarded port.
+   - SSH key installed via `bootstrap-ssh.sh`.
+- Fix: Re-run bootstrap, ensure correct user (`ubuntu`), and remove stale known_hosts entries.
+
 ## socket_vmnet Issues
 
 ### Error: "/opt/socket_vmnet/bin/socket_vmnet" has to be installed

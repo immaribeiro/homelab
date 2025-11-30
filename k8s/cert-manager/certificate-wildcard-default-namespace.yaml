@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-lab-immas-org
+  namespace: default
+spec:
+  secretName: wildcard-lab-immas-org-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: "*.lab.immas.org"
+  dnsNames:
+    - "*.lab.immas.org"
+    - "lab.immas.org"

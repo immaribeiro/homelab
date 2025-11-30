@@ -13,7 +13,37 @@ cd terraform && terraform init && terraform apply
 cd ../ansible && ansible-playbook -i inventory.yml playbooks/k3s-install.yml
 ```
 
-See [SETUP.md](./SETUP.md) for detailed instructions and [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for common issues.
+See [SETUP.md](./SETUP.md) for detailed instructions, [k8s/README.md](./k8s/README.md) for manifest conventions, [lima/README.md](./lima/README.md) for VM environment, and [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for common issues.
+
+## Architecture Overview
+
+Components:
+- Lima VMs (control-plane + workers) on `lima0` network.
+- K3s lightweight Kubernetes distribution.
+- MetalLB for LoadBalancer IP assignment (pool 192.168.105.50-99).
+- cert-manager with Cloudflare DNS-01 for wildcard TLS.
+- NGINX Ingress Controller for HTTP routing.
+- Cloudflare Tunnel for secure external access (no inbound ports).
+- Application manifests under `k8s/manifests/` using shared wildcard TLS secret.
+
+Flow:
+Client → Cloudflare (wildcard CNAME) → Cloudflare Tunnel → NGINX Ingress → Service → Pod.
+
+## Add-ons Automation
+```bash
+make addons          # MetalLB + cert-manager + issuers + wildcard cert
+make ingress-nginx   # Install ingress controller
+make deploy-home     # Deploy home app + ingress
+make tunnel          # Deploy cloudflared (requires env vars)
+```
+
+Verify:
+```bash
+kubectl get nodes
+kubectl get svc -A | grep LoadBalancer
+kubectl get certificates -A
+kubectl get ingress -A
+```
 
 ## Prerequisites
 
@@ -45,6 +75,53 @@ Lima's default networking uses user-mode (slirp) which doesn't allow VM-to-VM co
 - VM-to-VM communication
 - Stable IP addresses
 - Proper network for K3s CNI plugins
+
+## Quick Cluster Check
+After installing K3s, you can quickly verify the cluster with:
+
+```sh
+# From repo root
+make status
+```
+
+The status target runs `lima/scripts/cluster-status.sh` to print `kubectl get nodes -o wide` and `kubectl get pods -A` from the control plane VM.
+
+## Cloudflare Tunnel DNS Setup
+To access apps (e.g. `hello.lab.immas.org`) from any device without `/etc/hosts` hacks:
+
+1. Create tunnel locally:
+  ```sh
+  cloudflared tunnel login
+  cloudflared tunnel create homelab
+  export TUNNEL_ID=<uuid output>
+  ```
+2. Add DNS route (automatic CNAME creation):
+  ```sh
+  cloudflared tunnel route dns homelab hello.lab.immas.org
+  # Or wildcard:
+  cloudflared tunnel route dns homelab '*.lab.immas.org'
+  ```
+3. Deploy tunnel in cluster (from repo root):
+  ```sh
+  export TUNNEL_CRED_FILE=~/.cloudflared/$TUNNEL_ID.json
+  make tunnel
+  ```
+4. Verify tunnel pod:
+  ```sh
+  kubectl -n cloudflared get pods
+  kubectl -n cloudflared logs deploy/cloudflared | tail -n 40
+  ```
+5. Test external access (from a different network/device):
+  ```sh
+  curl -I https://hello.lab.immas.org
+  ```
+
+Notes:
+- Wildcard CNAME (`*.lab.immas.org`) lets you map multiple subdomains using one Tunnel.
+- Ingress rules are defined in `k8s/cloudflared/tunnel.yaml` ConfigMap; add new hostnames under `ingress:` list.
+- Keep a final catch-all rule: `- service: http_status:404`.
+- SSL termination still handled by NGINX Ingress with your wildcard Let’s Encrypt certificate.
+
 
 ## Repository Structure
 

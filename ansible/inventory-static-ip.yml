@@ -4,17 +4,17 @@ all:
       hosts:
         k3s-control-1:
           ansible_host: 127.0.0.1
-          ansible_port: 65361
+          ansible_port: 49772
           node_ip: 192.168.105.2
     workers:
       hosts:
         k3s-worker-1:
           ansible_host: 127.0.0.1
-          ansible_port: 65401
+          ansible_port: 49805
           node_ip: 192.168.105.3
         k3s-worker-2:
           ansible_host: 127.0.0.1
-          ansible_port: 65427
+          ansible_port: 49835
           node_ip: 192.168.105.4
   vars:
     ansible_user: "ubuntu"
