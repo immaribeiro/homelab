@@ -25,6 +25,7 @@ These variables are read by the Makefile and used in commands:
 | `K3S_CONTROL_PLANE_IP` | Fetch kubeconfig from control plane | `make kubeconfig` |
 | `TUNNEL_ID` | Cloudflare Tunnel UUID for deployment | `make tunnel` / `make tunnel-setup` |
 | `TUNNEL_CRED_FILE` | Path to tunnel credentials JSON | `make tunnel` / `make tunnel-setup` |
+| `TUNNEL_NAME` | Cloudflare Tunnel name (alternative to UUID) | `make tunnel-route*` |
 
 ### Documentation Only (Hardcoded in YAML)
 
@@ -41,6 +42,20 @@ These variables document the values used in static YAML files. To change them, y
 | `HOME_ASSISTANT_TIMEZONE` | `k8s/manifests/home-assistant.yml` | Timezone env var |
 | `HOMEPAGE_ALLOWED_HOSTS` | `k8s/manifests/home.yml` | Allowed host(s) for Homepage domain validation |
 | `HOMEPAGE_VAR_TITLE` | `k8s/manifests/home.yml` | Dashboard title override |
+
+### Telegram Bot (Deploy-time Secrets)
+
+These are passed via `make deploy-bot` and stored as a Kubernetes Secret/ConfigMap at deploy time.
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `BOT_TOKEN` | Telegram Bot API token | – |
+| `CHAT_ID` | Allowed chat ID (whitelist) | – |
+| `QB_USER` | qBittorrent username | – |
+| `QB_PASS` | qBittorrent password | – |
+| `QB_URL` | qBittorrent base URL | `http://qbittorrent.qbittorrent.svc.cluster.local:8080` |
+| `SAVE_PATH` | Default save path for torrents | `/downloads` |
+| `AUTO_TMM` | Enable qB automatic torrent management | `false` |
 
 ### Reference Only
 
@@ -118,3 +133,26 @@ Consider using tools like:
 - **Kustomize** - Manage K8s configs with overlays
 - **Helm** - Templated Kubernetes manifests
 - **Sealed Secrets** - Encrypted secrets in Git
+
+## Cloudflare Tunnel DNS Routing
+
+To automate DNS records for hostnames routed through the Tunnel (no dashboard edits):
+
+1) Authenticate once locally (creates `~/.cloudflared/cert.pem`):
+```bash
+cloudflared login
+```
+
+2) Route a hostname:
+```bash
+# Use TUNNEL_NAME or TUNNEL_ID in .env
+make tunnel-route HOST=sub.immas.org
+```
+
+3) Verify:
+```bash
+make verify-host HOST=sub.immas.org
+```
+
+Notes:
+- VPN/corporate DNS can cache or filter; if resolution lags on your Mac, try `dig @1.1.1.1 +short sub.immas.org` or temporarily set Ethernet DNS to Cloudflare.

@@ -16,6 +16,8 @@ Common issues and their solutions.
 8. [Ansible SSH Failures](#ansible-ssh-failures)
 9. [Homepage Dashboard Issues](#homepage-dashboard-issues)
 10. [Monitoring Stack Issues](#monitoring-stack-issues)
+11. [Grafana Password & Login](#grafana-password--login)
+12. [Cloudflare DNS & VPN Resolvers](#cloudflare-dns--vpn-resolvers)
 
 ## Networking / Lima
 - Symptom: Pods cannot reach services on `192.168.5.x` / `eth0`.
@@ -77,6 +79,30 @@ dig +short hello.immas.org
 ```
 - Fix: Add wildcard CNAME `*.lab` -> `<TUNNEL_ID>.cfargotunnel.com` OR explicit host route via `cloudflared tunnel route dns`.
 
+## Cloudflare DNS & VPN Resolvers
+- Symptom: Works on other devices, but your Mac shows `Could not resolve host` or HTTP 530 from Cloudflare.
+- Cause: VPN (e.g., NordLynx) or per-interface DNS on macOS overrides/caches resolver responses; Ethernet and Wi‑Fi can use different resolvers.
+- Fix:
+   ```bash
+   # Flush macOS DNS
+   sudo dscacheutil -flushcache
+   sudo killall -HUP mDNSResponder
+
+   # Check resolvers
+   scutil --dns | sed -n '1,120p'
+
+   # Query Cloudflare resolver directly
+   dig @1.1.1.1 +short sub.immas.org
+
+   # Temporarily set Ethernet DNS to Cloudflare (replace with your service name)
+   networksetup -setdnsservers "Ethernet" 1.1.1.1 1.0.0.1
+   ```
+   If still failing, verify the public hostname is attached to the Tunnel in Zero Trust → Tunnels → Public Hostnames, or rerun the route command using the tunnel name: `cloudflared tunnel route dns <TUNNEL_NAME> <host>`.
+
+Notes:
+- When testing edge routing, `curl --resolve host:443:<cf-ip>` can force hitting Cloudflare edge, but HTTP 530 indicates the hostname isn’t fully associated yet.
+- The `cloudflare/cloudflared:latest` image is minimal; `cat` is not available in the container for exec checks.
+
 ## Tunnel Pod CrashLoopBackOff
 - Symptom: `kubectl -n cloudflared get pods` shows restarting.
 - Checks:
@@ -111,6 +137,71 @@ open http://localhost:9090/targets
 ```
 - Alertmanager empty: Verify rules loaded: `kubectl -n monitoring get prometheusrules`; add alerting rules via Helm values.
 - High resource usage: Lower scrape interval or disable exporters in `monitoring/values.yaml`.
+
+## Grafana Password & Login
+
+Understanding where the admin password comes from and how it’s applied:
+
+- Helm values: The chart sets `.grafana.adminUser` and `.grafana.adminPassword` in `k8s/monitoring/values.yaml`.
+- K8s secret: A Secret (`kube-prometheus-stack-grafana`) stores the admin password and is injected into the pod as `GF_SECURITY_ADMIN_USER` and `GF_SECURITY_ADMIN_PASSWORD`.
+- Grafana DB: The persistent SQLite DB (`grafana.db`) stores the hashed password. UI changes write to this DB.
+
+Effective behavior at startup:
+
+- If `GF_SECURITY_ADMIN_PASSWORD` is present, Grafana initializes/overrides the admin password using that value at startup, regardless of what’s in the DB.
+- If those env vars are not provided, the password in the DB remains in effect across restarts.
+
+Symptoms you might see:
+
+- Login succeeds once but fails after pod restart or chart upgrade.
+- Password changed via UI reverts after a restart.
+- Repeated failures lead to temporary lockout (brute-force protection).
+
+Quick fixes
+
+- Reset password now (DB only):
+   - `make grafana-reset PASSWORD=<newpass>`
+   - Takes effect immediately without a restart.
+- Keep Helm and DB in sync (deterministic on restarts):
+   - `make grafana-secret-sync PASSWORD=<newpass>`
+   - Patches the Secret and restarts Deployment so the env matches the DB.
+
+Diagnose the current source of truth
+
+```bash
+# 1) Check pod environment (does Grafana get admin creds via env?)
+POD=$(kubectl -n monitoring get pods -l app.kubernetes.io/name=grafana -o jsonpath='{.items[0].metadata.name}')
+kubectl -n monitoring exec "$POD" -- sh -lc 'env | grep ^GF_SECURITY_ADMIN_ || true'
+
+# 2) Check the Secret value injected by Helm
+kubectl -n monitoring get secret kube-prometheus-stack-grafana -o jsonpath='{.data.admin-password}' | base64 -d; echo
+
+# 3) Confirm Deployment references the Secret env
+kubectl -n monitoring get deploy kube-prometheus-stack-grafana -o yaml | grep -A2 GF_SECURITY_ADMIN
+```
+
+Make it deterministic (choose one model)
+
+- Manage via Helm/Secret (recommended for GitOps):
+   - Set `grafana.adminPassword: "<yourpass>"` in `k8s/monitoring/values.yaml`.
+   - Apply: your normal `helm upgrade` flow.
+   - Note: UI password changes won’t persist across pod restarts unless you also update the Helm value.
+- Manage via UI/DB only (no env override):
+   - Remove `grafana.adminUser` and `grafana.adminPassword` from `k8s/monitoring/values.yaml`.
+   - Delete the Secret once to avoid leftover env overrides:
+      ```bash
+      kubectl -n monitoring delete secret kube-prometheus-stack-grafana || true
+      kubectl -n monitoring rollout restart deploy/kube-prometheus-stack-grafana
+      ```
+   - Change the password in the UI; it will persist in the DB across restarts.
+
+Lockouts and retries
+
+- Too many failed attempts can trigger temporary lockout; wait a few minutes or restart the Grafana pod:
+   ```bash
+   kubectl -n monitoring rollout restart deploy/kube-prometheus-stack-grafana
+   ```
+- If needed temporarily, you can disable brute-force protection via Helm values with `GF_SECURITY_DISABLE_BRUTE_FORCE_LOGIN_PROTECTION=true` (not recommended for long-term).
 
 ## socket_vmnet Issues
 

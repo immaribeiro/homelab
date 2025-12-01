@@ -24,6 +24,8 @@ data:
         service: http://qbittorrent.qbittorrent.svc.cluster.local:8080
       - hostname: grafana.immas.org
         service: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local:80
+      - hostname: vault.immas.org
+        service: http://vaultwarden.vaultwarden.svc.cluster.local:80
       - service: http_status:404
 ---
 apiVersion: apps/v1

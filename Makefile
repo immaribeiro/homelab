@@ -44,6 +44,81 @@ deploy-home:
 	kubectl apply -f k8s/manifests/home.yml
 	kubectl -n default get pods,svc
 
+deploy-vault:
+	@echo "[deploy-vault] Deploying Vaultwarden..."
+	kubectl apply -f k8s/manifests/vaultwarden.yml
+	kubectl -n vaultwarden rollout status deploy/vaultwarden --timeout=120s || true
+	@echo "[deploy-vault] Updating Cloudflare Tunnel..."
+	kubectl apply -f k8s/cloudflared/tunnel.yaml
+	kubectl -n cloudflared rollout restart deploy/cloudflared
+	@echo ""
+	@echo "✅ Vaultwarden deployed!"
+	@echo ""
+	@echo "Access at: https://vault.immas.org"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  1. Visit https://vault.immas.org and create your account"
+	@echo "  2. Install browser extension: https://bitwarden.com/download/"
+	@echo "  3. In extension, set Server URL to: https://vault.immas.org"
+	@echo "  4. After creating your account, disable signups:"
+	@echo "     kubectl -n vaultwarden set env deploy/vaultwarden SIGNUPS_ALLOWED=false"
+	@echo ""
+	@echo "To sync with Apple Passwords:"
+	@echo "  - Export from Vaultwarden (Settings → Export Vault → .csv)"
+	@echo "  - Import to iCloud Keychain via System Settings → Passwords"
+
+.PHONY: tunnel-route-vault-dns
+tunnel-route-vault-dns:
+	@if [ -z "$(TUNNEL_ID)" ] && [ -z "$(TUNNEL_NAME)" ]; then echo "Error: set TUNNEL_ID or TUNNEL_NAME in .env"; exit 1; fi
+	@echo "[tunnel-route-vault-dns] Ensuring origin cert secret exists (requires local ~/.cloudflared/cert.pem)"
+	@if [ ! -f "$(HOME)/.cloudflared/cert.pem" ]; then echo "Error: origin cert not found at $(HOME)/.cloudflared/cert.pem. Run: cloudflared login"; exit 1; fi
+	kubectl create namespace cloudflared --dry-run=client -o yaml | kubectl apply -f -
+	kubectl -n cloudflared delete secret cloudflared-origin-cert --ignore-not-found
+	kubectl -n cloudflared create secret generic cloudflared-origin-cert --from-file=cert.pem=$(HOME)/.cloudflared/cert.pem
+	@echo "[tunnel-route-vault-dns] Setting params ConfigMap (TUNNEL_REF + HOSTNAME)"
+	TREF=$$(if [ -n "$(TUNNEL_NAME)" ]; then echo "$(TUNNEL_NAME)"; else echo "$(TUNNEL_ID)"; fi); \
+	kubectl -n cloudflared create configmap cloudflared-dns-route-params \
+	  --from-literal=TUNNEL_REF="$$TREF" \
+	  --from-literal=HOSTNAME="vault.immas.org" \
+	  --dry-run=client -o yaml | kubectl apply -f -
+	@echo "[tunnel-route-vault-dns] Applying DNS route Job"
+	kubectl apply -f k8s/cloudflared/dns-route-job.yaml
+	@echo "[tunnel-route-vault-dns] Waiting for Job to complete..."
+	kubectl -n cloudflared wait --for=condition=complete --timeout=90s job/cloudflared-dns-route || true
+	@echo "[tunnel-route-vault-dns] Logs:"
+	kubectl -n cloudflared logs job/cloudflared-dns-route --tail=100 || true
+	@echo "[tunnel-route-vault-dns] Done. Verify DNS: dig +short vault.immas.org"
+
+.PHONY: tunnel-route
+# Usage: make tunnel-route HOST=<hostname>
+tunnel-route:
+	@if [ -z "$(HOST)" ]; then echo "Usage: make tunnel-route HOST=<hostname>"; exit 1; fi
+	@if [ -z "$(TUNNEL_ID)" ] && [ -z "$(TUNNEL_NAME)" ]; then echo "Error: set TUNNEL_ID or TUNNEL_NAME in .env"; exit 1; fi
+	@if [ ! -f "$(HOME)/.cloudflared/cert.pem" ]; then echo "Error: origin cert not found at $(HOME)/.cloudflared/cert.pem. Run: cloudflared login"; exit 1; fi
+	kubectl create namespace cloudflared --dry-run=client -o yaml | kubectl apply -f -
+	kubectl -n cloudflared delete secret cloudflared-origin-cert --ignore-not-found
+	kubectl -n cloudflared create secret generic cloudflared-origin-cert --from-file=cert.pem=$(HOME)/.cloudflared/cert.pem
+	TREF=$$(if [ -n "$(TUNNEL_NAME)" ]; then echo "$(TUNNEL_NAME)"; else echo "$(TUNNEL_ID)"; fi); \
+	kubectl -n cloudflared create configmap cloudflared-dns-route-params \
+	  --from-literal=TUNNEL_REF="$$TREF" \
+	  --from-literal=HOSTNAME="$(HOST)" \
+	  --dry-run=client -o yaml | kubectl apply -f -
+	kubectl apply -f k8s/cloudflared/dns-route-job.yaml
+	kubectl -n cloudflared wait --for=condition=complete --timeout=90s job/cloudflared-dns-route || true
+	kubectl -n cloudflared logs job/cloudflared-dns-route --tail=200 || true
+	@echo "[tunnel-route] Done. Verify: dig +short $(HOST)"
+
+.PHONY: verify-host
+# Usage: make verify-host HOST=<hostname>
+verify-host:
+	@if [ -z "$(HOST)" ]; then echo "Usage: make verify-host HOST=<hostname>"; exit 1; fi
+	@echo "[verify-host] DNS via system resolver:"
+	dig +short $(HOST) || true
+	@echo "[verify-host] DNS via Cloudflare resolver:"
+	dig @1.1.1.1 +short $(HOST) || true
+	@echo "[verify-host] HTTP response (may be proxied):"
+	curl -I https://$(HOST) || true
+
 ## Kubeconfig convenience
 .PHONY: kubeconfig
 
@@ -153,6 +228,48 @@ metrics:
 	@echo "[metrics] Grafana available at https://grafana.immas.org"
 	@echo "[metrics] Default credentials: admin / admin (change on first login)"
 
+.PHONY: grafana-reset
+grafana-reset:
+	@if [ -z "$(PASSWORD)" ]; then echo "Usage: make grafana-reset PASSWORD=<newpassword>"; exit 1; fi
+	@echo "[grafana-reset] Resetting Grafana admin password inside pod to '$(PASSWORD)'"
+	@POD=$$(kubectl -n monitoring get pods -l app.kubernetes.io/name=grafana -o jsonpath='{.items[0].metadata.name}'); \
+	 kubectl -n monitoring exec $$POD -- grafana-cli admin reset-admin-password $(PASSWORD) || { echo "grafana-cli failed"; exit 1; }; \
+	 echo "[grafana-reset] Done. Update Helm values (adminPassword) if you want this persisted on clean re-deploy.";
+	@echo "[grafana-reset] Current secret value (may differ until Helm upgrade):"; \
+	 kubectl -n monitoring get secret kube-prometheus-stack-grafana -o jsonpath='{.data.admin-password}' | base64 -d || true; echo
+
+.PHONY: grafana-secret-sync
+grafana-secret-sync:
+	@if [ -z "$(PASSWORD)" ]; then echo "Usage: make grafana-secret-sync PASSWORD=<password-to-sync>"; exit 1; fi
+	@echo "[grafana-secret-sync] Patching kube-prometheus-stack-grafana secret with provided password"
+	kubectl -n monitoring patch secret kube-prometheus-stack-grafana -p '{"data":{"admin-password":"'$(shell printf "%s" "$(PASSWORD)" | base64)'"}}'
+	@echo "[grafana-secret-sync] Secret patched. Rolling out restart."
+	kubectl -n monitoring rollout restart deploy/kube-prometheus-stack-grafana
+	kubectl -n monitoring rollout status deploy/kube-prometheus-stack-grafana --timeout=120s || true
+	@echo "[grafana-secret-sync] Completed. Try logging in with: admin / $(PASSWORD)"
+
+
+.PHONY: qb-add
+qb-add:
+	@if [ -z "$(MAGNET)" ]; then echo "Usage: make qb-add MAGNET='magnet:...' [SAVEPATH=/downloads]"; exit 1; fi
+	@echo "[qb-add] Submitting magnet to qBittorrent..."
+	@QB_USER=$(QB_USER) QB_PASS=$(QB_PASS) QB_HOST=$(QB_HOST) \
+	  scripts/qb-add.sh '$(MAGNET)' $(if $(SAVEPATH),--savepath $(SAVEPATH),)
+	@echo "[qb-add] Done"
+
+.PHONY: grafana-set-password
+# Rotate the password via Helm (chart-managed). Source of truth: Helm release values.
+grafana-set-password:
+	@if [ -z "$(PASSWORD)" ]; then echo "Usage: make grafana-set-password PASSWORD=<newpassword>"; exit 1; fi
+	@if ! command -v helm >/dev/null 2>&1; then echo "Error: helm not installed"; exit 1; fi
+	@echo "[grafana-set-password] Upgrading kube-prometheus-stack with new Grafana admin password via Helm"
+	helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+	  --namespace monitoring \
+	  --values k8s/monitoring/values.yaml \
+	  --set grafana.adminPassword=$(PASSWORD) \
+	  --wait --timeout 10m
+	@echo "[grafana-set-password] Complete. Login with: admin / $(PASSWORD)"
+
 
 SHELL := /bin/zsh
 
@@ -257,3 +374,28 @@ post-reboot: start-vms
 	@echo "  2. Restart tunnel: kubectl -n cloudflared rollout restart deploy/cloudflared"
 	@echo "  3. Verify DNS: dig +short home.immas.org"
 	@echo "  4. Check app pods: kubectl get pods -A | grep -v Running"
+
+.PHONY: deploy-bot
+deploy-bot:
+	@if [ -z "$(BOT_TOKEN)" ] || [ -z "$(CHAT_ID)" ] || [ -z "$(QB_USER)" ] || [ -z "$(QB_PASS)" ]; then \
+	  echo "Usage: make deploy-bot BOT_TOKEN=... CHAT_ID=... QB_USER=... QB_PASS=... [QB_URL=http://qbittorrent.qbittorrent.svc.cluster.local:8080]"; exit 1; fi
+	@echo "[deploy-bot] Ensuring namespace automations exists"
+	@kubectl create namespace automations --dry-run=client -o yaml | kubectl apply -f -
+	@echo "[deploy-bot] Creating/Updating Secret homelab-bot-secret"
+	@kubectl -n automations delete secret homelab-bot-secret --ignore-not-found
+	@kubectl -n automations create secret generic homelab-bot-secret \
+	  --from-literal=BOT_TOKEN=$(BOT_TOKEN) \
+	  --from-literal=QB_USER=$(QB_USER) \
+	  --from-literal=QB_PASS=$(QB_PASS) \
+	  --from-literal=CHAT_ID=$(CHAT_ID)
+	@echo "[deploy-bot] Applying bot manifest"
+	@# Inject the current Python bot into the ConfigMap for runtime
+	@kubectl -n automations create configmap homelab-bot-config \
+	  --from-literal=QB_URL="$(or $(QB_URL),http://qbittorrent.qbittorrent.svc.cluster.local:8080)" \
+	  --from-literal=SAVE_PATH="/downloads" \
+	  --from-literal=AUTO_TMM="false" \
+	  --from-file=bot.py=scripts/homelab-bot.py \
+	  --dry-run=client -o yaml | kubectl apply -f -
+	@kubectl apply -f k8s/manifests/homelab-bot.yml
+	@kubectl -n automations rollout status deploy/homelab-bot --timeout=120s || true
+	@echo "[deploy-bot] Homelab bot deployed. Send a magnet or /start to your Telegram bot to test."

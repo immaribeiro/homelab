@@ -66,7 +66,7 @@ spec:
             claimName: qbittorrent-config
         - name: downloads
           hostPath:
-            path: /Users/imma/torrents
+            path: /Users/imma/plex
             type: DirectoryOrCreate
 ---
 apiVersion: v1

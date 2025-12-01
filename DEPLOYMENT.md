@@ -79,6 +79,12 @@ make deploy-home
 
 # (Optional) Install monitoring stack (Prometheus, Grafana, Alertmanager)
 make metrics
+
+# Deploy Vaultwarden (Bitwarden-compatible)
+make deploy-vault
+
+# Deploy Homelab Telegram Bot (qB integration)
+make deploy-bot BOT_TOKEN=... CHAT_ID=... QB_USER=... QB_PASS=... [QB_URL=...]
 ```
 
 ### 9. Verify Deployment
@@ -140,6 +146,7 @@ External (Cloudflare Tunnel):
 - Plex: `https://plex.immas.org`
 - qBittorrent: `https://qb.immas.org`
 - Grafana: `https://grafana.immas.org`
+- Vaultwarden: `https://vault.immas.org`
 
 Internal Cluster-only (default):
 - Prometheus: `http://monitoring-prometheus.monitoring.svc.cluster.local:9090`
@@ -151,12 +158,82 @@ kubectl -n ingress-nginx get svc ingress-nginx-controller
 # Use http://<EXTERNAL-IP> for direct cluster ingress testing
 ```
 
+## qBittorrent: Add Magnet (CLI)
+
+Use the provided Make target or script to submit magnet links to qBittorrent over HTTPS (with proper headers):
+
+```bash
+# Via Make (recommended)
+make qb-add MAGNET='magnet:?xt=urn:btih:...'
+
+# Optional: set a save path inside the container (maps to your Mac folder)
+make qb-add MAGNET='magnet:?xt=urn:btih:...' SAVEPATH=/downloads
+
+# Direct script usage
+scripts/qb-add.sh 'magnet:?xt=urn:btih:...' --savepath /downloads
+```
+
+Notes:
+- Defaults: `QB_HOST=https://qb.immas.org`, `QB_USER=admin`, `QB_PASS=adminadmin`.
+- Override by exporting env vars or passing flags to the script.
+- The script sends Referer/Origin headers to satisfy CSRF/WAF when using Cloudflare Tunnel.
+
+
+## Cloudflare DNS Routing Automation
+
+To avoid manual DNS edits in the Cloudflare dashboard, use the built-in Job and Make targets to create CNAMEs that route to your tunnel.
+
+Prerequisite: run `cloudflared login` on your Mac once (creates `~/.cloudflared/cert.pem`). Set either `TUNNEL_NAME` or `TUNNEL_ID` in `.env`.
+
+```bash
+# Route vault.immas.org
+make tunnel-route-vault-dns
+
+# Route any hostname
+make tunnel-route HOST=sub.immas.org
+
+# Verify resolution + HTTPS
+make verify-host HOST=sub.immas.org
+```
+
+Troubleshooting:
+- If `curl` fails with DNS resolution on your Mac but works on other devices, a VPN resolver may be caching/overriding DNS. Flush cache or set Ethernet DNS to Cloudflare temporarily.
+- HTTP 530 from Cloudflare edge usually means the public hostname isn’t fully associated to the tunnel yet; confirm in Zero Trust → Tunnels → Public Hostnames or re-run the route target.
+
+## Vaultwarden Notes
+
+After the first admin account is created, disable open signups:
+```bash
+kubectl -n vaultwarden set env deploy/vaultwarden SIGNUPS_ALLOWED=false
+```
+
+The Deployment sets:
+- `DOMAIN=https://vault.immas.org`
+- `WEBSOCKET_ENABLED=true`
+- `WEB_VAULT_ENABLED=true`
+
+## Homelab Telegram Bot
+
+Deploy:
+```bash
+make deploy-bot BOT_TOKEN=... CHAT_ID=... QB_USER=... QB_PASS=... [QB_URL=...]
+```
+
+Commands:
+- `/start`, `/help`, `/status`, `/version`, `/add <magnet>`, `/id`
+
+Behavior:
+- Only the whitelisted `CHAT_ID` can interact; magnets are submitted to qBittorrent.
+- Configuration is passed via Secret/ConfigMap at deploy-time.
+
 ## Troubleshooting
 
 ### Cloudflare Tunnel 530 Errors
 - Verify services exist: `kubectl get svc -A`
 - Check tunnel logs: `kubectl -n cloudflared logs -l app=cloudflared`
 - Ensure ingress routes match deployed services
+ - Ensure the public hostname is attached to the Tunnel (Zero Trust → Tunnels → Public Hostnames)
+ - If necessary, route using tunnel name instead of UUID: `cloudflared tunnel route dns <TUNNEL_NAME> <host>`
 
 ### Certificate Not Ready
 ```bash
@@ -179,6 +256,32 @@ kubectl -n monitoring port-forward svc/kube-prometheus-stack-prometheus 9090:909
 open http://localhost:9090/targets
 ```
 - Alertmanager empty: Check loaded rules `kubectl -n monitoring get prometheusrules`; add alerting / recording rules via values overrides.
+
+### Rotate Grafana Password (Helm-managed)
+
+The default admin password is `admin`. To rotate it via Helm (recommended for GitOps):
+
+```bash
+# Set a new password via Helm upgrade
+make grafana-set-password PASSWORD='YourNewPassword'
+
+# Or manually edit k8s/monitoring/values.yaml:
+# grafana:
+#   adminPassword: YourNewPassword
+# Then redeploy:
+make metrics
+```
+
+For immediate runtime password changes without Helm:
+```bash
+# Reset password in the DB (takes effect immediately)
+make grafana-reset PASSWORD='YourNewPassword'
+
+# Then sync the Kubernetes secret to match (ensures persistence across restarts)
+make grafana-secret-sync PASSWORD='YourNewPassword'
+```
+
+See `TROUBLESHOOTING.md` → [Grafana Password & Login](#grafana-password--login) for password source precedence and detailed diagnosis steps.
 ```bash
 limactl list
 limactl shell <vm-name>

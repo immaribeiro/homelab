@@ -1,0 +1,51 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homelab-bot
+  namespace: automations
+  labels:
+    app: homelab-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: homelab-bot
+  template:
+    metadata:
+      labels:
+        app: homelab-bot
+    spec:
+      containers:
+        - name: bot
+          image: python:3.12-slim
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -e
+              pip install --no-cache-dir python-telegram-bot==20.7 requests
+              echo "Starting bot..."
+              exec python /app/bot.py
+          envFrom:
+            - secretRef:
+                name: homelab-bot-secret
+            - configMapRef:
+                name: homelab-bot-config
+          volumeMounts:
+            - name: bot-script
+              mountPath: /app
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+      volumes:
+        - name: bot-script
+          configMap:
+            name: homelab-bot-config
+            items:
+              - key: bot.py
+                path: bot.py

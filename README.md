@@ -2,6 +2,12 @@
 
 Complete Infrastructure-as-Code setup for a K3s cluster using Lima, Terraform, and Ansible with proper networking.
 
+Highlights (recent additions)
+- Vaultwarden password manager exposed via Cloudflare Tunnel (`https://vault.immas.org`)
+- Telegram homelab bot with qBittorrent integration (submit magnets from Telegram)
+- Cloudflare Tunnel DNS automation: route hostnames without dashboard edits
+- Make targets for Grafana password rotation, tunnel routing, and post-reboot recovery
+
 ## Quick Start
 
 ```bash
@@ -43,6 +49,15 @@ make ingress-nginx   # Install ingress controller
 make deploy-home     # Deploy home app + ingress
 make tunnel          # Deploy cloudflared (requires env vars)
 make metrics         # Install kube-prometheus-stack (Prometheus/Grafana)
+
+# New DNS + verification helpers
+make tunnel-route-vault-dns         # Route vault.immas.org to the tunnel (uses origin cert)
+make tunnel-route HOST=sub.immas.org # Route any hostname (requires TUNNEL_NAME or TUNNEL_ID)
+make verify-host HOST=sub.immas.org  # DNS + HTTPS check for a hostname
+
+# qBittorrent: add a magnet via CLI
+make qb-add MAGNET='magnet:?xt=urn:btih:...'
+# More options in DEPLOYMENT.md → "qBittorrent: Add Magnet (CLI)"
 ```
 
 Verify:
@@ -129,6 +144,13 @@ Notes:
 - Ingress rules are defined in `k8s/cloudflared/tunnel.yaml` ConfigMap; add new hostnames under `ingress:` list.
 - Keep a final catch-all rule: `- service: http_status:404`.
 - SSL termination still handled by NGINX Ingress with your wildcard Let’s Encrypt certificate.
+
+DNS routing automation
+- Instead of manually creating DNS records in Cloudflare, you can auto-route hostnames to the tunnel using a Job:
+  - Prereq: `cloudflared login` once on your Mac to create `~/.cloudflared/cert.pem`.
+  - Route: `make tunnel-route HOST=<hostname>` or `make tunnel-route-vault-dns`.
+  - Verify: `make verify-host HOST=<hostname>`.
+  - Notes: Corporate/VPN resolvers can cache; use `dig @1.1.1.1` if the system resolver lags.
 
 
 ## Repository Structure
@@ -814,3 +836,23 @@ limactl shell k3s-control-1 sudo iptables -L -n -v
 - Introduce secret management (Sealed Secrets / External Secrets)
 - Harden Tunnel routing & add Zero Trust access policies
 - Enhance Homepage with authenticated widgets (Prometheus, Grafana, Home Assistant APIs)
+
+## Application Highlights
+
+### Vaultwarden
+- Namespace: `vaultwarden`
+- Manifest: `k8s/manifests/vaultwarden.yml`
+- External: `https://vault.immas.org` (via Cloudflare Tunnel)
+- First user: create account, then disable signups:
+  ```sh
+  kubectl -n vaultwarden set env deploy/vaultwarden SIGNUPS_ALLOWED=false
+  ```
+
+### Homelab Telegram Bot
+- Script: `scripts/homelab-bot.py`
+- Manifest: `k8s/manifests/homelab-bot.yml`
+- Deploy via Make:
+  ```sh
+  make deploy-bot BOT_TOKEN=... CHAT_ID=... QB_USER=... QB_PASS=... [QB_URL=...]
+  ```
+  Commands: `/start`, `/help`, `/status`, `/version`, `/add <magnet>`, `/id`.

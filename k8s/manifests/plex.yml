@@ -45,7 +45,7 @@ spec:
         - name: TZ
           value: "Europe/Lisbon"
         - name: PLEX_CLAIM
-          value: "claim-your-token-here"
+          value: "claim-Z--1xLrGKv228T6_72Yc"
         - name: ADVERTISE_IP
           value: "https://plex.immas.org:443"
         volumeMounts:

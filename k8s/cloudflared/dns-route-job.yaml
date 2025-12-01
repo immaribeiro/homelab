@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cloudflared-dns-route
+  namespace: cloudflared
+spec:
+  template:
+    metadata:
+      labels:
+        app: cloudflared-dns-route
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: cloudflared
+          image: cloudflare/cloudflared:latest
+          args:
+            - tunnel
+            - route
+            - dns
+            - $(TUNNEL_REF)
+            - $(HOSTNAME)
+          env:
+            - name: TUNNEL_ORIGIN_CERT
+              value: "/etc/cloudflared/cert.pem"
+            - name: TUNNEL_REF
+              valueFrom:
+                configMapKeyRef:
+                  name: cloudflared-dns-route-params
+                  key: TUNNEL_REF
+            - name: HOSTNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: cloudflared-dns-route-params
+                  key: HOSTNAME
+          volumeMounts:
+            - name: cloudflared-credentials
+              mountPath: /etc/cloudflared/cred
+              readOnly: true
+            - name: cloudflared-origin-cert
+              mountPath: /etc/cloudflared/cert.pem
+              subPath: cert.pem
+              readOnly: true
+      volumes:
+        - name: cloudflared-credentials
+          secret:
+            secretName: cloudflared-credentials
+        - name: cloudflared-origin-cert
+          secret:
+            secretName: cloudflared-origin-cert

@@ -6,7 +6,7 @@ This directory contains layered manifests and component-specific configuration a
 - `manifests/` – Application-level resources (Deployments, Services): `home.yml`, `home-assistant.yml`, `plex.yml`, `qbittorrent.yml`, `traefik-lb.yaml`.
 - `metallb/` – MetalLB address pool + L2 advertisement (`metallb-config.yaml`).
 - `cert-manager/` – ACME ClusterIssuers and wildcard certificates + wildcard cert requests.
-- `cloudflared/` – Cloudflare Tunnel Deployment + routing ConfigMap.
+- `cloudflared/` – Cloudflare Tunnel Deployment + routing ConfigMap. Includes a DNS routing Job and README to auto-create DNS records.
 - `monitoring/` – Helm values + dashboards for Prometheus / Grafana.
 
 ## Namespaces
@@ -108,6 +108,27 @@ Torrent client for downloads.
 - **External Access:** https://qb.immas.org
 - **Persistent Data:** PVC for configuration/download state.
 
+### Vaultwarden
+Bitwarden-compatible password manager.
+- **Namespace:** `vaultwarden`
+- **Manifest:** `manifests/vaultwarden.yml`
+- **External Access:** https://vault.immas.org
+- **Notes:** After creating your account, disable open signups:
+  ```bash
+  kubectl -n vaultwarden set env deploy/vaultwarden SIGNUPS_ALLOWED=false
+  ```
+
+### Homelab Telegram Bot
+Automation bot to submit magnet links to qBittorrent and run basic checks.
+- **Namespace:** `automations`
+- **Script:** `scripts/homelab-bot.py`
+- **Manifest:** `manifests/homelab-bot.yml`
+- **Deploy via Make:**
+  ```bash
+  make deploy-bot BOT_TOKEN=... CHAT_ID=... QB_USER=... QB_PASS=... [QB_URL=...]
+  ```
+  Commands: `/start`, `/help`, `/status`, `/version`, `/add <magnet>`, `/id`.
+
 ### Monitoring Stack (Prometheus / Grafana / Alertmanager)
 Installed via Helm (`make metrics`).
 - **Namespace:** `monitoring`
@@ -122,6 +143,7 @@ Outbound-only secure access path for all public hostnames.
 - **Manifest:** `cloudflared/tunnel.yaml`
 - **Credentials:** Secret `cloudflared-credentials` from `make tunnel`.
 - **Routing:** Ingress rules in ConfigMap map `*.immas.org` subdomains to internal services.
+- **DNS Automation:** Use `k8s/cloudflared/dns-route-job.yaml` with `make tunnel-route HOST=<host>` to auto-create CNAMEs that route to the tunnel. Verify with `make verify-host HOST=<host>`.
 
 ## Conventions
 - Use explicit `ingressClassName: nginx`.
