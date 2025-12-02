@@ -30,6 +30,8 @@ data:
         service: http://argocd-server.argocd.svc.cluster.local:80
       - hostname: llm.immas.org
         service: http://open-webui.llm.svc.cluster.local:8080
+      - hostname: files.immas.org
+        service: http://filebrowser.files.svc.cluster.local:80
       - service: http_status:404
 ---
 apiVersion: apps/v1

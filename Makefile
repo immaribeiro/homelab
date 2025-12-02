@@ -514,3 +514,36 @@ chat-status:
 	@echo ""
 	@echo "💬 Chat UI: https://llm.immas.org"
 	@echo "🔗 LM Studio: http://lmstudio.ai.svc.cluster.local:1234"
+
+## FileBrowser (File Server)
+.PHONY: deploy-files files-status files-logs files-restart
+
+deploy-files:
+	@echo "[deploy-files] Deploying FileBrowser file server..."
+	@kubectl apply -f k8s/manifests/filebrowser.yml
+	@kubectl -n files rollout status deploy/filebrowser --timeout=120s || true
+	@echo ""
+	@echo "✓ FileBrowser deployed!"
+	@echo "📁 Access: https://files.immas.org"
+	@echo "🔐 Default credentials:"
+	@echo "   Username: admin"
+	@echo "   Password: admin"
+	@echo "   ⚠️  CHANGE PASSWORD IMMEDIATELY!"
+	@echo ""
+	@echo "Next: Route DNS with 'make tunnel-route HOST=files.immas.org'"
+
+files-status:
+	@echo "[files-status] FileBrowser Status:"
+	@kubectl -n files get pods,svc,pvc,ingress
+	@echo ""
+	@echo "📁 File Manager: https://files.immas.org"
+	@echo "💾 Storage: 20Gi"
+
+files-logs:
+	@echo "[files-logs] Showing FileBrowser logs..."
+	@kubectl -n files logs -l app=filebrowser --tail=100 -f
+
+files-restart:
+	@echo "[files-restart] Restarting FileBrowser..."
+	@kubectl -n files rollout restart deploy/filebrowser
+	@kubectl -n files rollout status deploy/filebrowser --timeout=120s

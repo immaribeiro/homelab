@@ -77,6 +77,10 @@ data:
             href: https://llm.immas.org
             icon: si-openai
             description: Local LLM (Mac bare metal)
+        - File Manager:
+            href: https://files.immas.org
+            icon: mdi-folder
+            description: File Upload/Download
     - Infrastructure:
         - Grafana:
             href: https://grafana.immas.org
