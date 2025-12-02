@@ -28,6 +28,8 @@ data:
         service: http://vaultwarden.vaultwarden.svc.cluster.local:80
       - hostname: argocd.immas.org
         service: http://argocd-server.argocd.svc.cluster.local:80
+      - hostname: ollama.immas.org
+        service: http://open-webui.ollama.svc.cluster.local:8080
       - service: http_status:404
 ---
 apiVersion: apps/v1

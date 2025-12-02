@@ -67,6 +67,34 @@ deploy-vault:
 	@echo "  - Export from Vaultwarden (Settings → Export Vault → .csv)"
 	@echo "  - Import to iCloud Keychain via System Settings → Passwords"
 
+.PHONY: deploy-ollama
+deploy-ollama:
+	@echo "[deploy-ollama] Deploying Ollama + Open WebUI..."
+	kubectl apply -f k8s/manifests/ollama.yml
+	kubectl -n ollama rollout status deploy/ollama --timeout=180s || true
+	kubectl -n ollama rollout status deploy/open-webui --timeout=120s || true
+	@echo "[deploy-ollama] Updating Cloudflare Tunnel..."
+	kubectl apply -f k8s/cloudflared/tunnel.yaml
+	kubectl -n cloudflared rollout restart deploy/cloudflared
+	@echo ""
+	@echo "✅ Ollama + Open WebUI deployed!"
+	@echo ""
+	@echo "Access at: https://ollama.immas.org"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  1. Route DNS: make tunnel-route HOST=ollama.immas.org"
+	@echo "  2. Visit https://ollama.immas.org and create your account"
+	@echo "  3. Download models via UI or CLI:"
+	@echo "     kubectl exec -n ollama deploy/ollama -- ollama pull llama3.2"
+	@echo "     kubectl exec -n ollama deploy/ollama -- ollama pull mistral"
+	@echo "     kubectl exec -n ollama deploy/ollama -- ollama pull codellama"
+	@echo ""
+	@echo "Popular models:"
+	@echo "  - llama3.2:latest (3B, fast)"
+	@echo "  - llama3.1:8b (8B, balanced)"
+	@echo "  - mistral:latest (7B, versatile)"
+	@echo "  - codellama:latest (7B, coding)"
+
 .PHONY: tunnel-route-vault-dns
 tunnel-route-vault-dns:
 	@if [ -z "$(TUNNEL_ID)" ] && [ -z "$(TUNNEL_NAME)" ]; then echo "Error: set TUNNEL_ID or TUNNEL_NAME in .env"; exit 1; fi
