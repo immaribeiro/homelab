@@ -15,7 +15,7 @@ spec:
       include: lmstudio-external.yml
   destination:
     server: https://kubernetes.default.svc
-    namespace: ai
+    namespace: llm
   syncPolicy:
     automated:
       prune: true

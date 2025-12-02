@@ -15,13 +15,13 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: chat
+  name: llm
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: open-webui-data
-  namespace: chat
+  namespace: llm
 spec:
   accessModes:
     - ReadWriteOnce
@@ -33,7 +33,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: open-webui
-  namespace: chat
+  namespace: llm
   labels:
     app: open-webui
 spec:
@@ -55,7 +55,7 @@ spec:
         env:
         # Point to LM Studio via the cluster service
         - name: OPENAI_API_BASE_URLS
-          value: "http://lmstudio.ai.svc.cluster.local:1234/v1"
+          value: "http://lmstudio.llm.svc.cluster.local:1234/v1"
         - name: OPENAI_API_KEYS
           value: "not-needed"
         # WebUI configuration
@@ -104,7 +104,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: open-webui
-  namespace: chat
+  namespace: llm
   labels:
     app: open-webui
 spec:
@@ -121,7 +121,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: open-webui
-  namespace: chat
+  namespace: llm
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-dns-prod
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"

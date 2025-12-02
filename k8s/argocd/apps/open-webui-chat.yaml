@@ -15,7 +15,7 @@ spec:
       include: open-webui.yml
   destination:
     server: https://kubernetes.default.svc
-    namespace: chat
+    namespace: llm
   syncPolicy:
     automated:
       prune: true

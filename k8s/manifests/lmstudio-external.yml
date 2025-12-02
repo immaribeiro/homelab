@@ -1,10 +1,10 @@
 ---
 # External service pointing to LM Studio running on Mac (bare metal)
-# Allows cluster apps to access LM Studio at: http://lmstudio.ai.svc.cluster.local:1234
+# Allows cluster apps to access LM Studio at: http://lmstudio.llm.svc.cluster.local:1234
 #
 # Prerequisites:
 # 1. LM Studio running on Mac with server started
-# 2. MAC_IP environment variable set in .env (e.g. 192.168.1.100)
+# 2. MAC_IP environment variable set in .env (e.g. 192.168.1.231)
 # 3. LM Studio configured to allow remote connections
 #
 # Deploy: make lm-deploy
@@ -12,13 +12,13 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: ai
+  name: llm
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: lmstudio
-  namespace: ai
+  namespace: llm
   labels:
     app: lmstudio
     component: external
@@ -34,7 +34,7 @@ apiVersion: v1
 kind: Endpoints
 metadata:
   name: lmstudio
-  namespace: ai
+  namespace: llm
 subsets:
 - addresses:
   - ip: 192.168.1.231  # Mac bare metal LM Studio server
@@ -48,7 +48,7 @@ subsets:
 # kind: Ingress
 # metadata:
 #   name: lmstudio
-#   namespace: ai
+#   namespace: llm
 #   annotations:
 #     cert-manager.io/cluster-issuer: letsencrypt-dns-prod
 # spec:
