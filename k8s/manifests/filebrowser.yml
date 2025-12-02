@@ -68,7 +68,7 @@ spec:
         - name: FB_BASEURL
           value: ""
         - name: FB_DATABASE
-          value: "/database/filebrowser.db"
+          value: "/config/database/filebrowser.db"
         - name: FB_USERNAME
           value: "admin"
         - name: FB_PASSWORD
@@ -81,8 +81,6 @@ spec:
           readOnly: true
         - name: config
           mountPath: /config
-        - name: database
-          mountPath: /database
         resources:
           requests:
             memory: "128Mi"
@@ -111,9 +109,6 @@ spec:
           path: /Users/imma/plex
           type: Directory
       - name: config
-        persistentVolumeClaim:
-          claimName: filebrowser-config
-      - name: database
         persistentVolumeClaim:
           claimName: filebrowser-config
 ---
