@@ -83,6 +83,14 @@ make metrics
 # Deploy Vaultwarden (Bitwarden-compatible)
 make deploy-vault
 
+# Deploy FileBrowser (file server)
+make deploy-files
+make tunnel-route HOST=files.immas.org
+
+# Deploy LM Studio (LLM chat interface)
+make deploy-chat
+make tunnel-route HOST=llm.immas.org
+
 # Deploy Homelab Telegram Bot (qB integration)
 make deploy-bot BOT_TOKEN=... CHAT_ID=... QB_USER=... QB_PASS=... [QB_URL=...]
 ```
@@ -145,6 +153,11 @@ External (Cloudflare Tunnel):
 - Home Assistant: `https://ha.immas.org`
 - Plex: `https://plex.immas.org`
 - qBittorrent: `https://qb.immas.org`
+- Grafana: `https://grafana.immas.org`
+- Vaultwarden: `https://vault.immas.org`
+- ArgoCD: `https://argocd.immas.org`
+- LM Studio Chat: `https://llm.immas.org`
+- FileBrowser: `https://files.immas.org`
 - Grafana: `https://grafana.immas.org`
 - Vaultwarden: `https://vault.immas.org`
 
@@ -225,6 +238,45 @@ Commands:
 Behavior:
 - Only the whitelisted `CHAT_ID` can interact; magnets are submitted to qBittorrent.
 - Configuration is passed via Secret/ConfigMap at deploy-time.
+
+## FileBrowser (File Server)
+
+Deploy:
+```bash
+make deploy-files
+make tunnel-route HOST=files.immas.org
+```
+
+Access: `https://files.immas.org`
+
+Default credentials:
+- Username: `admin`
+- Password: Check pod logs: `kubectl -n files logs -l app=filebrowser | grep password`
+- **Change password immediately** after first login!
+
+Features:
+- Web-based file upload/download
+- Drag & drop interface
+- File preview (images, videos, PDFs)
+- Create public share links
+- User management
+- 20GB storage (expandable)
+
+Management:
+```bash
+make files-status    # Check status
+make files-logs      # View logs
+make files-restart   # Restart service
+```
+
+Expand storage:
+```bash
+kubectl -n files edit pvc filebrowser-data
+# Change: storage: 20Gi → storage: 50Gi
+```
+
+Future NAS mounting:
+When you add external drives, update the deployment to mount them as hostPath volumes and they'll appear in FileBrowser.
 
 ## Troubleshooting
 

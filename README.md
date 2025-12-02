@@ -3,6 +3,7 @@
 Complete Infrastructure-as-Code setup for a K3s cluster using Lima, Terraform, and Ansible with proper networking.
 
 Highlights (recent additions)
+- **FileBrowser** Web-based file manager at `https://files.immas.org` (20GB storage, NAS-ready)
 - **LM Studio** LLM inference running bare metal on Mac (OpenAI-compatible API)
 - Vaultwarden password manager exposed via Cloudflare Tunnel (`https://vault.immas.org`)
 - Telegram homelab bot with qBittorrent integration (submit magnets from Telegram)
@@ -92,6 +93,34 @@ make tunnel-route HOST=llm.immas.org
 - 🔗 Access from cluster: `http://lmstudio.ai.svc.cluster.local:1234`
 
 See [LMSTUDIO.md](./LMSTUDIO.md) for setup guide and [CHAT_UI.md](./CHAT_UI.md) for web interface docs.
+
+## FileBrowser (File Server)
+
+Web-based file manager for backups and file storage, ready for NAS expansion:
+
+```bash
+# Deploy file server
+make deploy-files
+make tunnel-route HOST=files.immas.org
+
+# Access at: https://files.immas.org
+# Default: admin/Bfz3mQTAhKCZtD29 (change immediately!)
+```
+
+**Features:**
+- 📁 **Web Upload/Download**: Drag & drop files via browser
+- 🔍 **Search & Preview**: Search files, preview images/videos/PDFs
+- 🔗 **File Sharing**: Create public download links
+- 👥 **Multi-user**: User authentication and permissions
+- 💾 **20GB Storage**: Expandable PVC, ready for NAS mounting
+- 🖥️ **NAS-Ready**: Easy to mount external drives later
+
+**Management:**
+```bash
+make files-status    # Check status
+make files-logs      # View logs
+make files-restart   # Restart service
+```
 
 ## Prerequisites
 
