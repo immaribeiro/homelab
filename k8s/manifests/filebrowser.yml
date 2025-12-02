@@ -67,9 +67,18 @@ spec:
         env:
         - name: FB_BASEURL
           value: ""
+        - name: FB_DATABASE
+          value: "/database/filebrowser.db"
+        - name: FB_USERNAME
+          value: "admin"
+        - name: FB_PASSWORD
+          value: "homelab2024"
         volumeMounts:
         - name: data
-          mountPath: /srv
+          mountPath: /srv/My Files
+        - name: plex-media
+          mountPath: /srv/Plex Media
+          readOnly: true
         - name: config
           mountPath: /config
         - name: database
@@ -97,11 +106,16 @@ spec:
       - name: data
         persistentVolumeClaim:
           claimName: filebrowser-data
+      - name: plex-media
+        hostPath:
+          path: /Users/imma/plex
+          type: Directory
       - name: config
         persistentVolumeClaim:
           claimName: filebrowser-config
       - name: database
-        emptyDir: {}
+        persistentVolumeClaim:
+          claimName: filebrowser-config
 ---
 apiVersion: v1
 kind: Service
