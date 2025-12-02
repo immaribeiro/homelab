@@ -40,6 +40,9 @@ spec:
           env:
             - name: OLLAMA_HOST
               value: "0.0.0.0:11434"
+            # Disable GPU/CUDA for CPU-only inference (smaller image)
+            - name: OLLAMA_NUM_GPU
+              value: "0"
           volumeMounts:
             - name: ollama-data
               mountPath: /root/.ollama

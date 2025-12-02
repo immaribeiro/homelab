@@ -476,3 +476,69 @@ deploy-bot:
 	@kubectl apply -f k8s/manifests/homelab-bot.yml
 	@kubectl -n automations rollout status deploy/homelab-bot --timeout=120s || true
 	@echo "[deploy-bot] Homelab bot deployed. Send a magnet or /start to your Telegram bot to test."
+
+## LM Studio (Bare Metal Mac)
+.PHONY: lm-status lm-test lm-deploy lm-install deploy-chat chat-logs chat-restart chat-status
+
+lm-install:
+	@echo "[lm-install] Installing LM Studio via Homebrew..."
+	@brew install --cask lm-studio || echo "LM Studio already installed or brew not available"
+	@echo "✓ Installation complete. Run 'open -a \"LM Studio\"' to launch."
+	@echo "📖 See LMSTUDIO.md for setup guide"
+
+lm-status:
+	@echo "[lm-status] Checking LM Studio server status..."
+	@curl -sf http://localhost:1234/v1/models > /dev/null && \
+		echo "✓ LM Studio server is running on http://localhost:1234" || \
+		echo "✗ LM Studio server not responding. Start it in the LM Studio app (Local Server tab)"
+
+lm-test:
+	@echo "[lm-test] Testing LM Studio API..."
+	@echo "Available models:"
+	@curl -sf http://localhost:1234/v1/models | jq -r '.data[]? | "  - \(.id)"' || \
+		echo "✗ Cannot connect to LM Studio. Ensure server is running."
+	@echo ""
+	@echo "Testing chat completion..."
+	@curl -sf http://localhost:1234/v1/chat/completions \
+		-H "Content-Type: application/json" \
+		-d '{"model":"local-model","messages":[{"role":"user","content":"Say hello in one word"}],"max_tokens":10}' \
+		| jq -r '.choices[0].message.content' || echo "✗ Chat test failed"
+
+lm-deploy:
+	@echo "[lm-deploy] Creating Kubernetes resources for LM Studio access..."
+	@if [ -z "$(MAC_IP)" ]; then \
+		echo "Error: Set MAC_IP in .env (your Mac's local IP, e.g. 192.168.1.100)"; \
+		exit 1; \
+	fi
+	@kubectl create namespace ai --dry-run=client -o yaml | kubectl apply -f -
+	@kubectl apply -f k8s/manifests/lmstudio-external.yml
+	@echo "✓ LM Studio external service created in 'ai' namespace"
+	@echo "Cluster apps can access: http://lmstudio.ai.svc.cluster.local:1234"
+
+deploy-chat:
+	@echo "[deploy-chat] Deploying Open WebUI chat interface..."
+	@echo "Prerequisite: LM Studio must be running (make lm-status)"
+	@kubectl apply -f k8s/manifests/open-webui.yml
+	@kubectl -n chat rollout status deploy/open-webui --timeout=120s || true
+	@echo ""
+	@echo "✓ Chat UI deployed!"
+	@echo "📱 Access: https://chat.immas.org"
+	@echo "👤 First user to sign up becomes admin"
+	@echo ""
+	@echo "Next: Route DNS with 'make tunnel-route HOST=chat.immas.org'"
+
+chat-logs:
+	@echo "[chat-logs] Showing Open WebUI logs..."
+	@kubectl -n chat logs -l app=open-webui --tail=100 -f
+
+chat-restart:
+	@echo "[chat-restart] Restarting Open WebUI..."
+	@kubectl -n chat rollout restart deploy/open-webui
+	@kubectl -n chat rollout status deploy/open-webui --timeout=120s
+
+chat-status:
+	@echo "[chat-status] Open WebUI Status:"
+	@kubectl -n chat get pods,svc,ingress
+	@echo ""
+	@echo "💬 Chat UI: https://chat.immas.org"
+	@echo "🔗 LM Studio: http://lmstudio.ai.svc.cluster.local:1234"

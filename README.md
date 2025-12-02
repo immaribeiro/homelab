@@ -3,6 +3,7 @@
 Complete Infrastructure-as-Code setup for a K3s cluster using Lima, Terraform, and Ansible with proper networking.
 
 Highlights (recent additions)
+- **LM Studio** LLM inference running bare metal on Mac (OpenAI-compatible API)
 - Vaultwarden password manager exposed via Cloudflare Tunnel (`https://vault.immas.org`)
 - Telegram homelab bot with qBittorrent integration (submit magnets from Telegram)
 - Cloudflare Tunnel DNS automation: route hostnames without dashboard edits
@@ -19,7 +20,7 @@ cd terraform && terraform init && terraform apply
 cd ../ansible && ansible-playbook -i inventory.yml playbooks/k3s-install.yml
 ```
 
-See [SETUP.md](./SETUP.md) for detailed instructions, [k8s/README.md](./k8s/README.md) for manifest conventions, [lima/README.md](./lima/README.md) for VM environment, [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for common issues, [RECOVERY.md](./RECOVERY.md) for server restart procedures, and [PERSISTENCE.md](./PERSISTENCE.md) for storage and backup management.
+See [SETUP.md](./SETUP.md) for detailed instructions, [k8s/README.md](./k8s/README.md) for manifest conventions, [lima/README.md](./lima/README.md) for VM environment, [LMSTUDIO.md](./LMSTUDIO.md) for LLM deployment, [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for common issues, [RECOVERY.md](./RECOVERY.md) for server restart procedures, and [PERSISTENCE.md](./PERSISTENCE.md) for storage and backup management.
 
 ## Architecture Overview
 
@@ -67,6 +68,30 @@ kubectl get svc -A | grep LoadBalancer
 kubectl get certificates -A
 kubectl get ingress -A
 ```
+
+## LM Studio (Local LLM)
+
+Run LLMs locally on your Mac for AI-powered homelab features with a **ChatGPT-like web interface**:
+
+```bash
+# Quick setup (installs LM Studio, configures networking)
+bash scripts/lmstudio-setup.sh
+
+# Deploy web chat UI (ChatGPT-style interface)
+make deploy-chat
+make tunnel-route HOST=chat.immas.org
+
+# Access at: https://chat.immas.org
+```
+
+**Features:**
+- 💬 **Web Chat UI**: Beautiful interface at https://chat.immas.org
+- 🔌 OpenAI-compatible API at `http://localhost:1234/v1`
+- 🏠 No cloud dependencies, runs on M4 Apple Silicon
+- 🤖 Recommended models: Llama 3.2 3B, Mistral 7B, Phi-3 Mini
+- 🔗 Access from cluster: `http://lmstudio.ai.svc.cluster.local:1234`
+
+See [LMSTUDIO.md](./LMSTUDIO.md) for setup guide and [CHAT_UI.md](./CHAT_UI.md) for web interface docs.
 
 ## Prerequisites
 

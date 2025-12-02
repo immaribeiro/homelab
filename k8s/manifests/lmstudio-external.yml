@@ -1,0 +1,70 @@
+---
+# External service pointing to LM Studio running on Mac (bare metal)
+# Allows cluster apps to access LM Studio at: http://lmstudio.ai.svc.cluster.local:1234
+#
+# Prerequisites:
+# 1. LM Studio running on Mac with server started
+# 2. MAC_IP environment variable set in .env (e.g. 192.168.1.100)
+# 3. LM Studio configured to allow remote connections
+#
+# Deploy: make lm-deploy
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lmstudio
+  namespace: ai
+  labels:
+    app: lmstudio
+    component: external
+spec:
+  type: ClusterIP
+  ports:
+  - port: 1234
+    targetPort: 1234
+    protocol: TCP
+    name: http
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: lmstudio
+  namespace: ai
+subsets:
+- addresses:
+  - ip: 192.168.1.231  # Mac bare metal LM Studio server
+  ports:
+  - port: 1234
+    name: http
+---
+# Optional: Ingress for external access via Cloudflare Tunnel
+# Uncomment and update tunnel.yaml to enable
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: lmstudio
+#   namespace: ai
+#   annotations:
+#     cert-manager.io/cluster-issuer: letsencrypt-dns-prod
+# spec:
+#   ingressClassName: nginx
+#   tls:
+#   - hosts:
+#     - llm.immas.org
+#     secretName: wildcard-immas-org-tls
+#   rules:
+#   - host: llm.immas.org
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: lmstudio
+#             port:
+#               number: 1234
