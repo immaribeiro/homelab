@@ -119,6 +119,34 @@ verify-host:
 	@echo "[verify-host] HTTP response (may be proxied):"
 	curl -I https://$(HOST) || true
 
+.PHONY: argocd
+argocd:
+	@echo "[argocd] Installing ArgoCD"
+	kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
+	kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+	@echo "[argocd] Waiting for ArgoCD server to be ready..."
+	kubectl -n argocd rollout status deploy/argocd-server --timeout=300s || true
+	@echo "[argocd] Updating Cloudflare Tunnel for argocd.immas.org"
+	kubectl apply -f k8s/cloudflared/tunnel.yaml
+	kubectl -n cloudflared rollout restart deploy/cloudflared
+	@echo ""
+	@echo "✅ ArgoCD installed!"
+	@echo ""
+	@echo "Access: https://argocd.immas.org"
+	@echo "Username: admin"
+	@echo "Password: run 'make argocd-password'"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  1. Route DNS: make tunnel-route HOST=argocd.immas.org"
+	@echo "  2. Get password: make argocd-password"
+	@echo "  3. Install CLI: brew install argocd"
+	@echo "  4. Login: argocd login argocd.immas.org"
+
+.PHONY: argocd-password
+argocd-password:
+	@echo "ArgoCD admin password:"
+	@kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
+
 ## Kubeconfig convenience
 .PHONY: kubeconfig
 

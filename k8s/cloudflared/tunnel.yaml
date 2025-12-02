@@ -26,6 +26,8 @@ data:
         service: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local:80
       - hostname: vault.immas.org
         service: http://vaultwarden.vaultwarden.svc.cluster.local:80
+      - hostname: argocd.immas.org
+        service: https://argocd-server.argocd.svc.cluster.local:443
       - service: http_status:404
 ---
 apiVersion: apps/v1

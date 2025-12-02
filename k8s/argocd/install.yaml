@@ -1,0 +1,15 @@
+# ArgoCD Installation
+# This manifest installs ArgoCD in the argocd namespace
+# Source: https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+#
+# Deploy with: kubectl apply -f k8s/argocd/install.yaml
+# Or use: make argocd
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+---
+# Note: The full ArgoCD manifest is large (~10k lines)
+# We reference the remote install instead to keep this repo clean
+# The Makefile applies the remote manifest directly
