@@ -139,13 +139,32 @@ argocd:
 	@echo "Next steps:"
 	@echo "  1. Route DNS: make tunnel-route HOST=argocd.immas.org"
 	@echo "  2. Get password: make argocd-password"
-	@echo "  3. Install CLI: brew install argocd"
-	@echo "  4. Login: argocd login argocd.immas.org"
+	@echo "  3. Deploy apps: make argocd-apps"
+	@echo "  4. Install CLI: brew install argocd"
+	@echo "  5. Login: argocd login argocd.immas.org"
 
 .PHONY: argocd-password
 argocd-password:
 	@echo "ArgoCD admin password:"
 	@kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
+
+.PHONY: argocd-apps
+argocd-apps:
+	@echo "[argocd-apps] Deploying app-of-apps..."
+	kubectl apply -f k8s/argocd/app-of-apps.yaml
+	@echo ""
+	@echo "✅ App-of-apps deployed!"
+	@echo ""
+	@echo "ArgoCD will now manage all homelab applications:"
+	@echo "  - homepage"
+	@echo "  - home-assistant"
+	@echo "  - plex"
+	@echo "  - qbittorrent"
+	@echo "  - vaultwarden"
+	@echo "  - homelab-bot"
+	@echo ""
+	@echo "View apps: https://argocd.immas.org"
+	@echo "Or: kubectl get applications -n argocd"
 
 ## Kubeconfig convenience
 .PHONY: kubeconfig

@@ -33,7 +33,13 @@ make argocd-password
    - Username: `admin`
    - Password: (from previous step)
 
-4. **Optional: Change password via CLI:**
+4. **Deploy app-of-apps:**
+   ```bash
+   kubectl apply -f k8s/argocd/app-of-apps.yaml
+   ```
+   This creates the root Application that manages all your homelab apps.
+
+5. **Optional: Change password via CLI:**
    ```bash
    argocd login argocd.immas.org
    argocd account update-password
@@ -42,9 +48,19 @@ make argocd-password
 ## Architecture
 
 This setup uses an "app-of-apps" pattern:
-- `argocd/apps/root.yaml` - Root application that manages all other apps
-- `argocd/apps/*.yaml` - Individual application definitions
-- Each app points to manifests in `k8s/manifests/`
+- `argocd/app-of-apps.yaml` - Root application that manages all other apps
+- `argocd/apps/*.yaml` - Individual application definitions for each app
+- Each app points to specific manifests in `k8s/manifests/`
+
+### Deployed Applications
+
+The following apps are managed by ArgoCD:
+- **homepage** - Dashboard at https://home.immas.org
+- **home-assistant** - Smart home platform at https://ha.immas.org
+- **plex** - Media server at https://plex.immas.org
+- **qbittorrent** - Torrent client
+- **vaultwarden** - Password manager at https://vault.immas.org
+- **homelab-bot** - Telegram bot for qBittorrent integration
 
 ## Managing Applications
 
