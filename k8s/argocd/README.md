@@ -8,12 +8,15 @@ ArgoCD provides declarative, Git-based continuous delivery for Kubernetes.
 # Install ArgoCD
 make argocd
 
+# Apply insecure mode (required for Cloudflare Tunnel HTTP backend)
+kubectl apply -f k8s/argocd/argocd-cmd-params-cm.yaml
+
 # Get admin password
 make argocd-password
 
 # Access UI
-# Internal: kubectl -n argocd port-forward svc/argocd-server 8080:443
 # External: https://argocd.immas.org (via Cloudflare Tunnel)
+# Internal: kubectl -n argocd port-forward svc/argocd-server 8080:80
 ```
 
 ## Initial Setup
