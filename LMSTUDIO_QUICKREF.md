@@ -5,9 +5,9 @@
 ```bash
 # Deploy ChatGPT-style web interface
 make deploy-chat
-make tunnel-route HOST=chat.immas.org
+make tunnel-route HOST=llm.immas.org
 
-# Access at: https://chat.immas.org
+# Access at: https://llm.immas.org
 # First user becomes admin
 ```
 
@@ -44,7 +44,7 @@ make chat-restart  # Restart chat UI
 
 ## Quick Access
 
-- **Chat UI**: https://chat.immas.org (web interface)
+- **Chat UI**: https://llm.immas.org (web interface)
 - **API (Local)**: http://localhost:1234/v1 (Mac)
 - **API (Cluster)**: http://lmstudio.ai.svc.cluster.local:1234/v1 (K8s)
 

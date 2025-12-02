@@ -79,13 +79,13 @@ bash scripts/lmstudio-setup.sh
 
 # Deploy web chat UI (ChatGPT-style interface)
 make deploy-chat
-make tunnel-route HOST=chat.immas.org
+make tunnel-route HOST=llm.immas.org
 
-# Access at: https://chat.immas.org
+# Access at: https://llm.immas.org
 ```
 
 **Features:**
-- 💬 **Web Chat UI**: Beautiful interface at https://chat.immas.org
+- 💬 **Web Chat UI**: Beautiful interface at https://llm.immas.org
 - 🔌 OpenAI-compatible API at `http://localhost:1234/v1`
 - 🏠 No cloud dependencies, runs on M4 Apple Silicon
 - 🤖 Recommended models: Llama 3.2 3B, Mistral 7B, Phi-3 Mini

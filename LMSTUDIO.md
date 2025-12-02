@@ -19,8 +19,8 @@ LM Studio is a desktop application that allows you to:
 Quick deploy:
 ```bash
 make deploy-chat              # Deploy Open WebUI
-make tunnel-route HOST=chat.immas.org
-# Access at: https://chat.immas.org
+make tunnel-route HOST=llm.immas.org
+# Access at: https://llm.immas.org
 ```
 
 ## Installation

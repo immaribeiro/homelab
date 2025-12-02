@@ -55,10 +55,10 @@ subsets:
 #   ingressClassName: nginx
 #   tls:
 #   - hosts:
-#     - llm.immas.org
+#     - llm-api.immas.org
 #     secretName: wildcard-immas-org-tls
 #   rules:
-#   - host: llm.immas.org
+#   - host: llm-api.immas.org
 #     http:
 #       paths:
 #       - path: /

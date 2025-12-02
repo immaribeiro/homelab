@@ -30,9 +30,9 @@ data:
         service: http://argocd-server.argocd.svc.cluster.local:80
       - hostname: ollama.immas.org
         service: http://open-webui.ollama.svc.cluster.local:8080
-      # LM Studio Chat UI (uncomment after deploying with 'make deploy-chat')
-      # - hostname: chat.immas.org
-      #   service: http://open-webui.chat.svc.cluster.local:8080
+      # LM Studio Chat UI - Web interface for LM Studio running on Mac bare metal
+      - hostname: llm.immas.org
+        service: http://open-webui.chat.svc.cluster.local:8080
       - service: http_status:404
 ---
 apiVersion: apps/v1

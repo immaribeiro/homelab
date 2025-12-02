@@ -522,10 +522,10 @@ deploy-chat:
 	@kubectl -n chat rollout status deploy/open-webui --timeout=120s || true
 	@echo ""
 	@echo "✓ Chat UI deployed!"
-	@echo "📱 Access: https://chat.immas.org"
+	@echo "📱 Access: https://llm.immas.org"
 	@echo "👤 First user to sign up becomes admin"
 	@echo ""
-	@echo "Next: Route DNS with 'make tunnel-route HOST=chat.immas.org'"
+	@echo "Next: Route DNS with 'make tunnel-route HOST=llm.immas.org'"
 
 chat-logs:
 	@echo "[chat-logs] Showing Open WebUI logs..."
@@ -540,5 +540,5 @@ chat-status:
 	@echo "[chat-status] Open WebUI Status:"
 	@kubectl -n chat get pods,svc,ingress
 	@echo ""
-	@echo "💬 Chat UI: https://chat.immas.org"
+	@echo "💬 Chat UI: https://llm.immas.org"
 	@echo "🔗 LM Studio: http://lmstudio.ai.svc.cluster.local:1234"

@@ -2,7 +2,7 @@
 
 Web-based ChatGPT-like interface for your LM Studio instance.
 
-**Access:** https://chat.immas.org
+**Access:** https://llm.immas.org
 
 ## Features
 
@@ -28,16 +28,16 @@ make lm-deploy
 make deploy-chat
 
 # 4. Route DNS via Cloudflare Tunnel
-make tunnel-route HOST=chat.immas.org
+make tunnel-route HOST=llm.immas.org
 
-# 5. Access at https://chat.immas.org
+# 5. Access at https://llm.immas.org
 ```
 
 ## First-Time Setup
 
 ### 1. Create Admin Account
 
-When you first visit https://chat.immas.org:
+When you first visit https://llm.immas.org:
 
 1. Click **Sign Up**
 2. Enter email and password
@@ -66,7 +66,7 @@ kubectl -n chat set env deploy/open-webui ENABLE_SIGNUP=false
 
 ### Basic Chat
 
-1. Visit https://chat.immas.org
+1. Visit https://llm.immas.org
 2. Log in with your account
 3. Select a model from dropdown
 4. Type your message and press Enter
@@ -198,7 +198,7 @@ Then switch between them in the UI.
 - name: WEBUI_NAME
   value: "Homelab AI"
 - name: WEBUI_URL
-  value: "https://chat.immas.org"
+  value: "https://llm.immas.org"
 - name: DEFAULT_LOCALE
   value: "en-US"
 ```
@@ -279,14 +279,14 @@ kubectl -n chat set env deploy/open-webui ENABLE_SIGNUP=false
 
 ```bash
 # Route with Cloudflare Tunnel
-make tunnel-route HOST=chat.immas.org
+make tunnel-route HOST=llm.immas.org
 
 # Verify
-make verify-host HOST=chat.immas.org
+make verify-host HOST=llm.immas.org
 
 # Manual test
-dig chat.immas.org
-curl -I https://chat.immas.org
+dig llm.immas.org
+curl -I https://llm.immas.org
 ```
 
 ## Management Commands
@@ -338,7 +338,7 @@ Open WebUI provides its own API:
 # Get API key from Settings → Account → API Keys
 
 # Test
-curl https://chat.immas.org/api/chat/completions \
+curl https://llm.immas.org/api/chat/completions \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -392,7 +392,7 @@ Create a REST command:
 # configuration.yaml
 rest_command:
   ask_ai:
-    url: https://chat.immas.org/api/chat/completions
+    url: https://llm.immas.org/api/chat/completions
     method: POST
     headers:
       Authorization: "Bearer YOUR_API_KEY"
@@ -413,7 +413,7 @@ import requests
 
 def ask_webui(question):
     response = requests.post(
-        "https://chat.immas.org/api/chat/completions",
+        "https://llm.immas.org/api/chat/completions",
         headers={"Authorization": f"Bearer {API_KEY}"},
         json={
             "model": "local-model",
@@ -430,7 +430,7 @@ Add to `k8s/manifests/home.yml` services:
 ```yaml
 - AI:
     - Chat Assistant:
-        href: https://chat.immas.org
+        href: https://llm.immas.org
         icon: si-openai
         description: LM Studio Web UI
 ```
@@ -459,7 +459,7 @@ Add to `k8s/manifests/home.yml` services:
 ## Next Steps
 
 1. ✅ Deploy: `make deploy-chat`
-2. ✅ Route DNS: `make tunnel-route HOST=chat.immas.org`
+2. ✅ Route DNS: `make tunnel-route HOST=llm.immas.org`
 3. ✅ Create admin account
 4. ✅ Disable signups
 5. 🚀 Start chatting with your local LLM!

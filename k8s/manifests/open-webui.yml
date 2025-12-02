@@ -62,7 +62,7 @@ spec:
         - name: WEBUI_NAME
           value: "Homelab Chat"
         - name: WEBUI_URL
-          value: "https://chat.immas.org"
+          value: "https://llm.immas.org"
         # Enable auth (first user becomes admin)
         - name: ENABLE_SIGNUP
           value: "true"
@@ -131,10 +131,10 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - chat.immas.org
+    - llm.immas.org
     secretName: wildcard-immas-org-tls
   rules:
-  - host: chat.immas.org
+  - host: llm.immas.org
     http:
       paths:
       - path: /
