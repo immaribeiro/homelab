@@ -1,8 +1,12 @@
 # Open WebUI Chat Interface for LM Studio
 
-Web-based ChatGPT-like interface for your LM Studio instance.
+Web-based ChatGPT-like interface for your homelab's LM Studio instance running on Mac bare metal.
 
 **Access:** https://llm.immas.org
+
+## Overview
+
+This is your homelab's **only LLM chat interface**, connecting to LM Studio running on your Mac (192.168.1.231). The web UI runs in Kubernetes while LM Studio runs natively on macOS for optimal performance.
 
 ## Features
 
@@ -183,14 +187,14 @@ kubectl -n chat rollout restart deploy/open-webui
 
 ### Connect to Multiple LLM Backends
 
-Open WebUI supports multiple API endpoints:
+Open WebUI supports multiple API endpoints (optional):
 
 ```yaml
 - name: OPENAI_API_BASE_URLS
-  value: "http://lmstudio.ai.svc.cluster.local:1234/v1;http://ollama.ollama.svc.cluster.local:11434"
+  value: "http://lmstudio.ai.svc.cluster.local:1234/v1"
 ```
 
-Then switch between them in the UI.
+You can add additional endpoints separated by semicolons if needed.
 
 ### Custom Branding
 

@@ -1,8 +1,8 @@
 # LM Studio Deployment Guide
 
-Guide for deploying LM Studio on Mac (bare metal) for homelab LLM inference.
+Guide for deploying LM Studio on Mac (bare metal) as your homelab's LLM inference engine.
 
-**Quick Start:** `bash scripts/lmstudio-setup.sh` then `make deploy-chat` for web UI.
+**Quick Start:** `bash scripts/lmstudio-setup.sh` then `make deploy-chat` for web UI at https://llm.immas.org
 
 ## What is LM Studio?
 
@@ -11,6 +11,28 @@ LM Studio is a desktop application that allows you to:
 - Run inference with OpenAI-compatible API
 - Use a simple UI for model management
 - No GPU required (optimized for Apple Silicon)
+- Runs bare metal on Mac for maximum performance
+
+## Architecture
+
+This deployment runs LM Studio **directly on your Mac** (not in Kubernetes), with a web chat interface deployed in the K8s cluster:
+
+```
+Mac (192.168.1.231)           K8s Cluster              Internet
+┌─────────────────┐          ┌──────────────┐        ┌──────────┐
+│   LM Studio     │◄─────────│  Open WebUI  │◄───────│  Users   │
+│   Port 1234     │  HTTP    │  (chat ns)   │ Tunnel │          │
+│   (bare metal)  │          │              │        │          │
+└─────────────────┘          └──────────────┘        └──────────┘
+                                     │
+                             https://llm.immas.org
+```
+
+**Why bare metal?**
+- Better performance (direct Metal/Neural Engine access)
+- No containerization overhead
+- Easier model management
+- Native macOS optimizations
 
 ## Web Chat Interface
 
