@@ -67,12 +67,6 @@ spec:
         env:
         - name: FB_BASEURL
           value: ""
-        - name: FB_DATABASE
-          value: "/config/database/filebrowser.db"
-        - name: FB_USERNAME
-          value: "admin"
-        - name: FB_PASSWORD
-          value: "homelab2024"
         volumeMounts:
         - name: data
           mountPath: /srv/My Files
