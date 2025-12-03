@@ -58,6 +58,15 @@ spec:
       labels:
         app: filebrowser
     spec:
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+      - name: fix-permissions
+        image: busybox:latest
+        command: ['sh', '-c', 'chmod -R 777 /srv/data && chown -R 1000:1000 /srv/data']
+        volumeMounts:
+        - name: data
+          mountPath: /srv/data
       containers:
       - name: filebrowser
         image: filebrowser/filebrowser:latest
