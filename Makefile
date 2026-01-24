@@ -1,14 +1,21 @@
-## Add-ons automation
-# Load .env if it exists
+## Kubernetes Add-ons automation
+## 
+## CRITICAL: Make sure to run `make addons` after `make install`
+## This includes NGINX Ingress Controller (required for manifests routing)
 ifneq (,$(wildcard .env))
     include .env
     export
 endif
 
-.PHONY: addons metallb certmgr cf-secret issuers wildcard deploy-home
+.PHONY: addons metallb certmgr cf-secret issuers wildcard deploy-home ingress-nginx
 
-addons: metallb certmgr cf-secret issuers wildcard
-	@echo "Add-ons installed and configured. Try: make deploy-home"
+addons: metallb ingress-nginx certmgr cf-secret issuers wildcard
+	@echo "✅ Add-ons installed successfully!"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  1. Deploy applications: make deploy-home"
+	@echo "  2. Setup tunnel: make tunnel-setup"
+	@echo "  3. Deploy chat UI: make deploy-chat"
 
 metallb:
 	@echo "Installing MetalLB..."

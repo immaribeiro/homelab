@@ -2,6 +2,20 @@
 
 Quick reference for recovering your homelab cluster after a Mac Mini reboot or power cycle.
 
+## Important: Storage Initialization
+
+Before or after cluster restart, ensure storage directories exist on all worker nodes:
+
+```bash
+# Initialize storage on all nodes
+for node in k3s-worker-1 k3s-worker-2; do
+  limactl shell $node sudo mkdir -p /var/lib/rancher/k3s/storage
+  limactl shell $node sudo chmod 777 /var/lib/rancher/k3s/storage
+done
+```
+
+If pods fail to mount volumes with errors like `MountVolume.NewMounter initialization failed`, this is likely the cause. See [Troubleshooting: Storage / PVC Mount Failures](./TROUBLESHOOTING.md#storage--pvc-mount-failures) for details.
+
 ## Quick Recovery (After Mac Mini Restart)
 
 After your Mac Mini restarts, Lima VMs will be stopped. Run this single command to recover:

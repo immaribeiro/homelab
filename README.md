@@ -2,7 +2,10 @@
 
 Complete Infrastructure-as-Code setup for a K3s cluster using Lima, Terraform, and Ansible with proper networking.
 
+**Latest Release:** v0.2.0 - Added ingress controller verification, storage directory initialization, and comprehensive troubleshooting guides.
+
 Highlights (recent additions)
+- **NGINX Ingress Controller** properly configured with MetalLB LoadBalancer
 - **FileBrowser** Web-based file manager at `https://files.immas.org` (20GB storage, NAS-ready)
 - **LM Studio** LLM inference running bare metal on Mac (OpenAI-compatible API)
 - Vaultwarden password manager exposed via Cloudflare Tunnel (`https://vault.immas.org`)

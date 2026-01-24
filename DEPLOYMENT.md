@@ -48,6 +48,18 @@ make addons
 ```
 Installs MetalLB, cert-manager, Cloudflare API secret, ClusterIssuers, and wildcard certificate (~2-3 min).
 
+### 6b. Install NGINX Ingress Controller (CRITICAL)
+```bash
+make ingress-nginx
+```
+Installs NGINX Ingress Controller v1.11.1 with LoadBalancer service. This is **required** for your manifests to work.
+Verify it's running and has an external IP assigned:
+```bash
+kubectl -n ingress-nginx get svc ingress-nginx-controller
+# Should show EXTERNAL-IP like 192.168.105.50
+```
+**Note:** K3s includes Traefik by default, but your application manifests are configured for NGINX. Without this step, ingresses will not be routable.
+
 ### 7. Configure Cloudflare Tunnel
 ```bash
 make tunnel-setup

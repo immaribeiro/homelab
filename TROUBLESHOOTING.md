@@ -1,23 +1,63 @@
 # Troubleshooting Guide
 
-## Networking: VMs can't reach each other
-
-
 Common issues and their solutions.
 
 ## Contents
-1. [Networking / Lima](#networking--lima)
-2. [MetalLB IP Not Assigned](#metallb-ip-not-assigned)
-3. [Ingress 404 or Default Backend](#ingress-404-or-default-backend)
-4. [Wildcard Certificate Pending](#wildcard-certificate-pending)
-5. [Cloudflare DNS-01 Failures](#cloudflare-dns-01-failures)
-6. [Tunnel Hostnames Not Resolving](#tunnel-hostnames-not-resolving)
-7. [Tunnel Pod CrashLoopBackOff](#tunnel-pod-crashloopbackoff)
-8. [Ansible SSH Failures](#ansible-ssh-failures)
-9. [Homepage Dashboard Issues](#homepage-dashboard-issues)
-10. [Monitoring Stack Issues](#monitoring-stack-issues)
-11. [Grafana Password & Login](#grafana-password--login)
-12. [Cloudflare DNS & VPN Resolvers](#cloudflare-dns--vpn-resolvers)
+1. [Storage / PVC Mount Failures](#storage--pvc-mount-failures)
+2. [NGINX Ingress Controller Not Working](#nginx-ingress-controller-not-working)
+3. [Networking / Lima](#networking--lima)
+4. [MetalLB IP Not Assigned](#metallb-ip-not-assigned)
+5. [Ingress 404 or Default Backend](#ingress-404-or-default-backend)
+6. [Wildcard Certificate Pending](#wildcard-certificate-pending)
+7. [Cloudflare DNS-01 Failures](#cloudflare-dns-01-failures)
+8. [Tunnel Hostnames Not Resolving](#tunnel-hostnames-not-resolving)
+9. [Tunnel Pod CrashLoopBackOff](#tunnel-pod-crashloopbackoff)
+10. [Ansible SSH Failures](#ansible-ssh-failures)
+11. [Homepage Dashboard Issues](#homepage-dashboard-issues)
+12. [Monitoring Stack Issues](#monitoring-stack-issues)
+13. [Grafana Password & Login](#grafana-password--login)
+14. [Cloudflare DNS & VPN Resolvers](#cloudflare-dns--vpn-resolvers)
+
+## Storage / PVC Mount Failures
+- **Symptom:** Pods stuck in `Init:0/1` or `Pending` with error: `MountVolume.NewMounter initialization failed for volume "..."`.
+- **Checks:**
+```bash
+kubectl describe pod <pod-name> -n <namespace> | grep -A 10 "Events:"
+kubectl get pvc -n <namespace>
+kubectl get pv | grep <pvc-name>
+```
+- **Root Cause:** The local-path provisioner storage directory `/var/lib/rancher/k3s/storage/` doesn't exist on the worker node.
+- **Fix:** Create storage directories on all worker nodes:
+```bash
+# For each worker node (k3s-worker-1, k3s-worker-2, etc)
+limactl shell k3s-worker-1 sudo mkdir -p /var/lib/rancher/k3s/storage
+limactl shell k3s-worker-1 sudo chmod 777 /var/lib/rancher/k3s/storage
+```
+Then delete the failing PVC and pod to trigger recreation:
+```bash
+kubectl delete pvc <pvc-name> -n <namespace>
+kubectl delete pod <pod-name> -n <namespace>
+```
+
+## NGINX Ingress Controller Not Working
+- **Symptom:** Ingresses show no `ADDRESS` (blank or pending) after applying manifests.
+- **Cause:** NGINX Ingress Controller was never installed. K3s includes Traefik by default, but your manifests are configured for NGINX.
+- **Checks:**
+```bash
+kubectl get ingressclass
+kubectl -n ingress-nginx get pods
+kubectl -n ingress-nginx get svc
+```
+- **Fix:** Install NGINX Ingress Controller v1.11.1:
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.1/deploy/static/provider/cloud/deploy.yaml
+kubectl -n ingress-nginx rollout status deploy/ingress-nginx-controller --timeout=180s
+```
+Verify LoadBalancer IP assignment (should match MetalLB pool, e.g., `192.168.105.50`):
+```bash
+kubectl -n ingress-nginx get svc ingress-nginx-controller
+```
+Once installed, all ingresses will automatically be assigned the LoadBalancer IP.
 
 ## Networking / Lima
 - Symptom: Pods cannot reach services on `192.168.5.x` / `eth0`.
