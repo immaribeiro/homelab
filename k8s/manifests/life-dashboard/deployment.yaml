@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: life-dashboard
+  namespace: life-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: life-dashboard
+  template:
+    metadata:
+      labels:
+        app: life-dashboard
+    spec:
+      containers:
+        - name: life-dashboard
+          image: ghcr.io/immaribeiro/life-dashboard:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_PATH
+              value: /data/life.db
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: life-dashboard-secrets
+                  key: API_KEY
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: life-dashboard-data
