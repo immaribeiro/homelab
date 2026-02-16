@@ -13,6 +13,7 @@ spec:
       labels:
         app: life-dashboard
     spec:
+      nodeName: k3s-control-1
       containers:
         - name: life-dashboard
           image: ghcr.io/immaribeiro/life-dashboard:latest
