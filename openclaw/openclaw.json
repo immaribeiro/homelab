@@ -1,0 +1,303 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.2.9",
+    "lastTouchedAt": "2026-02-16T10:08:47.895Z"
+  },
+  "wizard": {
+    "lastRunAt": "2026-02-11T01:23:06.473Z",
+    "lastRunVersion": "2026.2.9",
+    "lastRunCommand": "configure",
+    "lastRunMode": "local"
+  },
+  "auth": {
+    "profiles": {
+      "anthropic:clawd_anthropic": {
+        "provider": "google-antigravity",
+        "mode": "oauth"
+      },
+      "anthropic:claude.ai": {
+        "provider": "anthropic",
+        "mode": "token"
+      },
+      "google-antigravity:imma.ribeiro@gmail.com": {
+        "provider": "google-antigravity",
+        "mode": "oauth"
+      },
+      "google-gemini-cli:imma.ribeiro@gmail.com": {
+        "provider": "google-gemini-cli",
+        "mode": "oauth"
+      },
+      "anthropic:vertex-oauth": {
+        "provider": "anthropic",
+        "mode": "oauth",
+        "email": "imma.ribeiro@gmail.com"
+      },
+      "google-vertex:default": {
+        "provider": "google-vertex",
+        "mode": "oauth",
+        "email": "imma.ribeiro@gmail.com"
+      }
+    }
+  },
+  "models": {
+    "providers": {
+      "google-vertex": {
+        "baseUrl": "https://us-central1-aiplatform.googleapis.com/v1/projects/imma-clawd/locations/us-central1/publishers/anthropic/models",
+        "auth": "oauth",
+        "api": "anthropic-messages",
+        "authHeader": true,
+        "models": [
+          {
+            "id": "claude-3-5-sonnet-v2@20241022",
+            "name": "Claude 3.5 Sonnet v2 (Vertex)",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "claude-3-opus@20240229",
+            "name": "Claude 3 Opus (Vertex)",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 4096
+          },
+          {
+            "id": "claude-3-haiku@20240307",
+            "name": "Claude 3 Haiku (Vertex)",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 4096
+          }
+        ]
+      },
+      "ollama": {
+        "baseUrl": "http://localhost:11434/v1",
+        "apiKey": "ollama",
+        "auth": "api-key",
+        "models": [
+          {
+            "id": "deepseek-r1:8b",
+            "name": "DeepSeek R1 8B (local reasoning)",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 32768,
+            "maxTokens": 8192
+          },
+          {
+            "id": "mistral:7b-instruct",
+            "name": "Mistral 7B Instruct (local)",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 32768,
+            "maxTokens": 4096
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "anthropic/claude-sonnet-4-5",
+        "fallbacks": [
+          "anthropic/claude-haiku-4-5",
+          "google-gemini-cli/gemini-2.5-flash"
+        ]
+      },
+      "models": {
+        "anthropic/claude-opus-4-6": {
+          "alias": "opus"
+        },
+        "anthropic/claude-haiku-4-5": {},
+        "anthropic/claude-opus-4-5": {},
+        "anthropic/claude-sonnet-4-5": {
+          "alias": "sonnet"
+        },
+        "anthropic/claude-3-5-sonnet-v2@20241022": {
+          "alias": "sonnet"
+        },
+        "anthropic/claude-3-opus@20240229": {
+          "alias": "opus"
+        },
+        "anthropic/claude-3-haiku@20240307": {
+          "alias": "haiku"
+        },
+        "google-vertex/claude-3-5-sonnet-v2@20241022": {
+          "alias": "sonnet"
+        },
+        "google-vertex/claude-3-opus@20240229": {
+          "alias": "opus"
+        },
+        "google-vertex/claude-3-haiku@20240307": {
+          "alias": "haiku"
+        },
+        "ollama/deepseek-r1:8b": {
+          "alias": "deepseek"
+        },
+        "ollama/mistral:7b-instruct": {
+          "alias": "mistral"
+        },
+        "google-gemini-cli/gemini-2.5-flash": {
+          "alias": "gemini"
+        }
+      },
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      }
+    },
+    "list": [
+      {
+        "id": "main",
+        "model": {
+          "primary": "anthropic/claude-sonnet-4-5",
+          "fallbacks": [
+            "anthropic/claude-opus-4-5",
+            "anthropic/claude-haiku-4-5",
+            "google-gemini-cli/gemini-2.5-flash",
+            "ollama/deepseek-r1:8b",
+            "ollama/mistral:7b-instruct"
+          ]
+        }
+      },
+      {
+        "id": "ops",
+        "model": {
+          "primary": "anthropic/claude-sonnet-4-5",
+          "fallbacks": [
+            "anthropic/claude-opus-4-5",
+            "anthropic/claude-haiku-4-5",
+            "google-gemini-cli/gemini-2.5-flash",
+            "ollama/deepseek-r1:8b",
+            "ollama/mistral:7b-instruct"
+          ]
+        }
+      },
+      {
+        "id": "architect",
+        "model": {
+          "primary": "anthropic/claude-opus-4-5",
+          "fallbacks": [
+            "anthropic/claude-sonnet-4-5",
+            "google-gemini-cli/gemini-2.5-flash"
+          ]
+        }
+      },
+      {
+        "id": "backend",
+        "model": {
+          "primary": "anthropic/claude-haiku-4-5",
+          "fallbacks": [
+            "google-gemini-cli/gemini-2.5-flash"
+          ]
+        }
+      },
+      {
+        "id": "frontend",
+        "model": {
+          "primary": "anthropic/claude-haiku-4-5",
+          "fallbacks": [
+            "google-gemini-cli/gemini-2.5-flash"
+          ]
+        }
+      }
+    ]
+  },
+  "tools": {
+    "agentToAgent": {
+      "enabled": true
+    }
+  },
+  "messages": {
+    "ackReactionScope": "group-mentions"
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto"
+  },
+  "channels": {
+    "telegram": {
+      "dmPolicy": "pairing",
+      "botToken": "8447454046:AAFmaZjHv_bUMC8PqvbjtOasrNP4lh5KCDc",
+      "allowFrom": [
+        "1022966386"
+      ],
+      "groupPolicy": "allowlist",
+      "streamMode": "partial"
+    }
+  },
+  "gateway": {
+    "port": 3100,
+    "mode": "local",
+    "bind": "lan",
+    "auth": {
+      "token": "95238189d6b4afa3379167fc0ae7dabb3948cafe5c0e45cd61c9c324c57bd641"
+    },
+    "trustedProxies": [
+      "192.168.105.3",
+      "192.168.105.1"
+    ]
+  },
+  "plugins": {
+    "entries": {
+      "google-antigravity-auth": {
+        "enabled": true
+      },
+      "google-gemini-cli-auth": {
+        "enabled": true
+      },
+      "telegram": {
+        "enabled": true
+      }
+    }
+  }
+}
