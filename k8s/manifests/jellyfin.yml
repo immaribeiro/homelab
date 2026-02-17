@@ -1,0 +1,130 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: jellyfin
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-config
+  namespace: jellyfin
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyfin
+  namespace: jellyfin
+  labels:
+    app: jellyfin
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: jellyfin
+  template:
+    metadata:
+      labels:
+        app: jellyfin
+    spec:
+      containers:
+      - name: jellyfin
+        image: jellyfin/jellyfin:latest
+        ports:
+        - containerPort: 8096
+          name: http
+        env:
+        - name: TZ
+          value: "Europe/Lisbon"
+        - name: JELLYFIN_PublishedServerUrl
+          value: "https://jellyfin.immas.org"
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: cache
+          mountPath: /cache
+        - name: media
+          mountPath: /media
+          readOnly: true
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          failureThreshold: 30
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: jellyfin-config
+      - name: cache
+        emptyDir: {}
+      - name: media
+        hostPath:
+          path: /Users/imma/plex
+          type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jellyfin
+  namespace: jellyfin
+  labels:
+    app: jellyfin
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8096
+    targetPort: 8096
+    protocol: TCP
+    name: http
+  selector:
+    app: jellyfin
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jellyfin
+  namespace: jellyfin
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: jellyfin.immas.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: jellyfin
+            port:
+              number: 8096
