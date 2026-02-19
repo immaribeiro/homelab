@@ -8,9 +8,7 @@ spec:
   source:
     repoURL: https://github.com/immaribeiro/homelab.git
     targetRevision: HEAD
-    path: k8s/manifests
-    directory:
-      include: duarte-countdown.yml
+    path: k8s/manifests/duarte-countdown.yml
   destination:
     server: https://kubernetes.default.svc
     namespace: duarte-countdown
