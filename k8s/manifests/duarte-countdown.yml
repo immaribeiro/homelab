@@ -54,7 +54,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   rules:
-  - host: duarte.immas.com
+  - host: duarte.immas.org
     http:
       paths:
       - path: /
@@ -66,5 +66,5 @@ spec:
               number: 80
   tls:
   - hosts:
-    - duarte.immas.com
-    secretName: duarte-immas-com-tls # Cert-manager will create this secret
+    - duarte.immas.org
+    secretName: duarte-immas-org-tls # Cert-manager will create this secret
