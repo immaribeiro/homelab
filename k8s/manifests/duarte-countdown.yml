@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: duarte-countdown
+  namespace: duarte-countdown # Will create this namespace
+  labels:
+    app: duarte-countdown
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: duarte-countdown
+  template:
+    metadata:
+      labels:
+        app: duarte-countdown
+    spec:
+      containers:
+      - name: duarte-countdown
+        image: ghcr.io/immaribeiro/duarte-countdown:latest # Will build this image
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: duarte-countdown
+  namespace: duarte-countdown
+spec:
+  selector:
+    app: duarte-countdown
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: duarte-countdown
+  namespace: duarte-countdown
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/cluster-issuer: letsencrypt-prod # Assuming cert-manager is set up
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  rules:
+  - host: duarte.immas.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: duarte-countdown
+            port:
+              number: 80
+  tls:
+  - hosts:
+    - duarte.immas.com
+    secretName: duarte-immas-com-tls # Cert-manager will create this secret
