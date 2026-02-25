@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: reconstruction-postgres
+  namespace: reconstruction-db
+spec:
+  selector:
+    app: reconstruction-postgres
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
