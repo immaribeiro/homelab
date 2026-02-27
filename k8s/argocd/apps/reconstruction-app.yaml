@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: reconstruction-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/immaribeiro/homelab.git
+    targetRevision: main
+    path: k8s/manifests
+    directory:
+      include: reconstruction-app.yml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: reconstruction-app
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
