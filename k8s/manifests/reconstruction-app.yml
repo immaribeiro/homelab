@@ -28,6 +28,8 @@ spec:
       labels:
         app: reconstruction-app
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
       containers:
         - name: reconstruction-app
           image: ghcr.io/immaribeiro/reconstruction-app:latest
