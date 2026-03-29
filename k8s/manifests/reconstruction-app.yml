@@ -12,6 +12,10 @@ type: Opaque
 stringData:
   API_KEY: "reconstruction-app-secret-2026"
   DATABASE_URL: "postgresql://reconstruction_user:strylq4IK1ooqtaAB1PrmtODhx0B9c9BPOAV9gdKdiE%3D@reconstruction-postgres.reconstruction-db.svc.cluster.local:5432/reconstruction_db"
+  MINIO_ENDPOINT: "minio.reconstruction-storage.svc.cluster.local:9000"
+  MINIO_ACCESS_KEY: "mcadmin"
+  MINIO_SECRET_KEY: "eGu72lO0kjvx3/65qNna7H4CnqLm0bJL"
+  MINIO_SECURE: "false"
 ---
 apiVersion: apps/v1
 kind: Deployment
