@@ -720,24 +720,88 @@ async function renderAgents(view) {
   view.append(el("div", { class: "loading" }, el("span", { class: "spinner" }), "loading…"));
   const { agents } = await api("/api/agents");
   view.innerHTML = "";
-  const grid = el("div", { class: "agent-grid" });
-  for (const a of agents) {
-    const status = a.active_sessions > 0 ? "working" : (Date.now() / 1000 - (a.last_activity_at || 0)) < 600 ? "idle" : "done";
-    grid.append(el("div", { class: "agent-card", onclick: () => navigate(`#/sessions?agent=${encodeURIComponent(a.name)}`) },
-      el("h3", {}, dot(status), esc(a.name), el("span", { class: "spacer" }),
-        el("span", { class: "badge" }, a.active_sessions > 0 ? `${a.active_sessions} ACTIVE` : "IDLE")),
-      el("div", { class: "agent-meta" },
-        el("span", {}, `model: ${esc((a.models || []).join(", ") || "—")}`),
-        el("span", {}, `sources: ${esc((a.sources || []).join(", "))}`)),
-      el("div", { class: "agent-stats" },
-        el("div", {}, el("b", {}, fmt(a.total_sessions)), el("span", {}, "sessions")),
-        el("div", {}, el("b", {}, fmt(a.total_tool_calls)), el("span", {}, "tool calls")),
-        el("div", {}, el("b", {}, fmt(Math.round((a.total_tokens || 0) / 1000)) + "k"), el("span", {}, "tokens")),
-        el("div", {}, el("b", {}, fmt(a.subagent_count)), el("span", {}, "subagents"))),
-      el("div", { class: "agent-meta", style: "margin-top:8px" },
-        el("span", {}, `last: ${timeago(a.last_activity_at)}`),
-        a.last_activity_description ? el("span", { style: "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%" }, esc(a.last_activity_description)) : null)));
+
+  // Sort: active agents first (by active_sessions desc), then by last_activity_at desc
+  const now = Date.now() / 1000;
+  agents.forEach((a) => {
+    const age = a.last_activity_at ? now - a.last_activity_at : Infinity;
+    a._sortKey = { active: a.active_sessions > 0, age };
+  });
+  agents.sort((x, y) => {
+    if (x._sortKey.active !== y._sortKey.active) return x._sortKey.active ? -1 : 1;
+    return x._sortKey.age - y._sortKey.age;
+  });
+
+  // Find max tokens for token bar scaling
+  const maxTokens = Math.max(...agents.map((a) => a.total_tokens || 0), 1);
+
+  // Empty state
+  if (!agents.length) {
+    view.append(el("div", { class: "empty" }, "no agents configured"));
+    return;
   }
+
+  const grid = el("div", { class: "agent-grid" });
+
+  for (const a of agents) {
+    const status = a.active_sessions > 0 ? "working" : (now - (a.last_activity_at || 0)) < 600 ? "idle" : "done";
+    const is_active = a.active_sessions > 0;
+
+    // Token bar data (guard against missing/NaN)
+    const token_pct = ((a.total_tokens || 0) / maxTokens) * 100;
+
+    // Build stats cells
+    const stat_cells = [];
+    if (a.active_sessions > 0) stat_cells.push(el("span", { class: "stat-cell" }, el("b", {}, fmt(a.active_sessions)), el("span", { class: "stat-label" }, "active")));
+    if (a.total_sessions > 0) stat_cells.push(el("span", { class: "stat-cell" }, el("b", {}, fmt(a.total_sessions)), el("span", { class: "stat-label" }, "total")));
+    stat_cells.push(el("span", { class: "stat-cell" }, el("b", {}, fmt(a.total_tool_calls)), el("span", { class: "stat-label" }, "tools")));
+    stat_cells.push(el("span", { class: "stat-cell" }, el("b", {}, fmt(a.total_tokens)), el("span", { class: "stat-label" }, "tokens")));
+    if (a.estimated_cost_usd > 0) stat_cells.push(el("span", { class: "stat-cell" }, el("b", {}, `$${Number(a.estimated_cost_usd).toFixed(2)}`), el("span", { class: "stat-label" }, "cost")));
+
+    const card = el("div", {
+      class: `agent-card${is_active ? " active" : ""}`,
+      onclick: () => navigate(`#/sessions?agent=${encodeURIComponent(a.name)}`),
+    });
+
+    // Header: status dot + name + badge
+    card.append(
+      el("div", { class: "agent-header" },
+        dot(status),
+        el("span", { class: "agent-name", style: "font-weight:600;font-size:15px" }, a.name),
+        el("span", { class: `badge badge-agent-${is_active ? "active" : "idle"}` }, is_active ? `${a.active_sessions} ACTIVE` : "IDLE")
+      )
+    );
+
+    // Model + source badges
+    card.append(
+      el("div", { class: "agent-models" },
+        ...a.models.map((m) => modelBadge(m))),
+      el("div", { class: "agent-sources" },
+        ...a.sources.map((s) => sourceBadge(s)))
+    );
+
+    // Token usage mini bar
+    card.append(
+      el("div", { class: "token-bar", title: `${a.total_tokens.toLocaleString()} tokens` },
+        el("div", { class: "token-fill", style: `width:${Math.max(1, token_pct)}%;background:var(--accent)` })
+      )
+    );
+
+    // Stats row
+    card.append(el("div", { class: "agent-stats" }, ...stat_cells));
+
+    // Footer: last activity
+    const desc = a.last_activity_description ? (a.last_activity_description.length > 40 ? a.last_activity_description.slice(0, 37) + "…" : a.last_activity_description) : "";
+    card.append(
+      el("div", { class: "agent-footer" },
+        el("span", { class: "timeago" }, timeago(a.last_activity_at)),
+        el("span", { class: "agent-desc" }, desc)
+      )
+    );
+
+    grid.append(card);
+  }
+
   view.append(grid);
 }
 

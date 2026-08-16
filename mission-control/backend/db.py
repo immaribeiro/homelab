@@ -381,7 +381,8 @@ def resolve_agent(session: Session, thread_map: Dict[str, str],
       4. main
     """
     if session.profile:
-        return session.profile
+        # Canonicalize: the main profile may record 'default' (config name).
+        return "main" if session.profile == "default" else session.profile
     if session.source == "telegram":
         if session.thread_id and session.thread_id in thread_map:
             resolved = thread_map[session.thread_id]

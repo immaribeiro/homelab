@@ -209,6 +209,7 @@ class Store:
                 total_tokens=sum(
                     s.input_tokens + s.output_tokens + s.cache_read_tokens
                     + s.cache_write_tokens + s.reasoning_tokens for s in ss),
+                estimated_cost_usd=sum(s.estimated_cost_usd or 0.0 for s in ss),
                 subagent_count=sum(1 for s in ss if s.parent_session_id),
             ))
 

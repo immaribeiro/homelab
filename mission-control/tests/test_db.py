@@ -141,6 +141,8 @@ def test_overview_shapes(fake_home):
     agents = {a["name"]: a for a in ov["agents"]}
     assert "engineer" in agents
     assert "architect" in agents
+    # per-agent cost rollup field exists
+    assert "estimated_cost_usd" in agents["engineer"]
     # model rollup: tokens counted, sorted desc, capped
     ms = ov["model_stats"]
     assert ms and ms[0]["tokens"] >= ms[-1]["tokens"]

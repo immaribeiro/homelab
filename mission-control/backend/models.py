@@ -222,4 +222,5 @@ class AgentInfo:
     sources: list = field(default_factory=list)
     total_tool_calls: int = 0
     total_tokens: int = 0
+    estimated_cost_usd: float = 0.0
     subagent_count: int = 0
