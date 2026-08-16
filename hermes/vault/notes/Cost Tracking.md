@@ -32,16 +32,17 @@ Model costs and daily estimates for each agent.
 
 | Agent | Est. tokens/day | Cost/day |
 |-------|-----------------|----------|
-| Main | ~50K in / 50K out | $0.05 |
-| Architect | ~30K in / 30K out | $0.06 |
-| Backend | ~100K in / 100K out | $0.03 |
-| Frontend | ~100K (local) | $0.00 |
-| **Total** | **~280K** | **~$0.14/day** |
+| main | ~50K in / 50K out | $0.05 |
+| architect | ~30K in / 30K out | $0.06 |
+| backend | ~100K in / 100K out | $0.03 |
+| frontend | ~100K (local) | $0.00 |
+| engineer | ~50K in / 50K out | $0.01 |
+| **Total** | **~330K** | **~$0.15/day** |
 
-**Monthly estimate:** ~$4.20 (if usage is consistent)
+**Monthly estimate:** ~$4.50 (if usage is consistent)
 
-**Comparison:** If all 4 agents used GLM 5.2 exclusively: ~$0.50/day = ~$15/month
-**Savings:** ~70% reduction by using cheap/local models where appropriate.
+**Comparison:** If all 5 agents used GLM 5.2 exclusively: ~$0.65/day = ~$19.50/month
+**Savings:** ~77% reduction by using cheap/local models where appropriate.
 
 ## Full Price Reference
 

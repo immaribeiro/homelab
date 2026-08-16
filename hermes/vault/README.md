@@ -15,8 +15,9 @@ Welcome to your Hermes agent management vault. This vault is synced to the homel
 | Architect | architect | DeepSeek R1 via Nous | $0.40 / $1.72 | 🏛 Architecture |
 | Backend | backend | Qwen3 Coder 30B via Nous | $0.06 / $0.22 | ⚙️ Backend |
 | Frontend | frontend | Qwen 3.5 9B via LMStudio | FREE | 🎨 Frontend |
+| Engineer | engineer | Qwen3 Coder 30B via Nous | $0.06 / $0.22 | 🔧 Engineer |
 
-→ [[Agent Overview]] · [[Main Agent]] · [[Architect Agent]] · [[Backend Agent]] · [[Frontend Agent]]
+→ [[Agent Overview]] · [[Main Agent]] · [[Architect Agent]] · [[Backend Agent]] · [[Frontend Agent]] · [[Engineer Agent]]
 
 ## 📂 Projects
 

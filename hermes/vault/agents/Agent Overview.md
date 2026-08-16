@@ -77,6 +77,24 @@ Four Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a si
 
 → [[Frontend Agent]]
 
+### Engineer
+
+| Field | Value |
+|-------|-------|
+| **Profile** | engineer |
+| **Config** | `~/GitHub/homelab/hermes/profiles/engineer/config.yaml` |
+| **Model** | `qwen/qwen3-coder-30b-a3b` via Nous |
+| **Cost** | $0.06 in / $0.22 out per 1M (ultra-cheap) |
+| **Fallback** | GLM 5.2 via Nous → LMStudio google/gemma-4-e4b |
+| **Telegram** | 🔧 Engineer topic (thread 14) |
+| **Role** | IT infra: K3s, Lima VMs, Cloudflare, ArgoCD, troubleshooting |
+| **Tools** | No tts, image_gen, video, video_gen |
+| **Reasoning** | medium |
+| **Max turns** | 200 |
+| **Terminal cwd** | `/Users/imma/GitHub/homelab` |
+
+→ [[Engineer Agent]]
+
 ## Related Projects
 
 Agents work on these projects:

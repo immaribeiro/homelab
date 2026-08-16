@@ -32,6 +32,7 @@ Single Telegram bot (`@ImmaHermesBot`) → single gateway → `profile_routes` d
 | 🏛 Architecture | 3 | architect | [[Architect Agent]] |
 | ⚙️ Backend | 4 | backend | [[Backend Agent]] |
 | 🎨 Frontend | 5 | frontend | [[Frontend Agent]] |
+| 🔧 Engineer | 14 | engineer | [[Engineer Agent]] |
 
 **Personal DM** (chat_id `1022966386`) → always goes to default (main) — no route needed.
 
