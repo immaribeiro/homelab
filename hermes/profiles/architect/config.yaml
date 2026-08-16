@@ -1,15 +1,8 @@
-# ── Architect Profile ─────────────────────────────────────────────
-# Deep reasoning agent for system design, architecture decisions, code review.
-# Primary: DeepSeek R1 (reasoning model) via Nous — $0.40/$1.72 per 1M
-# Fallback 0: GLM 5.2 via Nous — $0.25/$0.77 per 1M
-# Fallback 1: Qwen 3.5 9B via LMStudio (local, free)
-
 model:
-  default: deepseek/r1-0528
+  default: deepseek/deepseek-v4-pro-0813
   provider: nous
   base_url: ''
   api_key_env: OPENAI_API_KEY
-
 fallback_providers:
   '0':
     provider: nous
@@ -18,7 +11,6 @@ fallback_providers:
     provider: lmstudio
     model: qwen3.5-9b-mlx
     base_url: http://localhost:1234/v1
-
 agent:
   max_turns: 120
   reasoning_effort: high
@@ -27,39 +19,32 @@ agent:
   environment_probe: false
   coding_context: auto
   disabled_toolsets:
-    - tts
-    - image_gen
-    - video
-    - video_gen
-
+  - tts
+  - image_gen
+  - video
+  - video_gen
 terminal:
   backend: local
   cwd: /Users/imma/GitHub
-
 display:
   interface: cli
   personality: technical
-
 memory:
   memory_enabled: true
   user_profile_enabled: true
   write_approval: false
   memory_char_limit: 2200
   user_char_limit: 1375
-
 delegation:
-  model: gpt-5.6-luna
-  provider: openai
-  base_url: https://api.openai.com/v1
-  api_key_env: OPENAI_API_KEY
+  model: openai/gpt-5.6-luna
+  provider: nous
   max_iterations: 250
   max_concurrent_children: 5
   max_spawn_depth: 1
-
 custom_providers:
-  - name: lmstudio
-    base_url: http://localhost:1234/v1
-    model: qwen3.5-9b-mlx
-    models:
-      - qwen3.5-9b-mlx
-      - google/gemma-4-e4b
+- name: lmstudio
+  base_url: http://localhost:1234/v1
+  model: qwen3.5-9b-mlx
+  models:
+  - qwen3.5-9b-mlx
+  - google/gemma-4-e4b

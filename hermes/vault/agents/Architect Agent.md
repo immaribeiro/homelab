@@ -2,7 +2,7 @@
 created: 2026-08-16
 updated: 2026-08-16
 profile: architect
-model: deepseek/r1-0528
+model: deepseek/deepseek-v4-pro-0813
 provider: nous
 status: active
 ---
@@ -16,9 +16,9 @@ Deep reasoning agent for system design, architecture decisions, and code review.
 | Field | Value |
 |-------|-------|
 | **Profile** | architect |
-| **Model** | `deepseek/r1-0528` (reasoning model) |
+| **Model** | `deepseek/deepseek-v4-pro-0813` (reasoning model) |
 | **Provider** | Nous Portal (OAuth) |
-| **Cost** | $0.40 in / $1.72 out per 1M tokens |
+| **Cost** | $0.35 in / $0.70 out per 1M tokens |
 | **Fallback 0** | `z-ai/glm-5.2` via Nous |
 | **Fallback 1** | `lmstudio/qwen3.5-9b-mlx` (local, free) |
 | **Config file** | `~/GitHub/homelab/hermes/profiles/architect/config.yaml` |

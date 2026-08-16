@@ -32,8 +32,8 @@ Four Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a si
 |-------|-------|
 | **Profile** | architect |
 | **Config** | `~/GitHub/homelab/hermes/profiles/architect/config.yaml` |
-| **Model** | `deepseek/r1-0528` via Nous |
-| **Cost** | $0.40 in / $1.72 out per 1M |
+| **Model** | `deepseek/deepseek-v4-pro-0813` via Nous |
+| **Cost** | $0.35 in / $0.70 out per 1M |
 | **Fallback** | GLM 5.2 via Nous → LMStudio qwen3.5 |
 | **Telegram** | 🏛 Architecture (thread 3) |
 | **Role** | System design, reasoning, code review |

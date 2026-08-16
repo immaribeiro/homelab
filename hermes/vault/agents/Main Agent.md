@@ -29,7 +29,7 @@ The default Hermes agent for general-purpose tasks and daily conversation.
 
 | Field | Value |
 |-------|-------|
-| **Delegation model** | `gpt-5.6-luna` via OpenAI |
+| **Delegation model** | `gpt-5.6-luna` via Nous |
 | **Max children** | 10 |
 | **Max spawn depth** | 1 |
 

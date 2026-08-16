@@ -8,20 +8,20 @@
 §
 **Notes:**
 §
-Context: Set up a multi-agent Hermes config with agents: main, architect, backend, frontend
-§
-Context: Uses Google Vertex AI OAuth for Claude models (not direct Anthropic API keys)
+Context: Multi-agent Hermes config: main, architect, backend, frontend, engineer profiles. Gateway multiplexed.
 §
 Context: Has Telegram channel configured
-§
-Context: Gateway runs as a daemon
 §
 Context: Wants evening check-ins (how was your day, did you train, what did you eat)
 §
 Current location is Japan. Will return home on the 29th of the month/upcoming date.
 §
-User is technically skilled (comfortable with virtual environments, absolute paths, cron jobs) and demonstrates patience in guiding the agent through complex troubleshooting when tools fail due to environment limitations. Focus on providing clear status updates during difficult multi-step processes.
+User is technically skilled (venvs, absolute paths, cron jobs). Patient during complex troubleshooting. Wants clear status updates.
 §
-User requires assistance with Telegram API key handling and is sensitive about credentials being stored/retrieved from memory.
+User is sensitive about credentials. API keys go in .env, never memory.
 §
-User is sensitive about credentials being stored/retrieved from memory. API keys should always be added to .env file, never to memory. This applies to OpenAI and other API keys.
+Cost-conscious — seeks cheaper models, prefers local LMStudio (free) where possible. Wants cost projections before model choice.
+§
+Prefers planning mode for complex setups — review plans before execution. Full visibility and documentation.
+§
+Wants everything synced to git. Uses Obsidian as management UI. Single source of truth across machines.

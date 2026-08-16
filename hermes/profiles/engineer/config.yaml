@@ -37,10 +37,8 @@ memory:
   memory_char_limit: 2200
   user_char_limit: 1375
 delegation:
-  model: gpt-5.6-luna
-  provider: openai
-  base_url: https://api.openai.com/v1
-  api_key_env: OPENAI_API_KEY
+  model: openai/gpt-5.6-luna
+  provider: nous
   max_iterations: 250
   max_concurrent_children: 10
   max_spawn_depth: 1
