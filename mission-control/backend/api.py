@@ -253,6 +253,12 @@ def statuses():
     return {"statuses": [s.value for s in SessionStatus]}
 
 
+@app.get("/api/trends")
+def trends(days: int = 14):
+    st = get_store()
+    return {"days": days, "points": st.trends(days)}
+
+
 @app.get("/api/stream")
 async def stream(request: Request, x_auth_token: Optional[str] = Header(default=None)):
     if auth_on:

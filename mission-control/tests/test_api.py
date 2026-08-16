@@ -38,6 +38,17 @@ def test_overview_endpoint(mc_app):
         assert agents["engineer"]["total_sessions"] == 1
 
 
+def test_trends_endpoint(mc_app):
+    with TestClient(mc_app.app) as c:
+        r = c.get("/api/trends?days=7").json()
+        assert len(r["points"]) == 7
+        assert all({"date", "sessions", "messages", "tool_calls", "tokens", "cost_usd"} <= set(p) for p in r["points"])
+        total = sum(p["sessions"] for p in r["points"])
+        assert total >= 7  # fixture sessions all start "now"
+        # clamping: absurd day counts are rejected
+        assert len(c.get("/api/trends?days=99999").json()["points"]) == 90
+
+
 def test_sessions_filters(mc_app):
     with _client(mc_app) as c:
         all_s = c.get("/api/sessions?limit=100").json()

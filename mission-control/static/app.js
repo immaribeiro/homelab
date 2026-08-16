@@ -154,6 +154,18 @@ window.addEventListener("load", async () => {
   await initLogin();
   bootstrap();
 });
+
+// "/" jumps to global search from anywhere
+document.addEventListener("keydown", (e) => {
+  const tag = (document.activeElement || {}).tagName;
+  if (e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey &&
+      tag !== "INPUT" && tag !== "TEXTAREA" && tag !== "SELECT") {
+    e.preventDefault();
+    navigate("#/search");
+    const inp = document.getElementById("search-page-input");
+    if (inp) setTimeout(() => inp.focus(), 60);
+  }
+});
 async function bootstrap() {
   setNav();
   try {
@@ -298,6 +310,33 @@ async function renderOverview(view) {
     }
     mp.append(mbody);
     view.append(mp);
+  }
+
+  // activity trend (14 days)
+  const tr = await api("/api/trends?days=14").catch(() => null);
+  if (tr && tr.points && tr.points.some((p) => p.sessions)) {
+    const maxS = Math.max(...tr.points.map((p) => p.sessions), 1);
+    const maxC = Math.max(...tr.points.map((p) => p.cost_usd), 0.01);
+    const tp = el("div", { class: "panel" }, el("div", { class: "panel-head" }, "ACTIVITY (14 DAYS)"));
+    const tb2 = el("div", { class: "panel-body" });
+    const row = (key, max, color, titleFn) => {
+      const r = el("div", { style: "display:flex;align-items:flex-end;gap:4px;height:56px;padding:2px 0" });
+      for (const p of tr.points) {
+        const v = p[key] || 0;
+        const h = v ? Math.max(3, Math.round((v / max) * 46)) : 1;
+        r.append(el("div", { style: "flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px", title: titleFn(p) },
+          el("div", { style: `width:72%;height:${h}px;background:${color};border-radius:3px;opacity:${v ? 1 : 0.25}` }),
+          el("div", { class: "muted", style: "font-size:8.5px" }, p.date.slice(8))));
+      }
+      return r;
+    };
+    tb2.append(el("div", { class: "muted", style: "font-size:10.5px;margin:2px 0" }, "sessions / day"));
+    tb2.append(row("sessions", maxS, "var(--accent)",
+      (p) => `${p.date}: ${p.sessions} sessions · ${fmt(p.messages)} msgs · ${fmt(p.tool_calls)} tool calls`));
+    tb2.append(el("div", { class: "muted", style: "font-size:10.5px;margin:6px 0 2px" }, "est. cost / day"));
+    tb2.append(row("cost_usd", maxC, "var(--warn)", (p) => `${p.date}: $${p.cost_usd.toFixed(2)}`));
+    tp.append(tb2);
+    view.append(tp);
   }
 
   // active agents
@@ -602,6 +641,9 @@ async function renderSessionDetail(view, id) {
   if (d.chat_type) meta.append(kv("chat", `${d.chat_type}${d.chat_id ? ` · ${d.chat_id}` : ""}${d.thread_id ? ` · thread ${d.thread_id}` : ""}`));
   if (d.cwd) meta.append(kv("cwd", esc(d.cwd)));
   if (d.git_branch) meta.append(kv("branch", esc(d.git_branch)));
+  meta.append(el("div", { class: "kv" },
+    el("div", { class: "k" }, "DASHBOARD"),
+    el("div", { class: "v" }, el("a", { href: `https://hermes.immas.org/chat?resume=${encodeURIComponent(d.id)}`, target: "_blank", rel: "noopener noreferrer" }, "open in Hermes dashboard ↗"))));
   view.append(meta);
 
   // subagent graph (recursive, SVG, status-colored, clickable)
@@ -702,7 +744,7 @@ async function renderAgents(view) {
 /* ── SEARCH ──────────────────────────────────────────────────── */
 function renderSearch(view) {
   const hero = el("div", { class: "search-hero" });
-  const input = el("input", { placeholder: "search sessions, messages, tool calls…", autofocus: "",
+  const input = el("input", { id: "search-page-input", placeholder: "search sessions, messages, tool calls…", autofocus: "",
     onkeydown: (e) => { if (e.key === "Enter") doSearch(input.value); } });
   hero.append(input);
   hero.append(el("button", { class: "nav-link", style: "border:1px solid var(--border)", onclick: () => doSearch(input.value) }, "search"));

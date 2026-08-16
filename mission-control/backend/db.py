@@ -258,6 +258,23 @@ def load_gateway_routing(db: Tuple[str, Path]) -> Dict[str, dict]:
     return out
 
 
+# ── trends (per-day activity/cost rollup) ──────────────────────────────
+
+def load_trends(db: Tuple[str, Path], since: float) -> List[tuple]:
+    """(started_at, message_count, tool_call_count, input_tokens,
+    output_tokens, cache_read_tokens, cache_write_tokens, reasoning_tokens,
+    estimated_cost_usd) rows for sessions started at/after `since`."""
+    with _connect_ro(db[1]) as conn:
+        cur = conn.execute(
+            "SELECT started_at, message_count, tool_call_count, "
+            "input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, "
+            "reasoning_tokens, COALESCE(estimated_cost_usd, 0) "
+            "FROM sessions WHERE started_at >= ? ORDER BY started_at",
+            (since,),
+        )
+        return [tuple(r) for r in cur.fetchall()]
+
+
 # ── FTS search ──────────────────────────────────────────────────────────
 
 def _safe_fts_term(term: str) -> str:

@@ -3,11 +3,12 @@ from __future__ import annotations
 
 import time
 from collections import Counter, defaultdict
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from .db import (load_child_sessions, load_gateway_routing, load_session,
-                 load_sessions, load_turn_leases, resolve_agent,
+                 load_sessions, load_trends, load_turn_leases, resolve_agent,
                  search_messages, search_sessions)
 from .models import AgentInfo, Message, Session, SessionStatus
 
@@ -136,6 +137,40 @@ class Store:
         msgs.sort(key=lambda m: m.get("timestamp") or 0, reverse=True)
         sess.sort(key=lambda s: s.get("started_at") or 0, reverse=True)
         return {"messages": msgs[:limit], "sessions": sess[:limit]}
+
+    def trends(self, days: int = 14) -> List[dict]:
+        """Per-day rollup (local time) for the last N days, oldest first,
+        zero-filled for days without activity."""
+        days = max(1, min(days, 90))
+        now = time.time()
+        start = now - days * 86400
+        buckets: Dict[str, dict] = {}
+        for profile, path in self.dbs:
+            try:
+                rows = load_trends((profile, path), start)
+            except Exception:  # noqa: BLE001 — isolate a bad DB
+                continue
+            for (ts, msgs, tools, itok, otok, cr, cw, rtok, cost) in rows:
+                if not ts:
+                    continue
+                day = datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
+                b = buckets.setdefault(day, {
+                    "date": day, "sessions": 0, "messages": 0,
+                    "tool_calls": 0, "tokens": 0, "cost_usd": 0.0,
+                })
+                b["sessions"] += 1
+                b["messages"] += msgs or 0
+                b["tool_calls"] += tools or 0
+                b["tokens"] += (itok or 0) + (otok or 0) + (cr or 0) + (cw or 0) + (rtok or 0)
+                b["cost_usd"] += cost or 0.0
+        out = []
+        for i in range(days - 1, -1, -1):
+            day = datetime.fromtimestamp(now - i * 86400).strftime("%Y-%m-%d")
+            out.append(buckets.get(day, {
+                "date": day, "sessions": 0, "messages": 0,
+                "tool_calls": 0, "tokens": 0, "cost_usd": 0.0,
+            }))
+        return out
 
     # ── views ────────────────────────────────────────────────────────────
     def overview(self, now: Optional[float] = None) -> dict:
