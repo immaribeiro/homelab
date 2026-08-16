@@ -38,7 +38,7 @@ If you enable LMStudio multi-model mode (loads multiple models simultaneously), 
 | qwen3.5-9b-mlx | ~30s | Good for simple tasks, struggles with complex logic |
 | google/gemma-4-e4b | ~15s | Lighter, faster, less capable |
 
-When the local model struggles, the fallback chain automatically switches to cloud models (Qwen3 Coder via Nous, then GLM 5.2).
+When the local model struggles, the fallback chain automatically switches to cloud models (deepseek-v4-flash via Nous, then GLM 5.2).
 
 ## Related
 

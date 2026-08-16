@@ -16,9 +16,9 @@ Single Telegram bot (`@ImmaHermesBot`) → single gateway → `profile_routes` d
        │
   Hermes Gateway (multiplex_profiles: true)
        │
-  ┌────┼────┬────┬────┐
-  │    │    │    │    │
- main arch back front
+  ┌────┼────┬────┬────┬────┐
+  │    │    │    │    │    │
+ main arch back front eng
 ```
 
 ## Live Configuration
@@ -73,6 +73,11 @@ gateway:
       chat_id: "-1004449482428"
       thread_id: "5"
       profile: frontend
+    - name: tg-engineer
+      platform: telegram
+      chat_id: "-1004449482428"
+      thread_id: "14"
+      profile: engineer
 ```
 
 ## Full Documentation

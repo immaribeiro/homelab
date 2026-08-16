@@ -22,7 +22,8 @@ How Hermes configuration files are organized and synced to git.
 ├── profiles/
 │   ├── architect/                 ← architect agent configs
 │   ├── backend/                   ← backend agent configs
-│   └── frontend/                  ← frontend agent configs
+│   ├── frontend/                  ← frontend agent configs
+│   └── engineer/                  ← engineer agent configs
 ├── docs/
 │   └── telegram-routing.md        ← Telegram setup guide
 └── vault/                         ← this Obsidian vault
@@ -47,7 +48,8 @@ How Hermes configuration files are organized and synced to git.
     │   ├── memories/ → symlink → repo
     │   └── .env                    ← SECRETS (never synced)
     ├── backend/ (same structure)
-    └── frontend/ (same structure)
+    ├── frontend/ (same structure)
+    └── engineer/ (same structure)
 ```
 
 ## What's Synced vs Not Synced
@@ -78,7 +80,7 @@ ln -s ~/GitHub/homelab/hermes/memories/USER.md memories/USER.md
 ln -s ~/GitHub/homelab/hermes/cron/jobs.json cron/jobs.json
 
 # Create profiles with symlinks
-for profile in architect backend frontend; do
+for profile in architect backend frontend engineer; do
   hermes profile create $profile
   cd ~/.hermes/profiles/$profile
   ln -sf ~/GitHub/homelab/hermes/profiles/$profile/config.yaml config.yaml

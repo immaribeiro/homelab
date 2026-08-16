@@ -2,7 +2,7 @@
 
 ## Architecture
 
-All four Hermes agents (main, architect, backend, frontend) share a single Telegram bot (`@ImmaHermesBot`) and a single gateway process. The gateway uses **profile multiplexing** to route messages from different Telegram Topics to different agent profiles.
+All five Hermes agents (main, architect, backend, frontend, engineer) share a single Telegram bot (`@ImmaHermesBot`) and a single gateway process. The gateway uses **profile multiplexing** to route messages from different Telegram Topics to different agent profiles.
 
 ```
                     ┌──────────────────────────┐
@@ -16,13 +16,12 @@ All four Hermes agents (main, architect, backend, frontend) share a single Teleg
                     │   ai.hermes.gateway       │
                     └──────────┬───────────────┘
                                │
-              ┌────────────────┼────────────────┐
-              │                │                │
-     ┌────────▼───┐  ┌────────▼───┐  ┌────────▼───┐  ┌────────────┐
-     │  main      │  │ architect  │  │  backend   │  │  frontend  │
-     │  (default) │  │  profile   │  │  profile   │  │  profile   │
-     │  GLM 5.2   │  │ DeepSeek R1│  │ Qwen3 Coder│  │ LMStudio   │
-     └────────────┘  └────────────┘  └────────────┘  └────────────┘
+     ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐
+     │  main         │ │  architect    │ │  backend      │ │  frontend     │ │  engineer     │
+     │  (default)    │ │  (profile)    │ │  (profile)    │ │  (profile)    │ │  (profile)    │
+     │ GPT-5.6 Luna  │ │ DeepSeek V4   │ │ DeepSeek V4   │ │ Qwen 3.5 9B   │ │ DeepSeek V4   │
+     │ ChatGPT Go    │ │ Pro (Nous)    │ │ Flash (Nous)  │ │ LMStudio loc. │ │ Flash (Nous)  │
+     └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘
 ```
 
 ## How It Works
@@ -36,10 +35,11 @@ All four Hermes agents (main, architect, backend, frontend) share a single Teleg
 
 | Telegram Topic | Thread ID | Profile | Model | Cost (in/out per 1M) |
 |----------------|-----------|---------|-------|----------------------|
-| General | 1 | default (main) | GLM 5.2 via Nous | $0.25 / $0.77 |
-| 🏛 Architecture | 3 | architect | DeepSeek R1 via Nous | $0.40 / $1.72 |
-| ⚙️ Backend | 4 | backend | Qwen3 Coder 30B via Nous | $0.06 / $0.22 |
+| General | 1 | default (main) | GPT-5.6 Luna (ChatGPT Go) | subscription |
+| 🏛 Architecture | 3 | architect | DeepSeek V4 Pro 0813 via Nous | $0.35 / $0.70 |
+| ⚙️ Backend | 4 | backend | DeepSeek V4 Flash via Nous | $0.05 / $0.10 |
 | 🎨 Frontend | 5 | frontend | Qwen 3.5 9B via LMStudio | FREE |
+| 🔧 Engineer | 14 | engineer | DeepSeek V4 Flash via Nous | $0.05 / $0.10 |
 
 **Group chat ID:** `-1004449482428` (group name: "Hermes")
 
@@ -74,11 +74,17 @@ gateway:
       chat_id: "-1004449482428"
       thread_id: "5"
       profile: frontend
+
+    - name: tg-engineer
+      platform: telegram
+      chat_id: "-1004449482428"
+      thread_id: "14"
+      profile: engineer
 ```
 
 ## Important: Telegram Credentials
 
-When multiplexing is enabled, **only the default profile** (`~/.hermes/.env`) should have `TELEGRAM_BOT_TOKEN`. The secondary profiles (architect, backend, frontend) must NOT have Telegram credentials — the multiplexer handles the single Telegram connection and routes via `profile_routes`.
+When multiplexing is enabled, **only the default profile** (`~/.hermes/.env`) should have `TELEGRAM_BOT_TOKEN`. The secondary profiles (architect, backend, frontend, engineer) must NOT have Telegram credentials — the multiplexer handles the single Telegram connection and routes via `profile_routes`.
 
 If secondary profiles have Telegram tokens, the gateway will refuse to start with:
 ```
@@ -94,6 +100,7 @@ Each profile has a different SOUL.md personality:
 - **architect** — refers to tradeoffs, ADRs, system boundaries
 - **backend** — talks about APIs, tests, server-side code
 - **frontend** — talks about UI, CSS, accessibility, components
+- **engineer** — talks about kubectl, clusters, infrastructure
 
 Ask any agent: "What model are you?" and it will tell you.
 

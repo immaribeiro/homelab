@@ -7,7 +7,9 @@ updated: 2026-08-16
 
 ## Summary
 
-Four Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a single gateway with Telegram multiplexing.
+Five Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a single gateway with Telegram multiplexing.
+
+> **Updated 2026-08-16:** main agent primary switched to `openai-codex` (ChatGPT Go).
 
 ## Agent Details
 
@@ -17,9 +19,9 @@ Four Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a si
 |-------|-------|
 | **Profile** | default |
 | **Config** | `~/.hermes/config.yaml` |
-| **Model** | `deepseek/deepseek-v4-flash` via Nous |
-| **Cost** | $0.05 in / $0.10 out per 1M |
-| **Fallback** | OpenAI gpt-5.6-luna → LMStudio qwen3.5 |
+| **Model** | `gpt-5.6-luna` via openai-codex (ChatGPT Go) |
+| **Cost** | ChatGPT subscription (no per-token); fallback $0.05/$0.10 |
+| **Fallback** | deepseek-v4-flash via Nous → LMStudio qwen3.5 |
 | **Telegram** | General topic (thread 1) + personal DM |
 | **Role** | General-purpose assistant, daily tasks, conversation |
 | **Tools** | Full toolset (web, terminal, file, image_gen, etc.) |
@@ -68,7 +70,7 @@ Four Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a si
 | **Config** | `~/GitHub/homelab/hermes/profiles/frontend/config.yaml` |
 | **Model** | `qwen3.5-9b-mlx` via LMStudio (local) |
 | **Cost** | FREE |
-| **Fallback** | Qwen3 Coder 30B via Nous → GLM 5.2 |
+| **Fallback** | deepseek-v4-flash via Nous → GLM 5.2 |
 | **Telegram** | 🎨 Frontend (thread 5) |
 | **Role** | UI/UX, React, CSS, accessibility |
 | **Tools** | No tts, video, video_gen |
@@ -108,8 +110,9 @@ Agents work on these projects:
 
 | Agent | Est. tokens/day | Cost/day |
 |-------|-----------------|----------|
-| main | ~50K | ~$0.05 |
-| architect | ~30K | ~$0.06 |
-| backend | ~100K | ~$0.03 |
+| main | ~50K | ~$0.00 (subscription; fallback only) |
+| architect | ~30K | ~$0.03 |
+| backend | ~100K | ~$0.02 |
 | frontend | ~100K (local) | $0.00 |
-| **Total** | ~280K | **~$0.14/day** |
+| engineer | ~50K | ~$0.01 |
+| **Total** | ~330K | **~$0.06/day** |

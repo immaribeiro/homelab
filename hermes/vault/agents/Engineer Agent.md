@@ -61,13 +61,13 @@ kubectl -n cloudflared rollout restart deploy/cloudflared
 Disabled: `tts`, `image_gen`, `video`, `video_gen`
 Keeps: `terminal` (essential), `file`, `web`, `browser`, `code_execution`, `memory`, `cronjob`
 
-## Why Qwen3 Coder 30B?
+## Why DeepSeek V4 Flash?
 
-The engineer needs to run shell commands (kubectl, limactl, make) and understand their output. Qwen3 Coder is:
-- Ultra-cheap ($0.06/$0.22) — infrastructure work can be token-heavy
+The engineer needs to run shell commands (kubectl, limactl, make) and understand their output. DeepSeek V4 Flash is:
+- Ultra-cheap ($0.05/$0.10) — infrastructure work can be token-heavy
 - Good at reading logs and error messages
 - Falls back to GLM 5.2 ($0.25/$0.77) for complex multi-step troubleshooting
-- 200 max turns (double the backend agent) — cluster operations need more steps
+- 200 max turns (more than any other profile) — cluster operations need many steps
 
 ## Command Aliases
 
