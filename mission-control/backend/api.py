@@ -105,11 +105,12 @@ async def security_headers(request: Request, call_next):
             "Content-Security-Policy",
             "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
             "img-src 'self' data:; connect-src 'self'; object-src 'none'; "
-            "base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+            "base-uri 'none'; form-action 'self'",
         )
     return response
 
 
+@app.head("/api/health")
 @app.get("/api/health")
 def health():
     # Public readiness probe: minimal, no deployment metadata.
@@ -283,6 +284,7 @@ if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
+@app.head("/", include_in_schema=False)
 @app.get("/", include_in_schema=False)
 def index():
     return FileResponse(str(STATIC_DIR / "index.html"))
