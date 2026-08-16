@@ -1,0 +1,6 @@
+[project]
+name = "telegram-downloader"
+version = "1.0.0"
+dependencies = [
+    "aiohttp>=3.9.0",
+]
