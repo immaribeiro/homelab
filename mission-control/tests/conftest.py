@@ -28,8 +28,10 @@ SESSION_COLS = [
     "thread_id TEXT", "cwd TEXT", "git_branch TEXT", "git_repo_root TEXT",
     "archived INTEGER DEFAULT 0", "hidden INTEGER DEFAULT 0",
     "pinned INTEGER DEFAULT 0", "origin_json TEXT", "profile_name TEXT",
-    "last_activity_at REAL", "last_activity_description TEXT",
-]
+ "last_activity_at REAL", "last_activity_description TEXT",
+ "handoff_state TEXT", "handoff_error TEXT",
+ "compression_failure_error TEXT",
+ ]
 
 MESSAGE_COLS = [
     "id INTEGER PRIMARY KEY AUTOINCREMENT", "session_id TEXT NOT NULL",

@@ -68,9 +68,15 @@ class Store:
                 s.status = SessionStatus.WORKING
                 continue
             route = routing.get(s.id)
-            if route and (route["suspended"] or route["resume_pending"]):
-                if s.status != SessionStatus.DONE:
-                    s.status = SessionStatus.WAITING
+            if route:
+                # Gateway turn token set durably -> the gateway is mid-turn.
+                if route.get("active_turn_token") and route.get("active_turn_started_at"):
+                    s.status = SessionStatus.WORKING
+                    continue
+                # Suspended / resume pending -> waiting for user input.
+                if route["suspended"] or route["resume_pending"]:
+                    if s.status != SessionStatus.DONE:
+                        s.status = SessionStatus.WAITING
 
         self._loaded_at = now
 

@@ -113,3 +113,51 @@ def test_security_headers(mc_app):
         api_r = c.get("/api/overview")
         assert api_r.headers.get("Cache-Control") == "no-store"
         assert api_r.headers.get("X-Content-Type-Options") == "nosniff"
+
+
+def test_db_hashes_unchanged_after_api(fake_home, mc_app):
+    """Prove strict read-only-ness: every state.db byte is identical before
+    and after exercising the API (list, detail, search, agents, sources)."""
+    import hashlib
+
+    def snap():
+        return {str(p): hashlib.sha256(p.read_bytes()).hexdigest()
+                for _, p in __import__("backend.db", fromlist=["discover_state_dbs"]).discover_state_dbs(fake_home)}
+
+    before = snap()
+    with TestClient(mc_app.app) as c:
+        assert c.get("/api/overview").status_code == 200
+        assert c.get("/api/sessions?limit=100").status_code == 200
+        assert c.get("/api/sessions/cli_main").status_code == 200
+        assert c.get("/api/search", params={"q": "CVE"}).status_code == 200
+        assert c.get("/api/agents").status_code == 200
+        assert c.get("/api/sources").status_code == 200
+    after = snap()
+    assert before == after
+
+
+def test_stream_emits_event_and_is_read_only(fake_home):
+    """The SSE generator emits a refresh event on first iteration and never
+    writes. Tested directly (TestClient hangs on infinite streams)."""
+    import asyncio
+
+    from backend.aggregate import Store
+    from backend.db import discover_state_dbs
+    from backend.stream import event_stream
+
+    dbs = discover_state_dbs(fake_home)
+    st = Store(dbs, thread_map={})
+    st.refresh()
+    import hashlib
+    before = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for _, p in dbs}
+
+    async def first_event():
+        agen = event_stream(st, dbs)
+        async for ev in agen:
+            return ev
+
+    ev = asyncio.get_event_loop().run_until_complete(
+        asyncio.wait_for(first_event(), timeout=10))
+    assert ev.startswith("event: refresh")
+    after = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for _, p in dbs}
+    assert before == after

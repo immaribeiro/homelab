@@ -68,14 +68,51 @@ def test_infer_status_unit():
     now = time.time()
     assert infer_status(ended_at=now, end_reason="done", last_activity_at=now,
                         message_count=5) == SessionStatus.DONE
-    assert infer_status(ended_at=now, end_reason="crashed", last_activity_at=now,
-                        message_count=5) == SessionStatus.ERROR
     assert infer_status(ended_at=None, end_reason=None, last_activity_at=now - 5,
                         message_count=2) == SessionStatus.WORKING
     assert infer_status(ended_at=None, end_reason=None, last_activity_at=now - 9999,
                         message_count=2) == SessionStatus.IDLE
     assert infer_status(ended_at=None, end_reason=None, last_activity_at=None,
                         message_count=0) == SessionStatus.UNKNOWN
+
+
+def test_infer_status_error_signals():
+    """Error is detected from handoff/compression fields (real data has no
+    generic 'error' end_reason)."""
+    now = time.time()
+    assert infer_status(ended_at=now, end_reason="done", last_activity_at=now,
+                        message_count=5, handoff_state="failed") == SessionStatus.ERROR
+    assert infer_status(ended_at=None, end_reason=None, last_activity_at=now,
+                        message_count=1, handoff_error="boom") == SessionStatus.ERROR
+    assert infer_status(ended_at=None, end_reason=None, last_activity_at=now,
+                        message_count=1,
+                        compression_failure_error="context too long") == SessionStatus.ERROR
+    # done end_reason values observed in real data are all 'done'
+    for reason in ["agent_close", "cli_close", "cron_complete", "session_reset",
+                   "compression", "new_session", "ws_orphan_reap"]:
+        assert infer_status(ended_at=now, end_reason=reason, last_activity_at=now,
+                            message_count=1) == SessionStatus.DONE
+
+
+def test_status_active_turn_token_marks_working(tmp_path):
+    """gateway_routing.active_turn_token (no lease) also means working."""
+    from tests.conftest import create_state_db, make_session
+    import json, time as t
+    now = t.time()
+    db = tmp_path / "state.db"
+    create_state_db(
+        db,
+        sessions=[make_session("turn_sess", source="telegram", title="Main",
+                               thread_id="1", msgs=2, last_activity=now - 9999)],
+        routing=[("/f", "k", {"session_id": "turn_sess", "suspended": False,
+                              "resume_pending": False,
+                              "active_turn_token": "tok-1",
+                              "active_turn_started_at": now - 10}, now)],
+    )
+    from backend.aggregate import Store
+    st = Store([("main", db)], thread_map={"1": "main"})
+    st.refresh()
+    assert st.sessions[0].status == SessionStatus.WORKING
 
 
 def test_messages_and_children(fake_home):

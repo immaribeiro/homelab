@@ -86,7 +86,8 @@ _SESSION_COLS = [
     "reasoning_tokens", "estimated_cost_usd", "title", "chat_id", "chat_type",
     "thread_id", "cwd", "git_branch", "git_repo_root", "archived", "hidden",
     "pinned", "origin_json", "profile_name", "last_activity_at",
-    "last_activity_description",
+    "last_activity_description", "handoff_state", "handoff_error",
+    "compression_failure_error",
 ]
 
 _SESSION_SELECT = ", ".join(_SESSION_COLS)
@@ -106,6 +107,9 @@ def _row_to_session(row: sqlite3.Row, profile: str, now: float) -> Session:
         end_reason=row["end_reason"],
         last_activity_at=row["last_activity_at"] or row["started_at"],
         last_activity_description=row["last_activity_description"],
+        handoff_state=row["handoff_state"],
+        handoff_error=row["handoff_error"],
+        compression_failure_error=row["compression_failure_error"],
         message_count=row["message_count"] or 0,
         tool_call_count=row["tool_call_count"] or 0,
         input_tokens=row["input_tokens"] or 0,
@@ -130,6 +134,8 @@ def _row_to_session(row: sqlite3.Row, profile: str, now: float) -> Session:
     s.status = infer_status(
         ended_at=s.ended_at, end_reason=s.end_reason,
         last_activity_at=s.last_activity_at, message_count=s.message_count,
+        handoff_state=s.handoff_state, handoff_error=s.handoff_error,
+        compression_failure_error=s.compression_failure_error,
         now=now,
     )
     return s
@@ -246,6 +252,7 @@ def load_gateway_routing(db: Tuple[str, Path]) -> Dict[str, dict]:
         out[sid] = {
             "suspended": bool(e.get("suspended")),
             "resume_pending": bool(e.get("resume_pending")),
+            "active_turn_token": e.get("active_turn_token"),
             "active_turn_started_at": e.get("active_turn_started_at"),
         }
     return out

@@ -39,23 +39,29 @@ ERROR_REASONS = {"error", "failed", "failure", "exception", "crash", "aborted",
 
 def infer_status(*, ended_at: Optional[float], end_reason: Optional[str],
                  last_activity_at: Optional[float], message_count: int,
+                 handoff_state: Optional[str] = None,
+                 handoff_error: Optional[str] = None,
+                 compression_failure_error: Optional[str] = None,
                  now: Optional[float] = None) -> SessionStatus:
     """Conservative status inference from Hermes session fields only.
 
-    Order of checks:
-      1. ended_at present  -> done (or error if end_reason is an error reason)
-      2. otherwise open    -> working if activity within ACTIVE_WINDOW_SECONDS
-      3. open + stale      -> idle
+    Order of checks (per the Hermes session-storage reference):
+      1. error conditions first: handoff_state='failed', handoff_error set,
+         or compression_failure_error set (more reliable than end_reason —
+         real data has no generic 'error' end_reason).
+      2. ended_at present  -> done
+      3. otherwise open    -> working if activity within ACTIVE_WINDOW_SECONDS
+      4. open + stale      -> idle
     WAITING is only emitted when the caller supplies an explicit signal
-    (e.g. a gateway turn lease or an approval prompt); it is never guessed
-    from timestamps alone.
+    (gateway routing suspended/resume_pending); never guessed from
+    timestamps alone.
     """
     now = now if now is not None else time.time()
 
+    if (handoff_state == "failed" or handoff_error or compression_failure_error):
+        return SessionStatus.ERROR
+
     if ended_at is not None:
-        reason = (end_reason or "").strip().lower()
-        if reason and any(r in reason for r in ERROR_REASONS):
-            return SessionStatus.ERROR
         return SessionStatus.DONE
 
     if last_activity_at is None:
@@ -80,6 +86,9 @@ class Session:
     started_at: Optional[float] = None
     ended_at: Optional[float] = None
     end_reason: Optional[str] = None
+    handoff_state: Optional[str] = None
+    handoff_error: Optional[str] = None
+    compression_failure_error: Optional[str] = None
     last_activity_at: Optional[float] = None
     last_activity_description: Optional[str] = None
     message_count: int = 0
@@ -116,6 +125,9 @@ class Session:
             "started_at": self.started_at,
             "ended_at": self.ended_at,
             "end_reason": self.end_reason,
+            "handoff_state": self.handoff_state,
+            "handoff_error": self.handoff_error,
+            "compression_failure_error": self.compression_failure_error,
             "last_activity_at": self.last_activity_at,
             "last_activity_description": self.last_activity_description,
             "message_count": self.message_count,
