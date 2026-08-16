@@ -11,13 +11,20 @@ def _client(mc_app):
 def test_health_and_config(mc_app):
     with _client(mc_app) as c:
         h = c.get("/api/health").json()
-        assert h["ok"] is True
+        assert h == {"ok": True}  # minimal, no deployment metadata
         cfg = c.get("/api/config").json()
-        assert "main" in cfg["profiles"]
-        assert "architect" in cfg["profiles"]
-        # Config must never expose credentials/token values
-        assert "password" not in str(cfg).lower()
-        assert "secret" not in str(cfg).lower()
+        assert cfg["app"] == "Hermes Mission Control"
+        assert "auth" in cfg
+        # Public config must not leak profiles / paths / versions
+        assert "profiles" not in cfg
+        assert "hermes_home" not in cfg
+        assert "version" not in cfg
+        # Full details live behind auth (/api/info) — open in loopback mode
+        info = c.get("/api/info").json()
+        assert "main" in info["profiles"]
+        assert "architect" in info["profiles"]
+        assert "password" not in str(info).lower()
+        assert "secret" not in str(info).lower()
 
 
 def test_overview_endpoint(mc_app):

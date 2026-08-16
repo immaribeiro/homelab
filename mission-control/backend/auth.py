@@ -40,6 +40,12 @@ def load_or_create_token(data_dir: Path, force: bool = False) -> str:
     data_dir.mkdir(parents=True, exist_ok=True)
     token_file = data_dir / "token"
     if token_file.exists():
+        # Repair permissions on read too (a pre-existing file may have been
+        # created with looser perms by an older version or a manual copy).
+        try:
+            token_file.chmod(0o600)
+        except OSError:
+            pass
         tok = token_file.read_text(encoding="utf-8").strip()
         if tok:
             return tok

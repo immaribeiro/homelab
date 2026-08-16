@@ -141,6 +141,7 @@ window.addEventListener("load", async () => {
 async function bootstrap() {
   setNav();
   try {
+    state.info = await api("/api/info").catch(() => null);
     await refreshOverview();
     startSSE();
     render();
@@ -200,7 +201,7 @@ async function refreshOverview() {
   const errs = state.overview.db_errors || [];
   $("#db-errors").textContent = errs.length ? `DB errors: ${errs.join("; ")}` : "";
   $("#footer-info").textContent =
-    `Hermes Mission Control · ${state.cfg?.version || ""} · poll ${state.cfg?.poll_seconds || 4}s · ` +
+    `Hermes Mission Control · ${state.info?.version || ""} · poll ${state.info?.poll_seconds || 4}s · ` +
     `${(state.overview.stats?.sessions || 0)} sessions · ${(state.overview.stats?.agents || 0)} agents`;
 }
 

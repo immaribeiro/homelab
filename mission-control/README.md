@@ -53,8 +53,11 @@ cd ~/GitHub/homelab/mission-control
 ```
 
 Covers: session discovery, Telegram attribution, status inference (turn
-leases), filters, FTS search + hostile input, API shapes, auth (fail-closed),
-read-only enforcement, SQL injection attempts, secret leakage.
+leases, gateway turn tokens, handoff/compression error signals), filters, FTS
+search + hostile input, API shapes, auth (fail-closed, minimal public
+surface), read-only enforcement (DB hash integrity before/after API + SSE),
+SQL injection attempts, secret leakage, payload truncation, SSE connection
+cap, security headers.
 
 ## Configuration
 
@@ -80,7 +83,8 @@ Auth model (fail-closed):
 | Endpoint | Description |
 |---|---|
 | `GET /api/health` | Liveness (no auth). |
-| `GET /api/config` | Public settings (no secrets). |
+| `GET /api/config` | Minimal public settings (`app`, `auth`) — no paths/versions. |
+| `GET /api/info` | Authed: version, poll cadence, profiles, hermes home. |
 | `GET /api/overview` | Stats, status/source distribution, agents, recent activity. |
 | `GET /api/sessions` | Filterable list: `agent, profile, source, model, status, q, date_from, date_to, active, limit, offset`. |
 | `GET /api/sessions/{id}` | Detail: metadata + conversation + tool calls + subagent children. |
@@ -132,14 +136,25 @@ official dashboard's per-profile API, and why this layer exists).
 ## Security
 
 - **Read-only by construction**: every SQLite connection uses `mode=ro`;
-  write statements are impossible (tests assert this).
+  write statements are impossible (tests assert this, including DB-byte
+  hashes before/after API + SSE usage).
 - **Loopback by default**; token auth is fail-closed for any non-loopback bind.
+- **Minimal public surface**: `/api/health` → `{"ok": true}` and
+  `/api/config` → `{"app", "auth"}` only; profiles/version/paths live behind
+  auth at `/api/info`.
+- **Session cookies**: hold a hash of the token (never the raw token),
+  `HttpOnly` + `SameSite=Strict` + `Secure` on remote binds; login rejects
+  cross-origin POSTs; token file is chmod 0600 (repaired on read).
+- **Bounded payloads**: message content/reasoning/tool-call JSON clipped
+  server-side (20k/10k/20k chars); max 5000 messages/session; SSE capped at
+  8 concurrent streams.
 - **No secrets**: the API never serializes `.env` contents, tokens, or
   credentials; `origin_json`/`api_content` are intentionally not exposed.
 - **XSS-safe UI**: no `innerHTML` with data; HTML-unsafe content is rendered
   as text.
 - **SQL injection**: all queries parameterized; FTS terms are quoted phrases.
-- Session cookie: `HttpOnly` + `SameSite=Strict`.
+- **Headers**: CSP (`default-src 'self'`), `X-Content-Type-Options: nosniff`,
+  `Referrer-Policy: no-referrer`, `Cache-Control: no-store` on API responses.
 
 ## Remote access (private network only — never public)
 
@@ -192,4 +207,4 @@ ssh -L 9118:127.0.0.1:9118 imma-mini
 - [x] Authentication fail-closed for remote binds (tested)
 - [x] Remote access private by default (loopback bind)
 - [x] Existing gateway + agents untouched (no config/process changes)
-- [x] Automated tests pass (30 tests)
+- [x] Automated tests pass (38 tests)

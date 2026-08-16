@@ -17,8 +17,8 @@ from fastapi.staticfiles import StaticFiles
 
 from . import __version__
 from .aggregate import Store
-from .auth import (auth_enabled, hash_token, load_or_create_token,
-                   token_matches)
+from .auth import (_is_loopback, auth_enabled, hash_token,
+                   load_or_create_token, token_matches)
 from .db import default_hermes_home, discover_state_dbs, load_thread_profile_map
 from .models import SessionStatus
 from .stream import event_stream, POLL_SECONDS
@@ -39,6 +39,8 @@ token: str = ""
 auth_on: bool = False
 thread_map: dict = {}
 dbs: List = []
+_sse_conns = 0
+MAX_SSE_CONNS = 8
 
 
 def get_store() -> Store:
@@ -73,7 +75,6 @@ async def require_auth(request: Request,
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global store, token, auth_on, thread_map, dbs
-    from .auth import _is_loopback
     loopback = _is_loopback(BIND_HOST)
     token = load_or_create_token(DATA_DIR, force=not loopback)
     auth_on = auth_enabled(BIND_HOST, token)
@@ -111,8 +112,8 @@ async def security_headers(request: Request, call_next):
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "app": APP_NAME, "version": __version__,
-            "auth": auth_on, "dbs": len(dbs), "ts": time.time()}
+    # Public readiness probe: minimal, no deployment metadata.
+    return {"ok": True}
 
 
 @app.post("/api/login")
@@ -121,16 +122,33 @@ async def login(request: Request, response: Response):
     provided = (body or {}).get("token", "")
     if not auth_on:
         return {"ok": True}
+    # CSRF hardening: same-origin POSTs only. Missing Origin (curl/CLI) is fine.
+    origin = request.headers.get("origin") or request.headers.get("referer") or ""
+    if origin:
+        from urllib.parse import urlparse
+        host = urlparse(origin).netloc
+        allowed = {f"127.0.0.1:{BIND_PORT}", f"localhost:{BIND_PORT}",
+                   BIND_HOST if ":" in BIND_HOST else f"{BIND_HOST}:{BIND_PORT}"}
+        if host not in allowed:
+            raise HTTPException(403, "cross-origin login rejected")
     if not token_matches(provided, token):
         raise HTTPException(401, "invalid token")
     # Bind the session to the token's hash (never the raw token).
     response.set_cookie(COOKIE_NAME, f"mc::{hash_token(token)}", httponly=True,
-                        samesite="strict", max_age=7 * 86400)
+                        samesite="strict", secure=not _is_loopback(BIND_HOST),
+                        max_age=7 * 86400)
     return {"ok": True}
 
 
 @app.get("/api/config")
 def public_config():
+    # Public surface stays minimal: the UI only needs to know whether to show
+    # the login screen. Everything else lives behind auth (/api/info).
+    return {"app": APP_NAME, "auth": auth_on}
+
+
+@app.get("/api/info", dependencies=[Depends(require_auth)])
+def info():
     return {
         "app": APP_NAME,
         "version": __version__,
@@ -236,8 +254,21 @@ async def stream(request: Request, x_auth_token: Optional[str] = Header(default=
     if auth_on:
         if not (_cookie_valid(request) or (x_auth_token and token_matches(x_auth_token, token))):
             raise HTTPException(401, "authentication required")
+    global _sse_conns
+    if _sse_conns >= MAX_SSE_CONNS:
+        raise HTTPException(503, "too many live streams open")
+    _sse_conns += 1
+
+    async def gen():
+        try:
+            async for frame in event_stream(get_store(), dbs):
+                yield frame
+        finally:
+            global _sse_conns
+            _sse_conns -= 1
+
     return StreamingResponse(
-        event_stream(get_store(), dbs),
+        gen(),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
