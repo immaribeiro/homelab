@@ -25,3 +25,5 @@ Cost-conscious — seeks cheaper models, prefers local LMStudio (free) where pos
 Prefers planning mode for complex setups — review plans before execution. Full visibility and documentation.
 §
 Wants everything synced to git. Uses Obsidian as management UI. Single source of truth across machines.
+§
+Git identity: Imma Ribeiro <imma.ribeiro@gmail.com> (set globally on Mac Mini 2026-08-16; applies to all agent profiles; set same on Mac Air).

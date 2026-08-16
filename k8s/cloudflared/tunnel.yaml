@@ -32,6 +32,12 @@ data:
         service: http://open-webui.llm.svc.cluster.local:8080
       - hostname: files.immas.org
         service: http://filebrowser.files.svc.cluster.local:80
+      - hostname: life.immas.org
+        service: http://life-dashboard.life-dashboard.svc.cluster.local:80
+      - hostname: jellyfin.immas.org
+        service: http://jellyfin.jellyfin.svc.cluster.local:8096
+      - hostname: reconstruction.immas.org
+        service: http://reconstruction-app.reconstruction-app.svc.cluster.local:80
       - hostname: hermes.immas.org
         service: http://192.168.8.161:9119
       - service: http_status:404
