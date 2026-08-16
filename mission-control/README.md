@@ -191,6 +191,27 @@ Check / re-enable anytime with `deploy/serve-https.sh`.
 > conversations and tool calls. The Hermes dashboard (9119) is already public
 > via Cloudflare Tunnel with Nous OAuth — Mission Control deliberately is not.
 
+## Cron
+
+### Daily digest
+
+Prints a Telegram-friendly Markdown summary of the last day of agent activity
+(sessions, messages, tool calls, cost, status, notable sessions) to stdout.
+
+- Wrapper: `~/.hermes/scripts/daily-digest.sh` (runs
+  `/Users/imma/.hermes/hermes-agent/venv/bin/python -m backend.digest --days 1`
+  from `~/GitHub/homelab/mission-control`; `set -euo pipefail`).
+- Test manually: `bash ~/.hermes/scripts/daily-digest.sh`
+- Cron recipe (no-agent Hermes cron job — stdout is delivered verbatim;
+  empty output stays silent, non-zero exit sends an error alert):
+
+  ```text
+  no_agent = true
+  script  = ~/.hermes/scripts/daily-digest.sh
+  deliver = telegram
+  schedule= 0 20 * * *        (daily 20:00 Europe/Lisbon)
+  ```
+
 ## Troubleshooting
 
 | Symptom | Fix |
