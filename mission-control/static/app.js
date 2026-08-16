@@ -620,6 +620,12 @@ async function renderSessionDetail(view, id) {
     agentBadge(d.agent), sourceBadge(d.source), statusBadge(d.status), modelBadge(d.model));
   view.append(head);
 
+  // export links (JSON / MD)
+  const exp = el("div", { class: "detail-head" },
+    el("a", { href: `/api/sessions/${encodeURIComponent(id)}/export?format=json`, class: "nav-link", style: "padding:0 8px 4px;opacity:0.7" }, "JSON"),
+    el("a", { href: `/api/sessions/${encodeURIComponent(id)}/export?format=md`, class: "nav-link", style: "padding:0 8px 4px;opacity:0.7" }, "MD"));
+  view.append(exp);
+
   // metadata panel
   const meta = el("div", { class: "detail-meta panel", style: "padding:12px 14px" });
   const kv = (k, v) => el("div", {}, el("div", { class: "k" }, k), el("div", { class: "v" }, v));

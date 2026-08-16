@@ -188,7 +188,12 @@ class Message:
     display_kind: Optional[str] = None
     api_content: Optional[str] = None
 
-    def to_dict(self, include_content: bool = True) -> dict:
+    def to_dict(self, include_content: bool = True, raw: bool = False) -> dict:
+        """Serialize to a plain dict.
+
+        `raw=True` (used by session export) skips the defensive content caps
+        so full-fidelity content/reasoning/tool_calls reach the consumer.
+        """
         d = {
             "id": self.id,
             "session_id": self.session_id,
@@ -197,7 +202,8 @@ class Message:
             "token_count": self.token_count,
             "finish_reason": self.finish_reason,
             "tool_call_id": self.tool_call_id,
-            "tool_calls": _clip(self.tool_calls, MAX_TOOL_CALLS_CHARS),
+            "tool_calls": self.tool_calls if raw
+            else _clip(self.tool_calls, MAX_TOOL_CALLS_CHARS),
             "tool_name": self.tool_name,
             "platform_message_id": self.platform_message_id,
             "active": self.active,
@@ -205,8 +211,8 @@ class Message:
             "display_kind": self.display_kind,
         }
         if include_content:
-            d["content"] = _clip(self.content, MAX_CONTENT_CHARS)
-            d["reasoning"] = _clip(self.reasoning, MAX_REASONING_CHARS)
+            d["content"] = self.content if raw else _clip(self.content, MAX_CONTENT_CHARS)
+            d["reasoning"] = self.reasoning if raw else _clip(self.reasoning, MAX_REASONING_CHARS)
         return d
 
 

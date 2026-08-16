@@ -6,10 +6,12 @@ See README for remote access guidance (Tailscale only).
 from __future__ import annotations
 
 import os
+import re
 import time
 from contextlib import asynccontextmanager
+from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
@@ -231,6 +233,75 @@ def session_detail(session_id: str, include_messages: bool = True,
     if include_children:
         detail["children"] = [c.to_dict() for c in st.children(session_id)]
     return detail
+
+
+# ── session export ──────────────────────────────────────────────────────
+
+EXPORT_EXT = {"json": "json", "md": "md"}
+
+
+def _export_filename(session_id: str, title: str, fmt: str) -> str:
+    """Attachment filename: title sanitized of slashes/whitespace (plus
+    header-breaking quotes), falling back to the session id when empty."""
+    name = re.sub(r'[\s/]+', '', title or "")
+    name = re.sub(r'["\\]+', '', name)
+    if not name:
+        name = session_id
+    return f"{name}.{EXPORT_EXT[fmt]}"
+
+
+def _fmt_ts(ts: Optional[float]) -> str:
+    if not ts:
+        return "n/a"
+    return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _render_markdown(payload: dict) -> str:
+    s = payload["session"]
+    lines = [f"# {s['title'] or '(untitled)'}", ""]
+    lines += [
+        f"- **Session**: {s['id']}",
+        f"- **Agent**: {s['agent']}",
+        f"- **Source**: {s['source']}",
+        f"- **Model**: {s['model'] or 'n/a'}",
+        f"- **Started**: {_fmt_ts(s['started_at'])}",
+        f"- **Ended**: {_fmt_ts(s['ended_at'])}",
+        f"- **Messages**: {s['message_count']}",
+        f"- **Tool calls**: {s['tool_call_count']}",
+    ]
+    lines += ["", "## Messages", ""]
+    for m in payload["messages"]:
+        lines.append(f"**{m['role']}** ({_fmt_ts(m['timestamp'])})")
+        lines.append("")
+        content = (m.get("content") or "").strip("\n")
+        if content:
+            lines += [f"> {ln}" for ln in content.splitlines()]
+            lines.append("")
+        tool_calls = m.get("tool_calls")
+        if tool_calls:
+            lines += ["```json", tool_calls, "```", ""]
+        reasoning = m.get("reasoning")
+        if reasoning:
+            lines.append(f"*reasoning: {reasoning}*")
+            lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+@app.get("/api/sessions/{session_id}/export",
+         dependencies=[Depends(require_auth)])
+def session_export(session_id: str, format: Literal["json", "md"] = "json"):
+    """Download a session (full, unclipped content) as JSON or Markdown."""
+    payload = get_store().export(session_id)
+    if payload is None:
+        raise HTTPException(404, "session not found")
+    filename = _export_filename(session_id, payload["session"].get("title"), format)
+    headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+    if format == "json":
+        import json as _json
+        return Response(content=_json.dumps(payload), media_type="application/json",
+                        headers=headers)
+    return Response(content=_render_markdown(payload), media_type="text/markdown",
+                    headers=headers)
 
 
 @app.get("/api/agents", dependencies=[Depends(require_auth)])

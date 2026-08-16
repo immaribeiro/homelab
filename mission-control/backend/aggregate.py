@@ -113,6 +113,35 @@ class Store:
             k.agent = resolve_agent(k, self.thread_map, self.telegram_titles)
         return kids
 
+    def export(self, session_id: str) -> Optional[dict]:
+        """Full-fidelity export payload for one session.
+
+        Returns {"session": <Session.to_dict()>, "messages": [...],
+        "children": [...]} with message content/reasoning/tool_calls
+        unclipped (raw=True), or None if the session is unknown. Children
+        are direct children only. Secret-adjacent fields (origin_json,
+        api_content) are excluded by the model serializers themselves.
+        """
+        pair = self.get(session_id)
+        if not pair:
+            return None
+        s, _ = pair
+        return {
+            "session": s.to_dict(),
+            "messages": [m.to_dict(raw=True) for m in self.messages(session_id)],
+            "children": [
+                {
+                    "id": k.id,
+                    "title": k.title or "",
+                    "status": k.status.value,
+                    "message_count": k.message_count,
+                    "tool_call_count": k.tool_call_count,
+                    "agent": k.agent,
+                }
+                for k in self.children(session_id)
+            ],
+        }
+
     def search(self, term: str, limit: int = 50) -> dict:
         """Global search across message content + session metadata."""
         term = (term or "").strip()
