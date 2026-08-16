@@ -16,7 +16,9 @@ function el(tag, attrs = {}, ...children) {
   }
   for (const c of children.flat()) {
     if (c == null) continue;
-    node.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+    if (typeof c === "string") node.appendChild(document.createTextNode(c));
+    else if (c instanceof Node) node.appendChild(c);
+    else node.appendChild(document.createTextNode(String(c))); // numbers, booleans
   }
   return node;
 }
