@@ -1,0 +1,25 @@
+{
+  "api_providers": {
+    "openai": [
+      {
+        "name": "gpt-5.6-luna",
+        "model": "gpt-5.6-luna",
+        "api_key_env": "OPENAI_API_KEY",
+        "reasoning_options": { "type": "medium" }
+      }
+    ],
+    "custom": [
+      {
+        "name": "qwen3.5-9b-mlx",
+        "endpoint": "http://localhost:1234",
+        "model_type": "local_llm"
+      },
+      {
+        "name": "google/gemma-4-e4b",
+        "endpoint": "http://localhost:1234",
+        "model_type": "local_llm"
+      }
+    ]
+  },
+  "version": "0.1"
+}

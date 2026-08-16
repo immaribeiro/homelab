@@ -1,0 +1,66 @@
+# ── Frontend Profile ───────────────────────────────────────────────
+# UI/UX implementation agent — React, CSS, accessibility, design.
+# Primary: Qwen 3.5 9B via LMStudio (local, FREE)
+# Fallback 0: Qwen3 Coder 30B via Nous — $0.06/$0.22 per 1M
+# Fallback 1: GLM 5.2 via Nous — $0.25/$0.77 per 1M
+#
+# Uses a DIFFERENT local model than backend's LMStudio fallback to avoid
+# model-slot conflicts in LMStudio (frontend=qwen3.5-9b, backend=gemma-4-e4b).
+
+model:
+  default: qwen3.5-9b-mlx
+  provider: lmstudio
+  base_url: http://localhost:1234/v1
+  api_key_env: LMSTUDIO_API_KEY
+
+fallback_providers:
+  '0':
+    provider: nous
+    model: qwen/qwen3-coder-30b-a3b
+  '1':
+    provider: nous
+    model: z-ai/glm-5.2
+
+agent:
+  max_turns: 150
+  reasoning_effort: low
+  tool_use_enforcement: auto
+  task_completion_guidance: true
+  environment_probe: false
+  coding_context: auto
+  disabled_toolsets:
+    - tts
+    - video
+    - video_gen
+
+terminal:
+  backend: local
+  cwd: /Users/imma/GitHub
+
+display:
+  interface: cli
+  personality: concise
+
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+  write_approval: false
+  memory_char_limit: 2200
+  user_char_limit: 1375
+
+delegation:
+  model: gpt-5.6-luna
+  provider: openai
+  base_url: https://api.openai.com/v1
+  api_key_env: OPENAI_API_KEY
+  max_iterations: 250
+  max_concurrent_children: 10
+  max_spawn_depth: 1
+
+custom_providers:
+  - name: lmstudio
+    base_url: http://localhost:1234/v1
+    model: qwen3.5-9b-mlx
+    models:
+      - qwen3.5-9b-mlx
+      - google/gemma-4-e4b
