@@ -77,6 +77,15 @@ Four Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a si
 
 → [[Frontend Agent]]
 
+## Related Projects
+
+Agents work on these projects:
+- [[Homelab Infrastructure]] — K3s cluster, networking, deployments
+- [[Reconstruction App]] — house reconstruction tracker
+- [[Life Dashboard]] — personal dashboard
+- [[Telegram E-book Downloader]] — weekly cron job
+- [[FlightScanner]] — multi-agent flight price comparison (dev)
+
 ## Estimated Daily Cost
 
 | Agent | Est. tokens/day | Cost/day |
