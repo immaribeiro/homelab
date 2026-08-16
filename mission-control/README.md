@@ -65,9 +65,9 @@ All via environment variables (see the launchd plist):
 
 | Env var | Default | Meaning |
 |---|---|---|
-| `MISSION_CONTROL_HOST` | `127.0.0.1` | Bind address. **Keep loopback.** |
+| `MISSION_CONTROL_HOST` | `127.0.0.1` | Bind address. Deployed as `0.0.0.0` + token auth for tailnet access. |
 | `MISSION_CONTROL_PORT` | `9118` | Listen port. |
-| `MISSION_CONTROL_TOKEN` | auto | Access token (only needed for non-loopback). |
+| `MISSION_CONTROL_TOKEN` | auto | Access token (required for any non-loopback bind). |
 | `MISSION_CONTROL_DATA_DIR` | `~/.hermes/mission-control` | Where the auto-generated token file lives. |
 | `HERMES_HOME` | `~/.hermes` | Hermes home (state DB discovery root). |
 
@@ -158,26 +158,28 @@ official dashboard's per-profile API, and why this layer exists).
 
 ## Remote access (private network only — never public)
 
-The service is designed to stay on the Mac Mini's loopback. To reach it from
-your MacBook / iPhone over your private network:
-
-**Option A — Tailscale Serve (recommended).** Expose it on your tailnet only:
+Mission Control binds `0.0.0.0:9118` with **token auth required** (fail-closed).
+Reach it from your MacBook / iPhone **over the tailnet only**:
 
 ```bash
-tailscale serve --bg 9118        # then open http://imma-mini:9118 from any tailnet device
+# From any tailnet device (MacBook, iPhone, …):
+open http://imma-mini:9118          # MagicDNS — resolves to the Mini's tailnet IP
+# or http://100.101.63.91:9118
 ```
 
-Optionally add a token (`MISSION_CONTROL_TOKEN=…` in the plist) so the tailnet
-login page is required.
+Sign in with the token in `MISSION_CONTROL_DATA_DIR/token` on the Mini
+(`~/.hermes/mission-control/token`). Rotate it anytime: delete the file and
+restart the service.
 
-**Option B — SSH tunnel.** From the MacBook/iPhone:
+**HTTPS option (Tailscale Serve)** — needs a one-time enable in the admin
+console (the CLI will print the link when you run `tailscale serve 9118`),
+then:
 
 ```bash
-ssh -L 9118:127.0.0.1:9118 imma-mini
-# then open http://127.0.0.1:9118 locally
+tailscale serve --bg 9118    # → https://imma-mini (HTTPS on the tailnet)
 ```
 
-> **Do not** expose it to the public internet. It shows private AI
+> **Never expose it to the public internet.** It shows private AI
 > conversations and tool calls. The Hermes dashboard (9119) is already public
 > via Cloudflare Tunnel with Nous OAuth — Mission Control deliberately is not.
 

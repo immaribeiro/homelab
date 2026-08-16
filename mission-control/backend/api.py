@@ -135,9 +135,11 @@ async def login(request: Request, response: Response):
     if not token_matches(provided, token):
         raise HTTPException(401, "invalid token")
     # Bind the session to the token's hash (never the raw token).
+    # Secure flag only over HTTPS (tailscale serve / reverse proxy): browsers
+    # drop Secure cookies on plain HTTP, which would lock users out.
+    secure = request.url.scheme == "https"
     response.set_cookie(COOKIE_NAME, f"mc::{hash_token(token)}", httponly=True,
-                        samesite="strict", secure=not _is_loopback(BIND_HOST),
-                        max_age=7 * 86400)
+                        samesite="strict", secure=secure, max_age=7 * 86400)
     return {"ok": True}
 
 

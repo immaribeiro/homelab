@@ -63,10 +63,16 @@ sources — Telegram, CLI, desktop, cron, everything.
 
 ## Remote access (private only)
 
+Mission Control binds `0.0.0.0:9118` with token auth (fail-closed). From any
+tailnet device (MacBook, iPhone):
+
 ```bash
-tailscale serve --bg 9118        # tailnet-only HTTPS
-# or: ssh -L 9118:127.0.0.1:9118 imma-mini
+open http://imma-mini:9118      # or http://100.101.63.91:9118
 ```
+
+Token: `~/.hermes/mission-control/token` on the Mini (rotate by deleting +
+restarting). Optional HTTPS: enable Tailscale Serve in the admin console once,
+then `tailscale serve --bg 9118` → https://imma-mini.
 
 Never expose publicly — it shows private conversations. The Hermes dashboard
 (9119, hermes.immas.org) is the public surface with Nous OAuth.

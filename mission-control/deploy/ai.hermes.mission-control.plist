@@ -20,7 +20,7 @@
         <key>HERMES_HOME</key>
         <string>/Users/imma/.hermes</string>
         <key>MISSION_CONTROL_HOST</key>
-        <string>127.0.0.1</string>
+        <string>0.0.0.0</string>
         <key>MISSION_CONTROL_PORT</key>
         <string>9118</string>
         <key>PATH</key>
