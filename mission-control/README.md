@@ -91,6 +91,7 @@ Auth model (fail-closed):
 | `GET /api/agents` | Per-agent rollups (models, active/total sessions, tool usage, tokens). |
 | `GET /api/sources` | Source distribution. |
 | `GET /api/search?q=` | Global FTS search (message content + session metadata). |
+| `GET /api/trends?days=N` | Per-day rollup (sessions/messages/tool calls/tokens/cost), zero-filled. |
 | `GET /api/stream` | SSE live updates (refresh events with compact overview). |
 | `POST /api/login` | `{"token": "…"}` → sets the session cookie. |
 
