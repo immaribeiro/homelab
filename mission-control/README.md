@@ -212,6 +212,52 @@ Prints a Telegram-friendly Markdown summary of the last day of agent activity
   schedule= 0 20 * * *        (daily 20:00 Europe/Lisbon)
   ```
 
+## Backups
+
+Daily online, consistent backups of every Hermes `state.db` (root + all
+profiles), taken with the SQLite backup API so WAL-mode DBs are captured
+safely while the gateway is writing to them.
+
+**What / where:** gzip-compressed snapshots of
+`~/.hermes/state.db` and `~/.hermes/profiles/*/state.db`:
+
+```text
+/Users/imma/Backups/hermes/hermes-<profile>-YYYYMMDD.sqlite.gz
+```
+
+`<profile>` is `main` for the root DB, otherwise the profile directory
+name (architect, backend, engineer, frontend, …). Same-day re-runs
+overwrite the same dated file (idempotent). Pruning keeps 14 daily
+backups (files older than 14 days are deleted).
+
+**Schedule:** launchd job `ai.hermes.backup`, daily at **03:30**
+(`~/Library/LaunchAgents/ai.hermes.backup.plist` →
+`/bin/bash ~/.hermes/scripts/backup-hermes.sh`). Logs:
+`~/.hermes/logs/backup.log` (+ `backup.error.log`).
+
+**Manual run:**
+
+```bash
+bash ~/.hermes/scripts/backup-hermes.sh          # real backup
+bash ~/.hermes/scripts/backup-hermes.sh -n       # dry run (prints targets)
+```
+
+**Restore procedure:**
+
+1. Stop the Hermes gateway/agents (a running gateway will keep writing to
+   the live DBs).
+2. Pick the backup date to restore, e.g.
+   `hermes-main-20260816.sqlite.gz`; decompress:
+   `gzip -dc … > /tmp/state.db`.
+3. Sanity-check the snapshot before restoring:
+   `/usr/bin/python3 -c "import sqlite3; print(sqlite3.connect('/tmp/state.db').execute('PRAGMA integrity_check').fetchone())"`
+   → must print `ok`.
+4. Replace the live DB: `cp /tmp/state.db ~/.hermes/state.db` (and the
+   matching `profiles/<name>/state.db` per profile backup). Remove stale
+   `-wal`/`-shm` siblings first.
+5. Start the gateway/agents again and verify sessions load (Mission
+   Control is a quick read-only way to confirm).
+
 ## Troubleshooting
 
 | Symptom | Fix |
