@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Hermes Mission Control</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="login-overlay" class="login-overlay hidden">
+  <form id="login-form" class="login-card">
+    <div class="login-logo">◈</div>
+    <h1>Hermes Mission Control</h1>
+    <p class="login-sub">Enter the access token to continue</p>
+    <input type="password" id="login-token" placeholder="access token" autocomplete="current-password" required>
+    <button type="submit">Sign in</button>
+    <p id="login-error" class="login-error"></p>
+  </form>
+</div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">◈</span>
+    <span class="brand-name">HERMES <span class="brand-dim">MISSION CONTROL</span></span>
+  </div>
+  <nav class="nav" id="nav">
+    <a href="#/" data-route="overview" class="nav-link">Overview</a>
+    <a href="#/sessions" data-route="sessions" class="nav-link">Sessions</a>
+    <a href="#/agents" data-route="agents" class="nav-link">Agents</a>
+    <a href="#/search" data-route="search" class="nav-link">Search</a>
+  </nav>
+  <div class="topbar-right">
+    <span id="gateway-pill" class="pill pill-unknown" title="Gateway status">…</span>
+    <span id="live-pill" class="pill pill-off" title="Live updates">LIVE</span>
+  </div>
+</header>
+
+<main id="view" class="view"></main>
+
+<footer class="footer">
+  <span id="footer-info">Hermes Mission Control</span>
+  <span id="db-errors" class="db-errors"></span>
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
