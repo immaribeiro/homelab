@@ -172,13 +172,20 @@ Sign in with the token in `MISSION_CONTROL_DATA_DIR/token` on the Mini
 (`~/.hermes/mission-control/token`). Rotate it anytime: delete the file and
 restart the service.
 
-**HTTPS option (Tailscale Serve)** — needs a one-time enable in the admin
-console (the CLI will print the link when you run `tailscale serve 9118`),
-then:
+**HTTPS option (Tailscale Serve)** — one-time enable in the admin console
+(account owner only):
+
+```text
+https://login.tailscale.com/f/serve?node=njVGiA1tWh11CNTRL
+```
+
+Then start serving (HTTPS on the tailnet):
 
 ```bash
-tailscale serve --bg 9118    # → https://imma-mini (HTTPS on the tailnet)
+tailscale serve --bg 9118    # → https://imma-mini
 ```
+
+Check / re-enable anytime with `deploy/serve-https.sh`.
 
 > **Never expose it to the public internet.** It shows private AI
 > conversations and tool calls. The Hermes dashboard (9119) is already public
