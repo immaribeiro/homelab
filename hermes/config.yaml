@@ -4,13 +4,13 @@ model:
   base_url: ''
   api_key_env: OPENAI_API_KEY
 fallback_providers:
-- provider: nous
-  model: deepseek/deepseek-v4-flash
-- provider: lmstudio
-  model: qwen3.5-9b-mlx
-  base_url: http://localhost:1234/v1
+  - provider: nous
+    model: deepseek/deepseek-v4-flash
+  - provider: lmstudio
+    model: qwen3.5-9b-mlx
+    base_url: http://localhost:1234/v1
 toolsets:
-- hermes-cli
+  - hermes-cli
 agent:
   max_turns: 90
   gateway_timeout: 1800
@@ -301,16 +301,16 @@ display:
   runtime_footer:
     enabled: false
     fields:
-    - model
-    - context_pct
-    - cwd
+      - model
+      - context_pct
+      - cwd
   copy_shortcut: auto
   tool_progress: all
 dashboard:
   theme: default
   show_token_analytics: false
   oauth:
-    client_id: ''
+    client_id: agent:cmsw4ufm7007nho0as0osc2zn
     portal_url: ''
   basic_auth:
     username: ''
@@ -318,7 +318,7 @@ dashboard:
     password: ''
     secret: ''
     session_ttl_seconds: 0
-  public_url: ''
+  public_url: https://hermes.immas.org
 privacy:
   redact_pii: false
 tts:
@@ -448,11 +448,11 @@ discord:
     speech_gain: 1.0
     ack_enabled: true
     ack_phrases:
-    - Let me look into that.
-    - One moment.
-    - Checking on that now.
-    - Give me a sec.
-    - On it.
+      - Let me look into that.
+      - One moment.
+      - Checking on that now.
+      - Give me a sec.
+      - On it.
 telegram:
   reactions: false
   allowed_chats: ''
@@ -473,15 +473,17 @@ approvals:
   mcp_reload_confirm: true
   destructive_slash_confirm: false
 command_allowlist:
-- sudo with privilege flag (stdin/askpass/shell/list)
-- chmod +x followed by immediate execution
-- script execution via -e/-c flag
-- overwrite system file via redirection
-- execute_code
-- in-place edit of Hermes config/env
-- stop/restart hermes launchd service (kills running agents)
-- overwrite project env/config file
-- delete in root path
+  - sudo with privilege flag (stdin/askpass/shell/list)
+  - chmod +x followed by immediate execution
+  - script execution via -e/-c flag
+  - overwrite system file via redirection
+  - execute_code
+  - in-place edit of Hermes config/env
+  - in-place edit of system config
+  - stop/restart hermes launchd service (kills running agents)
+  - stop/restart system service
+  - overwrite project env/config file
+  - delete in root path
 hooks_auto_accept: false
 security:
   allow_private_urls: false
@@ -536,31 +538,31 @@ gateway:
   trust_recent_files_seconds: 600
   multiplex_profiles: true
   profile_routes:
-  - name: tg-general
-    platform: telegram
-    chat_id: '-1004449482428'
-    thread_id: '1'
-    profile: default
-  - name: tg-architect
-    platform: telegram
-    chat_id: '-1004449482428'
-    thread_id: '3'
-    profile: architect
-  - name: tg-backend
-    platform: telegram
-    chat_id: '-1004449482428'
-    thread_id: '4'
-    profile: backend
-  - name: tg-frontend
-    platform: telegram
-    chat_id: '-1004449482428'
-    thread_id: '5'
-    profile: frontend
-  - name: tg-engineer
-    platform: telegram
-    chat_id: '-1004449482428'
-    thread_id: '14'
-    profile: engineer
+    - name: tg-general
+      platform: telegram
+      chat_id: '-1004449482428'
+      thread_id: '1'
+      profile: default
+    - name: tg-architect
+      platform: telegram
+      chat_id: '-1004449482428'
+      thread_id: '3'
+      profile: architect
+    - name: tg-backend
+      platform: telegram
+      chat_id: '-1004449482428'
+      thread_id: '4'
+      profile: backend
+    - name: tg-frontend
+      platform: telegram
+      chat_id: '-1004449482428'
+      thread_id: '5'
+      profile: frontend
+    - name: tg-engineer
+      platform: telegram
+      chat_id: '-1004449482428'
+      thread_id: '14'
+      profile: engineer
 streaming:
   enabled: false
   transport: auto
@@ -622,32 +624,32 @@ session_reset:
 group_sessions_per_user: true
 platform_toolsets:
   cli:
-  - hermes-cli
+    - hermes-cli
   telegram:
-  - hermes-telegram
+    - hermes-telegram
   discord:
-  - hermes-discord
+    - hermes-discord
   whatsapp:
-  - hermes-whatsapp
+    - hermes-whatsapp
   slack:
-  - hermes-slack
+    - hermes-slack
   signal:
-  - hermes-signal
+    - hermes-signal
   homeassistant:
-  - hermes-homeassistant
+    - hermes-homeassistant
   qqbot:
-  - hermes-qqbot
+    - hermes-qqbot
   yuanbao:
-  - hermes-yuanbao
+    - hermes-yuanbao
   teams:
-  - hermes-teams
+    - hermes-teams
 custom_providers:
-- name: lmstudio
-  base_url: http://localhost:1234/v1
-  model: google/gemma-4-e4b
-  models:
-  - qwen3.5-9b-mlx
-  - google/gemma-4-e4b
-  - text-embedding-nomic-embed-text-v1.5
+  - name: lmstudio
+    base_url: http://localhost:1234/v1
+    model: google/gemma-4-e4b
+    models:
+      - qwen3.5-9b-mlx
+      - google/gemma-4-e4b
+      - text-embedding-nomic-embed-text-v1.5
 image_gen:
   use_gateway: true
