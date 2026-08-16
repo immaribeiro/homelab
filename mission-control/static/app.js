@@ -223,6 +223,7 @@ async function render() {
   try {
     if (path === "sessions") await renderSessions(view);
     else if (path.startsWith("session/")) await renderSessionDetail(view, params.get("id") || path.split("/")[1]);
+    else if (path.startsWith("agent/")) await renderAgentPage(view, params.get("name") || path.split("/")[1]);
     else if (path === "agents") await renderAgents(view);
     else if (path === "search") renderSearch(view);
     else await renderOverview(view);
@@ -273,13 +274,16 @@ async function renderOverview(view) {
 
   // active agents
   const activeAgents = (ov.agents || []).filter((a) => a.active_sessions > 0 || (a.last_activity_at && (Date.now() / 1000 - a.last_activity_at) < 600));
-  const ap = el("div", { class: "panel" }, el("div", { class: "panel-head" }, "ACTIVE AGENTS"));
+  const ap = el("div", { class: "panel" }, el("div", { class: "panel-head" }, "ACTIVE AGENTS",
+    el("span", { class: "spacer" }),
+    el("span", { class: "muted", style: "font-size:10.5px;font-weight:400" }, "🟢 = live gateway turn (working)")));
   const ab = el("div", { class: "panel-body" });
   if (activeAgents.length) {
     const list = el("div");
     for (const a of activeAgents) {
+      const working = a.active_sessions > 0;
       list.append(el("div", { style: "display:flex;gap:12px;align-items:center;padding:6px 2px;cursor:pointer", onclick: () => navigate(`#/sessions?agent=${encodeURIComponent(a.name)}`) },
-        a.active_sessions > 0 ? dot("working") : dot("idle"),
+        working ? dot("working") : dot("idle"),
         el("span", { style: "font-weight:600;min-width:110px" }, esc(a.name)),
         sourceBadge(a.sources?.[0] || "—"),
         el("span", { class: "muted" }, esc(a.models?.[0] || "—")),
@@ -312,7 +316,46 @@ async function renderOverview(view) {
   view.append(rp);
 }
 
-/* ── SESSIONS ────────────────────────────────────────────────── */
+/* ── AGENT PAGE (drill-down) ─────────────────────────────────────────── */
+async function renderAgentPage(view, name) {
+  view.dataset.view = "sessions";
+  view.append(el("div", { class: "loading" }, el("span", { class: "spinner" }), `loading ${esc(name)}…`));
+  const data = await api(`/api/sessions?agent=${encodeURIComponent(name)}&limit=500`).catch(() => null);
+  view.innerHTML = "";
+  if (!data) {
+    view.append(el("div", { class: "empty" }, "agent not found"));
+    return;
+  }
+  const head = el("div", { class: "detail-head" },
+    el("a", { href: "#/agents", class: "nav-link", style: "padding:0 8px 0 0" }, "←"),
+    el("h2", {}, dot("idle"), esc(name)),
+    el("span", { class: "badge" }, `${data.total} SESSIONS`));
+  view.append(head);
+
+  const panel = el("div", { class: "panel" });
+  const table = el("table", { class: "grid" });
+  table.append(el("thead", {}, el("tr", {},
+    el("th", {}, "SOURCE"), el("th", {}, "MODEL"), el("th", {}, "STATUS"),
+    el("th", {}, "TITLE"), el("th", {}, "LAST ACTIVE"),
+    el("th", { class: "num" }, "MSGS"), el("th", { class: "num" }, "TOOLS"))));
+  const tbody = el("tbody");
+  for (const s of data.sessions) {
+    tbody.append(el("tr", { onclick: () => navigate(`#/session/${encodeURIComponent(s.id)}`) },
+      el("td", {}, sourceBadge(s.source)),
+      el("td", {}, modelBadge(s.model)),
+      el("td", {}, statusBadge(s.status)),
+      el("td", { style: "max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" }, esc(s.title || "(untitled)")),
+      el("td", { class: "timeago" }, timeago(s.last_activity_at || s.started_at)),
+      el("td", { class: "num muted" }, fmt(s.message_count)),
+      el("td", { class: "num muted" }, fmt(s.tool_call_count))));
+  }
+  table.append(tbody);
+  panel.append(table);
+  view.append(panel);
+  if (!data.sessions.length) view.append(el("div", { class: "empty" }, "no sessions for this agent"));
+}
+
+/* ── SESSIONS ────────────────────────────────────────────────────────── */
 let sessionsCache = null;
 async function fetchSessions() {
   const f = state.filters;
@@ -415,6 +458,82 @@ function renderSessionsTable(view) {
 }
 
 /* ── SESSION DETAIL ──────────────────────────────────────────── */
+/* ── session detail helpers ──────────────────────────────────────────── */
+const STATUS_HEX = {
+  working: "#3ddc84", waiting: "#f5b841", idle: "#6ea8fe",
+  done: "#9aa4b8", error: "#ff5c5c", unknown: "#565f73",
+};
+const SVG_NS = "http://www.w3.org/2000/svg";
+function svgEl(tag, attrs = {}) {
+  const n = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) if (v != null) n.setAttribute(k, v);
+  return n;
+}
+
+async function fetchSubagentGraph(rootId) {
+  /* Recursive parent→child walk (depth ≤ 3, ≤ 40 nodes). */
+  const nodes = [];
+  const seen = new Set();
+  async function walk(id, depth, parent) {
+    if (depth > 3 || nodes.length >= 40 || seen.has(id)) return;
+    seen.add(id);
+    const d = await api(`/api/sessions/${encodeURIComponent(id)}?include_messages=false`).catch(() => null);
+    if (!d) return;
+    nodes.push({ id: d.id, title: d.title || d.id, agent: d.agent, status: d.status, depth, parent, msgs: d.message_count });
+    for (const c of d.children || []) await walk(c.id, depth + 1, id);
+  }
+  await walk(rootId, 0, null);
+  return nodes;
+}
+
+function renderSvgGraph(container, nodes) {
+  if (!nodes.length) { container.append(el("div", { class: "empty" }, "no subagent data")); return; }
+  const childrenOf = {};
+  for (const n of nodes) (childrenOf[n.parent] = childrenOf[n.parent] || []).push(n);
+  const pos = {};
+  let slot = 0;
+  (function dfs(n) {
+    const kids = childrenOf[n.id] || [];
+    if (!kids.length) { pos[n.id] = { x: n.depth, y: slot++ }; return; }
+    kids.forEach(dfs);
+    const ys = kids.map((k) => pos[k.id].y);
+    pos[n.id] = { x: n.depth, y: (Math.min(...ys) + Math.max(...ys)) / 2 };
+  })(nodes.find((n) => n.parent === null) || nodes[0]);
+
+  const colW = 200, rowH = 46, pad = 14;
+  const maxDepth = Math.max(...nodes.map((n) => n.depth));
+  const width = maxDepth * colW + colW + 60;
+  const height = slot * rowH + 60;
+  const svg = svgEl("svg", { width, height, viewBox: `0 0 ${width} ${height}` });
+
+  // edges
+  for (const n of nodes) {
+    if (n.parent === null) continue;
+    const p = pos[n.parent], c = pos[n.id];
+    const x1 = p.x * colW + colW - 8, y1 = p.y * rowH + 28;
+    const x2 = c.x * colW + 10, y2 = c.y * rowH + 28;
+    svg.append(svgEl("line", { x1, y1, x2, y2, stroke: "#232a3a", "stroke-width": 1.5 }));
+  }
+  // nodes
+  for (const n of nodes) {
+    const p = pos[n.id];
+    const x = p.x * colW + 10, y = p.y * rowH + 8;
+    const w = colW - 20, h = 40;
+    const hex = STATUS_HEX[n.status] || STATUS_HEX.unknown;
+    const g = svgEl("g", { transform: `translate(${x},${y})`, style: "cursor:pointer" });
+    g.addEventListener("click", () => navigate(`#/session/${encodeURIComponent(n.id)}`));
+    g.append(svgEl("rect", { width: w, height: h, rx: 6, fill: hex + "1f", stroke: hex, "stroke-width": 1.2 }));
+    const title = (n.title || n.id).length > 22 ? (n.title || n.id).slice(0, 21) + "…" : (n.title || n.id);
+    const t1 = svgEl("text", { x: 8, y: 18, fill: "#e8ecf4", "font-size": 11, "font-family": "inherit" });
+    t1.textContent = title;
+    const t2 = svgEl("text", { x: 8, y: 32, fill: "#6b7590", "font-size": 9.5, "font-family": "inherit" });
+    t2.textContent = `${n.agent} · ${n.status} · ${n.msgs} msgs`;
+    g.append(t1, t2);
+    svg.append(g);
+  }
+  container.append(svg);
+}
+
 async function renderSessionDetail(view, id) {
   view.dataset.view = "detail";
   view.append(el("div", { class: "loading" }, el("span", { class: "spinner" }), "loading session…"));
@@ -450,23 +569,16 @@ async function renderSessionDetail(view, id) {
   if (d.git_branch) meta.append(kv("branch", esc(d.git_branch)));
   view.append(meta);
 
-  // subagent tree
+  // subagent graph (recursive, SVG, status-colored, clickable)
   if (d.children && d.children.length) {
-    const tp = el("div", { class: "panel" }, el("div", { class: "panel-head" }, `SUBAGENTS (${d.children.length})`));
-    const tb = el("div", { class: "panel-body" });
-    const tree = el("div", { class: "tree" });
-    const root = el("div", { class: "tree-root tree-node" },
-      el("span", { class: "tag" }, "◆ "), esc(d.title || d.id),
-      el("span", { class: "muted", style: "font-size:11px" }, ` (${esc(d.agent)})`));
-    tree.append(root);
-    for (const c of d.children) {
-      tree.append(el("div", { class: "tree-node", style: "cursor:pointer", onclick: () => navigate(`#/session/${encodeURIComponent(c.id)}`) },
-        el("span", { class: "tag" }, "└─ "), esc(c.title || c.id),
-        el("span", { class: "muted", style: "font-size:11px" }, ` · ${esc(c.status)} · ${fmt(c.message_count)} msgs`)));
-    }
-    tb.append(tree);
+    const tp = el("div", { class: "panel" },
+      el("div", { class: "panel-head" }, `SUBAGENT GRAPH (${d.children.length} direct)`));
+    const tb = el("div", { class: "panel-body", style: "overflow-x:auto" });
+    const graph = el("div");
+    tb.append(graph);
     tp.append(tb);
     view.append(tp);
+    fetchSubagentGraph(d.id).then((nodes) => renderSvgGraph(graph, nodes));
   }
 
   // conversation timeline
