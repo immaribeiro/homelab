@@ -1,0 +1,31 @@
+# Secrets — NEVER commit
+.env
+.env.*
+*.lock
+auth.json
+
+# Memory lock files
+memories/*.lock
+
+# Cron runtime data (jobs.json IS tracked, but execution databases are not)
+cron/executions.db
+cron/notepad.db
+cron/*.db-*
+cron/.*.lock
+cron/.tick
+cron/ticker_*
+cron/usage_audit.jsonl
+cron/output/
+
+# Profiles — only track config files, not runtime data
+profiles/*/state.db*
+profiles/*/sessions/
+profiles/*/logs/
+profiles/*/.env
+profiles/*/auth.json
+profiles/*/cache/
+profiles/*/projects.db
+profiles/*/kanban.db*
+
+# Symlink safety: if someone symlinks secrets here, ignore them
+*.env
