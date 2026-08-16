@@ -1,0 +1,11 @@
+{
+  "newFileLocation": "folder",
+  "newFileFolderPath": "notes",
+  "attachmentFolderPath": "assets",
+  "showLineNumber": true,
+  "alwaysUpdateLinks": true,
+  "useMarkdownLinks": false,
+  "newLinkFormat": "shortest",
+  "showFrontmatter": true,
+  "defaultView": "preview"
+}
