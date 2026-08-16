@@ -16,7 +16,7 @@ model:
 fallback_providers:
   '0':
     provider: nous
-    model: qwen/qwen3-coder-30b-a3b
+    model: deepseek/deepseek-v4-flash
   '1':
     provider: nous
     model: z-ai/glm-5.2

@@ -2,7 +2,7 @@
 created: 2026-08-16
 updated: 2026-08-16
 profile: backend
-model: qwen/qwen3-coder-30b-a3b
+model: deepseek/deepseek-v4-flash
 provider: nous
 status: active
 ---
@@ -16,9 +16,9 @@ Focused implementation agent for server-side code, APIs, databases, and infrastr
 | Field | Value |
 |-------|-------|
 | **Profile** | backend |
-| **Model** | `qwen/qwen3-coder-30b-a3b` (coding model) |
+| **Model** | `deepseek/deepseek-v4-flash` (coding model) |
 | **Provider** | Nous Portal (OAuth) |
-| **Cost** | $0.06 in / $0.22 out per 1M tokens (ultra-cheap) |
+| **Cost** | $0.05 in / $0.10 out per 1M tokens (ultra-cheap) |
 | **Fallback 0** | `lmstudio/google/gemma-4-e4b` (local, free — different model than frontend) |
 | **Fallback 1** | `z-ai/glm-5.2` via Nous |
 | **Config file** | `~/GitHub/homelab/hermes/profiles/backend/config.yaml` |

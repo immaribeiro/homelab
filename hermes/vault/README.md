@@ -11,7 +11,7 @@ Welcome to your Hermes agent management vault. This vault is synced to the homel
 
 | Agent | Profile | Model | Cost (in/out per 1M) | Telegram Topic |
 |-------|---------|-------|----------------------|----------------|
-| Main | default | GLM 5.2 via Nous | $0.25 / $0.77 | General |
+| Main | default | DeepSeek V4 Flash via Nous | $0.05 / $0.10 | General |
 | Architect | architect | DeepSeek R1 via Nous | $0.40 / $1.72 | 🏛 Architecture |
 | Backend | backend | Qwen3 Coder 30B via Nous | $0.06 / $0.22 | ⚙️ Backend |
 | Frontend | frontend | Qwen 3.5 9B via LMStudio | FREE | 🎨 Frontend |

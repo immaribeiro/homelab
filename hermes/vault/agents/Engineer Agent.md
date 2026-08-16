@@ -2,7 +2,7 @@
 created: 2026-08-16
 updated: 2026-08-16
 profile: engineer
-model: qwen/qwen3-coder-30b-a3b
+model: deepseek/deepseek-v4-flash
 provider: nous
 status: active
 ---
@@ -16,9 +16,9 @@ IT systems engineer responsible for the homelab infrastructure — K3s cluster, 
 | Field | Value |
 |-------|-------|
 | **Profile** | engineer |
-| **Model** | `qwen/qwen3-coder-30b-a3b` (coding model — good for ops) |
+| **Model** | `deepseek/deepseek-v4-flash` (coding model — good for ops) |
 | **Provider** | Nous Portal (OAuth) |
-| **Cost** | $0.06 in / $0.22 out per 1M tokens (ultra-cheap) |
+| **Cost** | $0.05 in / $0.10 out per 1M tokens (ultra-cheap) |
 | **Fallback 0** | `z-ai/glm-5.2` via Nous (better reasoning for complex issues) |
 | **Fallback 1** | `lmstudio/google/gemma-4-e4b` (local, free) |
 | **Config file** | `~/GitHub/homelab/hermes/profiles/engineer/config.yaml` |

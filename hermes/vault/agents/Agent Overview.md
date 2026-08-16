@@ -17,8 +17,8 @@ Four Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a si
 |-------|-------|
 | **Profile** | default |
 | **Config** | `~/.hermes/config.yaml` |
-| **Model** | `z-ai/glm-5.2` via Nous |
-| **Cost** | $0.25 in / $0.77 out per 1M |
+| **Model** | `deepseek/deepseek-v4-flash` via Nous |
+| **Cost** | $0.05 in / $0.10 out per 1M |
 | **Fallback** | OpenAI gpt-5.6-luna → LMStudio qwen3.5 |
 | **Telegram** | General topic (thread 1) + personal DM |
 | **Role** | General-purpose assistant, daily tasks, conversation |
@@ -49,8 +49,8 @@ Four Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a si
 |-------|-------|
 | **Profile** | backend |
 | **Config** | `~/GitHub/homelab/hermes/profiles/backend/config.yaml` |
-| **Model** | `qwen/qwen3-coder-30b-a3b` via Nous |
-| **Cost** | $0.06 in / $0.22 out per 1M (ultra-cheap) |
+| **Model** | `deepseek/deepseek-v4-flash` via Nous |
+| **Cost** | $0.05 in / $0.10 out per 1M (ultra-cheap) |
 | **Fallback** | LMStudio google/gemma-4-e4b → GLM 5.2 |
 | **Telegram** | ⚙️ Backend (thread 4) |
 | **Role** | Server-side coding, APIs, databases |
@@ -83,8 +83,8 @@ Four Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a si
 |-------|-------|
 | **Profile** | engineer |
 | **Config** | `~/GitHub/homelab/hermes/profiles/engineer/config.yaml` |
-| **Model** | `qwen/qwen3-coder-30b-a3b` via Nous |
-| **Cost** | $0.06 in / $0.22 out per 1M (ultra-cheap) |
+| **Model** | `deepseek/deepseek-v4-flash` via Nous |
+| **Cost** | $0.05 in / $0.10 out per 1M (ultra-cheap) |
 | **Fallback** | GLM 5.2 via Nous → LMStudio google/gemma-4-e4b |
 | **Telegram** | 🔧 Engineer topic (thread 14) |
 | **Role** | IT infra: K3s, Lima VMs, Cloudflare, ArgoCD, troubleshooting |

@@ -1,17 +1,8 @@
-# ── Engineer (IT System Engineer) Profile ────────────────────────
-# Homelab infrastructure agent: K3s cluster, Lima VMs, Cloudflare tunnels,
-# ArgoCD GitOps, deployments, troubleshooting, GitHub Actions.
-#
-# Primary: Qwen3 Coder 30B via Nous — $0.06/$0.22 per 1M (cheap, good for ops)
-# Fallback 0: GLM 5.2 via Nous — $0.25/$0.77 (better reasoning for complex issues)
-# Fallback 1: Gemma 4 E4B via LMStudio (local, free — different model than frontend/backend)
-
 model:
-  default: qwen/qwen3-coder-30b-a3b
+  default: deepseek/deepseek-v4-flash
   provider: nous
   base_url: ''
   api_key_env: OPENAI_API_KEY
-
 fallback_providers:
   '0':
     provider: nous
@@ -20,7 +11,6 @@ fallback_providers:
     provider: lmstudio
     model: google/gemma-4-e4b
     base_url: http://localhost:1234/v1
-
 agent:
   max_turns: 200
   reasoning_effort: medium
@@ -29,27 +19,23 @@ agent:
   environment_probe: false
   coding_context: auto
   disabled_toolsets:
-    - tts
-    - image_gen
-    - video
-    - video_gen
-
+  - tts
+  - image_gen
+  - video
+  - video_gen
 terminal:
   backend: local
   cwd: /Users/imma/GitHub/homelab
   timeout: 600
-
 display:
   interface: cli
   personality: technical
-
 memory:
   memory_enabled: true
   user_profile_enabled: true
   write_approval: false
   memory_char_limit: 2200
   user_char_limit: 1375
-
 delegation:
   model: gpt-5.6-luna
   provider: openai
@@ -58,11 +44,10 @@ delegation:
   max_iterations: 250
   max_concurrent_children: 10
   max_spawn_depth: 1
-
 custom_providers:
-  - name: lmstudio
-    base_url: http://localhost:1234/v1
-    model: google/gemma-4-e4b
-    models:
-      - qwen3.5-9b-mlx
-      - google/gemma-4-e4b
+- name: lmstudio
+  base_url: http://localhost:1234/v1
+  model: google/gemma-4-e4b
+  models:
+  - qwen3.5-9b-mlx
+  - google/gemma-4-e4b

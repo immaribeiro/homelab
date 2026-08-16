@@ -2,7 +2,7 @@
 created: 2026-08-16
 updated: 2026-08-16
 profile: default
-model: z-ai/glm-5.2
+model: deepseek/deepseek-v4-flash
 provider: nous
 status: active
 ---
@@ -16,9 +16,9 @@ The default Hermes agent for general-purpose tasks and daily conversation.
 | Field | Value |
 |-------|-------|
 | **Profile** | default (no profile needed — uses `~/.hermes/`) |
-| **Model** | `z-ai/glm-5.2` |
+| **Model** | `deepseek/deepseek-v4-flash` |
 | **Provider** | Nous Portal (OAuth) |
-| **Cost** | $0.25 in / $0.77 out per 1M tokens |
+| **Cost** | $0.05 in / $0.10 out per 1M tokens |
 | **Fallback 0** | `openai/gpt-5.6-luna` ($0.10/$0.60) |
 | **Fallback 1** | `lmstudio/qwen3.5-9b-mlx` (local, free) |
 | **Config file** | `~/.hermes/config.yaml` → symlink to `~/GitHub/homelab/hermes/config.yaml` |

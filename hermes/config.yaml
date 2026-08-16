@@ -1,5 +1,5 @@
 model:
-  default: qwen/qwen3-coder-30b-a3b
+  default: deepseek/deepseek-v4-flash
   provider: nous
   base_url: ''
   api_key_env: OPENAI_API_KEY
