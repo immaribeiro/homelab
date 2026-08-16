@@ -6,8 +6,6 @@ Configuration Hierarchy: hermes.json defines provider/model definitions, config.
 §
 Homelab: Mac Mini (imma-mini, 192.168.8.161 LAN, 100.101.63.91 Tailscale) M4 24GB. Always-on Hermes hub: dashboard :9119 (launchd: ai.hermes.dashboard, auth basic+nous OAuth, client agent:cmsw4ufm7007nho0as0osc2zn), publicly at https://hermes.immas.org via Cloudflare tunnel (ingress in k8s/cloudflared/tunnel.yaml, origin http://192.168.8.161:9119). Gateway (launchd: ai.hermes.gateway).
 §
-Projects (~/GitHub/): homelab(infra hub, K3s 3-node Lima cluster+Ansible+Cloudflare+Vaultwarden, telegram-downloader, configs synced); reconstruction(house reno app, FastAPI+PG+MinIO, 67 commits); flightscanner(AI flight comparison, 4 agents, 12 commits); japan-planner(trip planner, FastAPI, 14 commits); life-dashboard(personal dashboard, FastAPI+SQLModel, 17 commits); dotfiles(tmux/ghostty); configs; docker(compose files, not git); apisplayer(work, Bitbucket). AimmaOS(June 2026, merged into Hermes multi-agent profiles).
-§
 User works across multiple machines (Mac Mini as hub, Mac Air as client). Wants same Hermes sessions/memory/skills from any machine. NordVPN on Mac Mini conflicts with Tailscale — use LAN IP fallback or router-level VPN.
 §
 Engineer role: user expects proactive execution — start VMs, fix configs, deploy apps, restart services without asking permission. Full autonomy on infra ops.
