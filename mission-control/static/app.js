@@ -114,7 +114,14 @@ $("#login-form").addEventListener("submit", async (e) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token }),
     });
-    if (!res.ok) throw new Error("invalid token");
+    if (!res.ok) {
+      let msg = `sign in failed (${res.status})`;
+      try {
+        const b = await res.json();
+        if (b && b.detail) msg = b.detail;
+      } catch (_) {}
+      throw new Error(msg);
+    }
     sessionStorage.setItem("mc_token", token);
     $("#login-error").textContent = "";
     hideLogin();

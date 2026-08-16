@@ -93,6 +93,14 @@ def test_api_auth_blocks_when_token_set(fake_home, mc_app):
             r = c.post("/api/login", json={"token": "test-token-123"})
             assert r.status_code == 200
             assert "mc_session" in r.cookies
+            # Same-origin POST (Origin == Host) accepted
+            ok_origin = c.post("/api/login", json={"token": "test-token-123"},
+                               headers={"Origin": "http://testserver"})
+            assert ok_origin.status_code == 200
+            # Cross-origin POST rejected
+            bad_origin = c.post("/api/login", json={"token": "test-token-123"},
+                                headers={"Origin": "http://evil.example"})
+            assert bad_origin.status_code == 403
             # Bad login rejected
             assert c.post("/api/login", json={"token": "bad"}).status_code == 401
     finally:

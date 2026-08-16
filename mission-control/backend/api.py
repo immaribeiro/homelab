@@ -123,14 +123,15 @@ async def login(request: Request, response: Response):
     provided = (body or {}).get("token", "")
     if not auth_on:
         return {"ok": True}
-    # CSRF hardening: same-origin POSTs only. Missing Origin (curl/CLI) is fine.
-    origin = request.headers.get("origin") or request.headers.get("referer") or ""
+    # CSRF hardening: same-origin POSTs only (Origin host must equal the Host
+    # header the browser used — works for localhost, MagicDNS names, and
+    # tailnet IPs alike). Missing Origin (curl/CLI) is fine.
+    origin = request.headers.get("origin") or ""
     if origin:
         from urllib.parse import urlparse
-        host = urlparse(origin).netloc
-        allowed = {f"127.0.0.1:{BIND_PORT}", f"localhost:{BIND_PORT}",
-                   BIND_HOST if ":" in BIND_HOST else f"{BIND_HOST}:{BIND_PORT}"}
-        if host not in allowed:
+        origin_host = urlparse(origin).netloc
+        host = request.headers.get("host") or ""
+        if origin_host and origin_host != host:
             raise HTTPException(403, "cross-origin login rejected")
     if not token_matches(provided, token):
         raise HTTPException(401, "invalid token")
