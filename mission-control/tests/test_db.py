@@ -141,6 +141,12 @@ def test_overview_shapes(fake_home):
     agents = {a["name"]: a for a in ov["agents"]}
     assert "engineer" in agents
     assert "architect" in agents
+    # model rollup: tokens counted, sorted desc, capped
+    ms = ov["model_stats"]
+    assert ms and ms[0]["tokens"] >= ms[-1]["tokens"]
+    assert all(m["sessions"] >= 1 for m in ms)
+    models = {m["model"] for m in ms}
+    assert "test/model" in models
 
 
 def test_db_error_isolation(fake_home, tmp_path):

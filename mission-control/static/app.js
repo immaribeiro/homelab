@@ -82,7 +82,14 @@ function statusBadge(status) {
   return el("span", { class: "badge" }, dot(status), STATUS_LABEL[status] || status);
 }
 function sourceBadge(source) {
-  return el("span", { class: `badge badge-source-${source || "unknown"}` }, (source || "unknown").toUpperCase());
+  const b = el("span", { class: `badge badge-source-${source || "unknown"}` }, (source || "unknown").toUpperCase());
+  // Click any source badge to drill into that source's sessions.
+  b.style.cursor = "pointer";
+  b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    navigate(`#/source/${encodeURIComponent(source || "unknown")}`);
+  });
+  return b;
 }
 function modelBadge(model) {
   return el("span", { class: "badge badge-model" }, esc(model || "—"));
@@ -224,6 +231,7 @@ async function render() {
     if (path === "sessions") await renderSessions(view);
     else if (path.startsWith("session/")) await renderSessionDetail(view, params.get("id") || path.split("/")[1]);
     else if (path.startsWith("agent/")) await renderAgentPage(view, params.get("name") || path.split("/")[1]);
+    else if (path.startsWith("source/")) await renderSourcePage(view, params.get("source") || path.split("/")[1]);
     else if (path === "agents") await renderAgents(view);
     else if (path === "search") renderSearch(view);
     else await renderOverview(view);
@@ -272,6 +280,26 @@ async function renderOverview(view) {
   bar.append(body);
   view.append(bar);
 
+  // model usage rollup
+  const ms = ov.model_stats || [];
+  if (ms.length) {
+    const mp = el("div", { class: "panel" }, el("div", { class: "panel-head" }, "MODEL USAGE"));
+    const mbody = el("div", { class: "panel-body" });
+    const maxTok = Math.max(...ms.map((m) => m.tokens), 1);
+    for (const m of ms) {
+      const right = `${m.sessions} sess · ${fmt(Math.round(m.tokens / 1000))}k tok` +
+        (m.estimated_cost_usd > 0 ? ` · $${Number(m.estimated_cost_usd).toFixed(2)}` : "");
+      const row = el("div", { style: "display:flex;align-items:center;gap:10px;padding:5px 0" });
+      row.append(el("span", { class: "badge badge-model", style: "min-width:200px" }, esc(m.model)));
+      const wrap = el("div", { style: "flex:1;height:12px;background:var(--bg-2);border-radius:4px;overflow:hidden" });
+      wrap.append(el("div", { style: `width:${Math.max(2, (m.tokens / maxTok) * 100)}%;height:100%;background:var(--accent-dim);border-radius:4px` }));
+      row.append(wrap, el("span", { class: "muted", style: "font-size:11px;min-width:150px;text-align:right" }, right));
+      mbody.append(row);
+    }
+    mp.append(mbody);
+    view.append(mp);
+  }
+
   // active agents
   const activeAgents = (ov.agents || []).filter((a) => a.active_sessions > 0 || (a.last_activity_at && (Date.now() / 1000 - a.last_activity_at) < 600));
   const ap = el("div", { class: "panel" }, el("div", { class: "panel-head" }, "ACTIVE AGENTS",
@@ -316,19 +344,19 @@ async function renderOverview(view) {
   view.append(rp);
 }
 
-/* ── AGENT PAGE (drill-down) ─────────────────────────────────────────── */
-async function renderAgentPage(view, name) {
+/* ── AGENT / SOURCE PAGES (drill-down) ───────────────────────────────── */
+async function renderFilteredPage(view, title, params) {
   view.dataset.view = "sessions";
-  view.append(el("div", { class: "loading" }, el("span", { class: "spinner" }), `loading ${esc(name)}…`));
-  const data = await api(`/api/sessions?agent=${encodeURIComponent(name)}&limit=500`).catch(() => null);
+  view.append(el("div", { class: "loading" }, el("span", { class: "spinner" }), `loading ${esc(title)}…`));
+  const data = await api(`/api/sessions?${params}&limit=500`).catch(() => null);
   view.innerHTML = "";
   if (!data) {
-    view.append(el("div", { class: "empty" }, "agent not found"));
+    view.append(el("div", { class: "empty" }, "not found"));
     return;
   }
   const head = el("div", { class: "detail-head" },
-    el("a", { href: "#/agents", class: "nav-link", style: "padding:0 8px 0 0" }, "←"),
-    el("h2", {}, dot("idle"), esc(name)),
+    el("a", { href: "#/sessions", class: "nav-link", style: "padding:0 8px 0 0" }, "←"),
+    el("h2", {}, dot("idle"), esc(title)),
     el("span", { class: "badge" }, `${data.total} SESSIONS`));
   view.append(head);
 
@@ -352,7 +380,14 @@ async function renderAgentPage(view, name) {
   table.append(tbody);
   panel.append(table);
   view.append(panel);
-  if (!data.sessions.length) view.append(el("div", { class: "empty" }, "no sessions for this agent"));
+  if (!data.sessions.length) view.append(el("div", { class: "empty" }, "no sessions"));
+}
+
+async function renderAgentPage(view, name) {
+  return renderFilteredPage(view, name, `agent=${encodeURIComponent(name)}`);
+}
+async function renderSourcePage(view, source) {
+  return renderFilteredPage(view, source, `source=${encodeURIComponent(source)}`);
 }
 
 /* ── SESSIONS ────────────────────────────────────────────────────────── */
@@ -610,6 +645,12 @@ function messageBlock(m) {
     el("span", { class: "timeago", style: "margin-left:auto" }, clock(m.timestamp))));
   const content = m.content || "";
   if (content) block.append(el("div", { class: "msg-content" }, esc(content.slice(0, 6000))));
+  // assistant reasoning (thinking trace) — collapsible
+  if (m.role === "assistant" && m.reasoning) {
+    block.append(el("details", { class: "tool-call" },
+      el("summary", {}, "🧠 ", "reasoning", el("span", { class: "tc-time" }, "thinking")),
+      el("div", { class: "tc-body" }, el("pre", {}, esc(String(m.reasoning).slice(0, 4000))))));
+  }
   // assistant tool calls (request side)
   if (m.role === "assistant" && m.tool_calls) {
     let calls = null;
@@ -672,6 +713,22 @@ function renderSearch(view) {
   if (params.get("q")) { input.value = params.get("q"); doSearch(params.get("q")); }
 }
 
+function highlightText(container, text, term) {
+  /* Highlight term matches with <mark> nodes (XSS-safe: text nodes only). */
+  const t = (term || "").toLowerCase();
+  if (!t) { container.append(document.createTextNode(text)); return; }
+  const lower = text.toLowerCase();
+  let i = 0, idx;
+  while ((idx = lower.indexOf(t, i)) !== -1) {
+    if (idx > i) container.append(document.createTextNode(text.slice(i, idx)));
+    const mark = document.createElement("mark");
+    mark.textContent = text.slice(idx, idx + t.length);
+    container.append(mark);
+    i = idx + t.length;
+  }
+  if (i < text.length) container.append(document.createTextNode(text.slice(i)));
+}
+
 async function doSearch(q) {
   q = (q || "").trim();
   if (!q) return;
@@ -701,9 +758,11 @@ async function doSearch(q) {
   if (msgs.length) {
     out.append(el("div", { class: "search-group-title" }, `MESSAGES (${msgs.length})`));
     for (const m of msgs) {
+      const snippet = el("span", { class: "result-snippet" });
+      highlightText(snippet, (m.snippet || "").replace(/[\[\]]/g, "").slice(0, 220), q);
       out.append(el("div", { class: "result-row", onclick: () => navigate(`#/session/${encodeURIComponent(m.session_id)}`) },
         sourceBadge("msg"), agentBadge(m.agent || "main"),
-        el("span", { class: "result-snippet" }, esc((m.snippet || "").replace(/[\[\]]/g, "").slice(0, 180))),
+        snippet,
         el("span", { class: "timeago" }, timeago(m.timestamp))));
     }
   }

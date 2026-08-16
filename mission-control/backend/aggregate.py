@@ -179,6 +179,25 @@ class Store:
 
         agents.sort(key=lambda a: a.last_activity_at or 0, reverse=True)
 
+        # Model usage rollup (tokens + cost per model)
+        model_stats: Dict[str, dict] = {}
+        for s in sessions:
+            name = s.model or "unknown"
+            ms = model_stats.setdefault(name, {
+                "model": name, "sessions": 0, "messages": 0,
+                "tool_calls": 0, "tokens": 0, "estimated_cost_usd": 0.0,
+            })
+            ms["sessions"] += 1
+            ms["messages"] += s.message_count
+            ms["tool_calls"] += s.tool_call_count
+            ms["tokens"] += (s.input_tokens + s.output_tokens
+                             + s.cache_read_tokens + s.cache_write_tokens
+                             + s.reasoning_tokens)
+            if s.estimated_cost_usd:
+                ms["estimated_cost_usd"] += s.estimated_cost_usd
+        model_stats = sorted(model_stats.values(), key=lambda x: -x["tokens"])[:10]
+        model_stats = list(model_stats)  # type: ignore[assignment]
+
         # Recent activity feed (last N sessions by activity)
         recent = sorted(
             sessions,
@@ -197,6 +216,7 @@ class Store:
             },
             "status_counts": dict(status_counts),
             "source_counts": dict(source_counts),
+            "model_stats": model_stats,
             "agents": [a.__dict__ for a in agents],
             "recent_activity": [s.to_dict() for s in recent],
             "db_errors": self._errors,
