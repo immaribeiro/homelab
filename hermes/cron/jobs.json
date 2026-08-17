@@ -3,7 +3,7 @@
     {
       "id": "17ed147e373f",
       "name": "Weekly e-book download sync",
-      "prompt": "Execute the run_downloader.sh script to synchronize and download all new e-books from the configured Telegram group chat ID (https://t.me/c/2152949316/3) into the absolute directory located at /Users/imma/Downloads/ebook-library/PT. This task must run completely without any user interaction. The output of this job serves as the completion report, which should summarize the files downloaded and confirm successful execution.",
+      "prompt": "Run the script /Users/imma/GitHub/homelab/telegram-downloader/run_downloader.sh and report its stdout verbatim as the completion report. Interpret its exit code: 0 = sync succeeded (may include \"0 new files\" — that is normal when nothing new was posted); 1 = configuration or runtime error, alert the user; 2 = Telegram session missing/invalid, tell the user the one-time interactive login must be re-run (command: cd /Users/imma/GitHub/homelab/telegram-downloader && ./run_downloader.sh --login). The script sources its env file itself and uses the repo venv; do not set environment variables or activate anything manually.",
       "skills": [
         "terminal"
       ],
@@ -108,15 +108,15 @@
       "schedule_display": "0 20 * * *",
       "repeat": {
         "times": null,
-        "completed": 1
+        "completed": 2
       },
       "enabled": true,
       "state": "scheduled",
       "paused_at": null,
       "paused_reason": null,
       "created_at": "2026-08-16T21:58:53.609313+01:00",
-      "next_run_at": "2026-08-17T20:00:00+01:00",
-      "last_run_at": "2026-08-16T21:59:03.595090+01:00",
+      "next_run_at": "2026-08-18T20:00:00+01:00",
+      "last_run_at": "2026-08-17T20:00:31.117382+01:00",
       "last_status": "ok",
       "last_error": null,
       "last_delivery_error": null,
@@ -127,5 +127,5 @@
       "fire_claim": null
     }
   ],
-  "updated_at": "2026-08-16T21:59:03.595606+01:00"
+  "updated_at": "2026-08-17T21:24:45.594193+01:00"
 }

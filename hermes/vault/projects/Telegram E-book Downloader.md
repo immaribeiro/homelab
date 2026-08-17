@@ -23,6 +23,8 @@ Automated weekly download of e-books from a private Telegram channel, running as
 
 ## Status (2026-08-17)
 
+**WORKING — first full sync succeeded.**
+
 Rewritten by architect + backend profile agents (commit `10f3d6e`):
 
 - **`downloader.py`** — canonical Telethon implementation. Env-file config
@@ -40,15 +42,18 @@ Rewritten by architect + backend profile agents (commit `10f3d6e`):
 - Env `TELEGRAM_TARGET_CHAT` fixed to `-1002152949316` (was bogus
   `39155241:c/2152949316`).
 
-## Remaining
+### Login (done 2026-08-17)
 
-- **One-time interactive login**: run `./run_downloader.sh --login` from the
-  repo dir with the user present (phone code, or scan QR via
-  `/tmp/tg_qr_login.py`). Session file `*.session` is git-ignored.
-- **Cron rewire**: point cron job `17ed147e373f` at the wrapper (it already
-  uses the repo as workdir). Cron prompt should report script stdout and
-  treat exit 2 as "login pending", exit 1 as an alert.
-- **First real download test** after login.
+Session created via QR login (scanned from phone). Session file
+`testbot.session` in the repo dir, git-ignored. To re-login later:
+`./run_downloader.sh --login` (phone code) or QR flow.
+
+### First sync result (2026-08-17)
+
+- **370 books / 1.4 GB** downloaded into `~/Downloads/ebook-library/PT`
+- First run: 272 downloaded, 124 skipped (dup), 0 failed, exit 0
+- Re-run (dedupe check): 0 downloaded, 396 skipped, 0 failed, exit 0 in 2.4s
+- Cron rewired to the working wrapper; weekly Sunday 07:00
 
 ## Related
 
