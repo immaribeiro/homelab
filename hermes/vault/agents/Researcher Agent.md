@@ -20,7 +20,7 @@ Deep research agent: web research, market/competitor intelligence, academic pape
 | **Model** | `deepseek/deepseek-v4-flash` via Nous |
 | **Cost** | $0.05 in / $0.10 out per 1M (ultra-cheap) |
 | **Fallback** | GLM 5.2 via Nous → LMStudio qwen3.5-9b-mlx |
-| **Telegram** | topic pending (thread TBD) |
+| **Telegram** | 🔬 Research topic (thread 431) |
 | **Reasoning** | medium |
 | **Max turns** | 120 |
 | **Terminal cwd** | `/Users/imma/GitHub` |
@@ -42,7 +42,7 @@ Core: `deep-research-patterns` (multi-source gathering → analysis → synthesi
 
 ## Telegram
 
-Topic not yet created — routing pending. Assign thread ID in `config.yaml` `profile_routes` once the topic exists.
+🔬 Research topic — thread 431, wired in `config.yaml` `profile_routes` as `tg-researcher`. Group `-1004449482428`.
 
 ## Related
 

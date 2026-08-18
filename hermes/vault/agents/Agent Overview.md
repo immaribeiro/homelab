@@ -106,7 +106,7 @@ Six Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a sin
 | **Model** | `deepseek/deepseek-v4-flash` via Nous |
 | **Cost** | $0.05 in / $0.10 out per 1M (ultra-cheap) |
 | **Fallback** | GLM 5.2 via Nous → LMStudio qwen3.5-9b-mlx |
-| **Telegram** | topic pending (thread TBD) |
+| **Telegram** | 🔬 Research topic (thread 431) |
 | **Role** | Deep research: web research, market/competitor intel, papers, cited reports |
 | **Tools** | No tts, image_gen, video, video_gen |
 | **Reasoning** | medium |

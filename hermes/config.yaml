@@ -566,6 +566,11 @@ gateway:
       chat_id: '-1004449482428'
       thread_id: '14'
       profile: engineer
+    - name: tg-researcher
+      platform: telegram
+      chat_id: '-1004449482428'
+      thread_id: '431'
+      profile: researcher
 streaming:
   enabled: false
   transport: auto

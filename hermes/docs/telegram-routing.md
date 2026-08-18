@@ -40,7 +40,7 @@ All six Hermes agents (main, architect, backend, frontend, engineer, researcher)
 | ⚙️ Backend | 4 | backend | DeepSeek V4 Flash via Nous | $0.05 / $0.10 |
 | 🎨 Frontend | 5 | frontend | Qwen 3.5 9B via LMStudio | FREE |
 | 🔧 Engineer | 14 | engineer | DeepSeek V4 Flash via Nous | $0.05 / $0.10 |
-| 🔬 Research | TBD | researcher | DeepSeek V4 Flash via Nous | $0.05 / $0.10 |
+| 🔬 Research | 431 | researcher | DeepSeek V4 Flash via Nous | $0.05 / $0.10 |
 
 **Group chat ID:** `-1004449482428` (group name: "Hermes")
 
@@ -81,6 +81,12 @@ gateway:
       chat_id: "-1004449482428"
       thread_id: "14"
       profile: engineer
+
+    - name: tg-researcher
+      platform: telegram
+      chat_id: "-1004449482428"
+      thread_id: "431"
+      profile: researcher
 ```
 
 ## Important: Telegram Credentials
@@ -102,6 +108,7 @@ Each profile has a different SOUL.md personality:
 - **backend** — talks about APIs, tests, server-side code
 - **frontend** — talks about UI, CSS, accessibility, components
 - **engineer** — talks about kubectl, clusters, infrastructure
+- **researcher** — talks about sources, citations, confidence, verification
 
 Ask any agent: "What model are you?" and it will tell you.
 
