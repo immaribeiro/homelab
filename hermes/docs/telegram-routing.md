@@ -19,8 +19,8 @@ All six Hermes agents (main, architect, backend, frontend, engineer, researcher)
      ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐
      │  main         │ │  architect    │ │  backend      │ │  frontend     │ │  engineer     │ │  researcher   │
      │  (default)    │ │  (profile)    │ │  (profile)    │ │  (profile)    │ │  (profile)    │ │  (profile)    │
-     │ GPT-5.6 Luna  │ │ DeepSeek V4   │ │ DeepSeek V4   │ │ Qwen 3.5 9B   │ │ DeepSeek V4   │ │ DeepSeek V4   │
-     │ ChatGPT Go    │ │ Pro (Nous)    │ │ Flash (Nous)  │ │ LMStudio loc. │ │ Flash (Nous)  │ │ Flash (Nous)  │
+     │ GPT-5.6 Luna  │ │ DeepSeek V4   │ │ DeepSeek V4   │ │ DeepSeek V4   │ │ DeepSeek V4   │ │ DeepSeek V4   │
+     │ ChatGPT Go    │ │ Pro (Nous)    │ │ Flash (Nous)  │ │ Flash (Nous)  │ │ Flash (Nous)  │ │ Flash (Nous)  │
      └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘
 ```
 
