@@ -1,17 +1,17 @@
 _Created: 2026-03-30_
 §
-Hermes config: hermes.json defines providers/models, config.yaml runtime settings — both must be updated for changes to take effect. API keys → .env, settings → config.yaml.
+Hermes config: hermes.json = providers/models, config.yaml = settings; API keys → .env. `hermes config set` mangles list values (stores as JSON string) — patch config.yaml surgically instead. Route/model changes need gateway restart from a shell outside the gateway.
 §
-Mission Control: session observability app ~/GitHub/homelab/mission-control/ (:9118, launchd ai.hermes.mission-control, token ~/.hermes/mission-control/token, http://imma-mini:9118).
+Mission Control: session dashboard ~/GitHub/homelab/mission-control/ (:9118, launchd ai.hermes.mission-control, token ~/.hermes/mission-control/token, http://imma-mini:9118). Aggregates ALL profile state DBs; session mgmt (archive/delete lease-guarded, hanging filter, sort, pagination).
 §
-User works across multiple machines (Mac Mini as hub, Mac Air as client). Wants same Hermes sessions/memory/skills from any machine. NordVPN on Mac Mini conflicts with Tailscale — use LAN IP fallback or router-level VPN.
+Multi-machine: Mac Mini = hub (imma-mini, 192.168.8.161, 100.101.63.91), MacBook = client (desktop app → Mini gateway). NordVPN on Mini conflicts with Tailscale — use LAN IP fallback. 'localhost' preview = MacBook loopback; use tailnet hostnames (imma-mini) for Mini services.
 §
-User wants implementation work split across configured Hermes profiles (architect/backend/frontend/engineer), each using its own configured model, skills, and memory — main agent orchestrates, reviews, integrates. Engineer profile has full autonomy on infra ops (start VMs, fix configs, deploy, restart services without asking).
+Profiles: main + architect/backend/frontend/engineer/researcher, own model/skills/memory; main orchestrates/reviews/integrates. Engineer full autonomy on infra ops. Researcher = deep research (deepseek-v4-flash + glm-5.2).
 §
 K3s Lima cluster: VMs need `lima:shared` network + `--flannel-iface lima0`; on restart with new config, CA certs+node-token change — workers need the new token.
 §
-User's Hermes desktop app runs on the MacBook (connects to the Mini's gateway). The preview pane's 'localhost' is the MacBook's own loopback — for services on the Mini use tailnet hostnames/IPs (imma-mini, 100.101.63.91).
+Telegram ebook downloader: ~/GitHub/homelab/telegram-downloader/ (Telethon downloader.py + run_downloader.sh; creds ~/.hermes/env/telegram-downloader.env). Channel -1002152949316 → ~/Downloads/ebook-library/PT, cron 17ed147e373f Sun 07:00. ~272 author folders.
 §
-Telegram ebook downloader: ~/GitHub/homelab/telegram-downloader/ (Telethon downloader.py + run_downloader.sh = download→organize, recursive dedupe; creds ~/.hermes/env/telegram-downloader.env VALID). Channel -1002152949316 → ~/Downloads/ebook-library/PT, cron 17ed147e373f Sun 07:00. Library organized into ~272 author folders (~358 books, 11 in _duplicates/).
+Bookshelf: e-book library UI at https://books.immas.org (ns books, ghcr.io/immaribeiro/bookshelf via GH Actions CI — Mini Docker can't pull). Repo ~/GitHub/bookshelf (FastAPI+React+OPDS/Kobo + epub.js). Users imma+joaoreis, pw in secret bookshelf-auth. Uploads staged k3s-worker-1 → homelab/scripts/bookshelf-upload-sync.sh (launchd ai.hermes.bookshelf-upload-sync, 3min) → PT/ + rescan. Lima mounts Mac home RO → in-cluster writes 409; pod pinned k3s-worker-1.
 §
-Bookshelf: e-book library web UI → books.immas.org. Plan: ~/GitHub/homelab/.hermes/plans/2026-08-18_075836-bookshelf-library.md. Repo ~/GitHub/bookshelf (FastAPI + React + OPDS for Kobo). Bookshelf owns library organization (organizer.py port, POST /api/organize, ORGANIZE_ON_SCAN, RW hostPath mount). Deploy: k8s/manifests/bookshelf.yml, ns books, ghcr.io/immaribeiro/bookshelf, tunnel route books.immas.org.
+awesome-llm-apps cloned ~/GitHub/awesome-llm-apps (Apache-2.0) — skills source (see skills_list). Researcher profile: deep-research-patterns/llm-memory-patterns/token-optimization; Telegram 🔬 thread 431 (tg-researcher).
