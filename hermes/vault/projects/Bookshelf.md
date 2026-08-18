@@ -25,8 +25,10 @@ Personal e-book library web app — browse covers, search, and download books fr
 ## Features
 
 - Cover grid (covers extracted from EPUB metadata), live search, author filter, sort
+- **Pagination bar** (prev/next + page numbers) with per-page selector (12/24/48/96)
+- **Language filter** (normalized 2-letter codes: pt 307 · en 41 · es 2 · unknown 8) + language badges on covers
 - Download endpoint (byte-exact), detail modal, login screen
-- **Library organizer**: `POST /api/organize` + auto-organize on scan (`ORGANIZE_ON_SCAN=true`) — moves new downloads into author folders, MD5-dedupes to `_duplicates/` (idempotent, 0 moves on stable library)
+- **Library organizer**: `POST /api/organize` + auto-organize on scan (`ORGANIZE_ON_SCAN`) — moves new downloads into author folders, MD5-dedupes to `_duplicates/` (idempotent, 0 moves on stable library). Runs on the Mac host; in-cluster returns 409 (Lima mounts home read-only)
 - OPDS 1.2 catalog (root / all books / search) — Kobo-ready
 
 ## Status (2026-08-18)
