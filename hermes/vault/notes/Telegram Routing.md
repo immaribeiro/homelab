@@ -1,6 +1,6 @@
 ---
 created: 2026-08-16
-updated: 2026-08-16
+updated: 2026-08-18
 ---
 
 # 📱 Telegram Routing
@@ -16,9 +16,9 @@ Single Telegram bot (`@ImmaHermesBot`) → single gateway → `profile_routes` d
        │
   Hermes Gateway (multiplex_profiles: true)
        │
-  ┌────┼────┬────┬────┬────┐
-  │    │    │    │    │    │
- main arch back front eng
+  ┌────┼────┬────┬────┬────┬────┐
+  │    │    │    │    │    │    │
+ main arch back front eng  research
 ```
 
 ## Live Configuration
@@ -33,6 +33,7 @@ Single Telegram bot (`@ImmaHermesBot`) → single gateway → `profile_routes` d
 | ⚙️ Backend | 4 | backend | [[Backend Agent]] |
 | 🎨 Frontend | 5 | frontend | [[Frontend Agent]] |
 | 🔧 Engineer | 14 | engineer | [[Engineer Agent]] |
+| 🔬 Research | 431 | researcher | [[Researcher Agent]] |
 
 **Personal DM** (chat_id `1022966386`) → always goes to default (main) — no route needed.
 
@@ -78,6 +79,11 @@ gateway:
       chat_id: "-1004449482428"
       thread_id: "14"
       profile: engineer
+    - name: tg-researcher
+      platform: telegram
+      chat_id: "-1004449482428"
+      thread_id: "431"
+      profile: researcher
 ```
 
 ## Full Documentation
