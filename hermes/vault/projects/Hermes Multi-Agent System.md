@@ -30,7 +30,7 @@ Hermes Agent framework configured on the Mac Mini with 4 agent profiles, Telegra
 
 - **Profile multiplexing** — single gateway, single bot, 4 isolated agent profiles
 - **Telegram topic routing** — each topic maps to a different agent (see [[Telegram Routing]])
-- **Cost-optimized models** — frontend uses local LMStudio (free), backend uses ultra-cheap Qwen3 Coder
+- **Cost-optimized models** — frontend uses DeepSeek V4 Flash via Nous (ultra-cheap) with local LMStudio as offline fallback; backend uses ultra-cheap Qwen3 Coder
 - **Git-synced configs** — all configs version-controlled in the homelab repo
 - **Obsidian vault** — agent management UI, project notes, ADRs, accessible from any machine via SMB/Tailscale
 

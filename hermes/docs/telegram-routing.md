@@ -38,7 +38,7 @@ All six Hermes agents (main, architect, backend, frontend, engineer, researcher)
 | General | 1 | default (main) | GPT-5.6 Luna (ChatGPT Go) | subscription |
 | 🏛 Architecture | 3 | architect | DeepSeek V4 Pro 0813 via Nous | $0.35 / $0.70 |
 | ⚙️ Backend | 4 | backend | DeepSeek V4 Flash via Nous | $0.05 / $0.10 |
-| 🎨 Frontend | 5 | frontend | Qwen 3.5 9B via LMStudio | FREE |
+| 🎨 Frontend | 5 | frontend | DeepSeek V4 Flash via Nous | $0.05/$0.10 |
 | 🔧 Engineer | 14 | engineer | DeepSeek V4 Flash via Nous | $0.05 / $0.10 |
 | 🔬 Research | 431 | researcher | DeepSeek V4 Flash via Nous | $0.05 / $0.10 |
 

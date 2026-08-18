@@ -29,7 +29,7 @@ Focused implementation agent for server-side code, APIs, databases, and infrastr
 
 ## LMStudio Model-Slot Strategy
 
-Frontend uses `qwen3.5-9b-mlx` locally; backend falls back to `google/gemma-4-e4b` locally. This avoids model-slot conflicts in LMStudio (one model at a time).
+Frontend's primary is `deepseek/deepseek-v4-flash` via Nous (since 2026-08-18); it falls back to `qwen3.5-9b-mlx` locally for offline. Backend falls back to `google/gemma-4-e4b` locally. This avoids model-slot conflicts in LMStudio (one model at a time).
 
 ## Toolset Restrictions
 

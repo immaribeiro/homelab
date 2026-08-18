@@ -70,9 +70,9 @@ Six Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a sin
 |-------|-------|
 | **Profile** | frontend |
 | **Config** | `~/GitHub/homelab/hermes/profiles/frontend/config.yaml` |
-| **Model** | `qwen3.5-9b-mlx` via LMStudio (local) |
-| **Cost** | FREE |
-| **Fallback** | deepseek-v4-flash via Nous → GLM 5.2 |
+| **Model** | `deepseek/deepseek-v4-flash` via Nous ($0.05/$0.10) |
+| **Cost** | Ultra-cheap (~$0.01/day) |
+| **Fallback** | LMStudio qwen3.5-9b-mlx (local, offline) → GLM 5.2 |
 | **Telegram** | 🎨 Frontend (thread 5) |
 | **Role** | UI/UX, React, CSS, accessibility |
 | **Tools** | No tts, video, video_gen |
@@ -133,7 +133,7 @@ Agents work on these projects:
 | main | ~50K | ~$0.00 (subscription; fallback only) |
 | architect | ~30K | ~$0.03 |
 | backend | ~100K | ~$0.02 |
-| frontend | ~100K (local) | $0.00 |
+| frontend | ~100K | ~$0.01 |
 | engineer | ~50K | ~$0.01 |
 | researcher | ~30K | ~$0.01 |
-| **Total** | ~360K | **~$0.07/day** |
+| **Total** | ~360K | **~$0.08/day** |

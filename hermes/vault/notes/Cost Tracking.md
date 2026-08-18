@@ -14,7 +14,7 @@ Model costs and daily estimates for each agent. Prices per 1M tokens (input / ou
 | Main | `gpt-5.6-luna` via openai-codex (ChatGPT Go) | $0.00 | $0.00 | Covered by ChatGPT subscription — no per-token charge |
 | Architect | `deepseek/deepseek-v4-pro-0813` via Nous | $0.35 | $0.70 | Deep reasoning |
 | Backend | `deepseek/deepseek-v4-flash` via Nous | $0.05 | $0.10 | Ultra-cheap |
-| Frontend | `qwen3.5-9b-mlx` (LMStudio local) | $0.00 | $0.00 | FREE |
+| Frontend | `deepseek/deepseek-v4-flash` via Nous | $0.05 | $0.10 | Ultra-cheap |
 | Engineer | `deepseek/deepseek-v4-flash` via Nous | $0.05 | $0.10 | Ultra-cheap |
 | Researcher | `deepseek/deepseek-v4-flash` via Nous | $0.05 | $0.10 | Ultra-cheap |
 
@@ -22,10 +22,10 @@ Model costs and daily estimates for each agent. Prices per 1M tokens (input / ou
 
 | Model | In | Out | Used by |
 |-------|----|-----|---------|
-| `deepseek/deepseek-v4-flash` via Nous | $0.05 | $0.10 | Main fallback 0, Frontend fallback 0 |
+| `deepseek/deepseek-v4-flash` via Nous | $0.05 | $0.10 | Frontend primary, Main fallback 0, Engineer/Researcher primary |
 | `z-ai/glm-5.2` via Nous | $0.25 | $0.77 | Architect fallback 0, Backend fallback 1, Frontend fallback 1, Engineer fallback 0 |
 | `openai/gpt-5.6-luna` via Nous | $0.10 | $0.60 | Delegation (all profiles) |
-| `lmstudio/qwen3.5-9b-mlx` (local) | $0.00 | $0.00 | Main fallback 1, Architect fallback 1, Researcher fallback 1 |
+| `lmstudio/qwen3.5-9b-mlx` (local) | $0.00 | $0.00 | Frontend fallback 0 (offline), Main fallback 1, Architect fallback 1, Researcher fallback 1 |
 | `lmstudio/google/gemma-4-e4b` (local) | $0.00 | $0.00 | Backend fallback 0, Engineer fallback 1 |
 
 ## Daily Cost Estimate
@@ -37,12 +37,12 @@ Rough estimates — actual cost depends on usage and how often fallbacks fire.
 | main | ~50K | ~$0.00 (subscription; Nous fallback only) |
 | architect | ~30K | ~$0.03 |
 | backend | ~100K | ~$0.02 |
-| frontend | ~100K (local) | $0.00 |
+| frontend | ~100K | ~$0.01 |
 | engineer | ~50K | ~$0.01 |
 | researcher | ~30K | ~$0.01 |
-| **Total** | **~360K** | **~$0.07/day** |
+| **Total** | **~360K** | **~$0.08/day** |
 
-**Monthly estimate:** ~$2.10 (if usage is consistent)
+**Monthly estimate:** ~$2.40 (if usage is consistent)
 
 **Comparison:** if all 6 agents ran on GLM 5.2 exclusively: ~$0.41/day ≈ ~$12/month
 **Savings:** ~80% reduction by using ChatGPT subscription + cheap/local models.

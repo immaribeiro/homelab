@@ -11,7 +11,7 @@ Local models running on LMStudio (Mac Mini M4, 24GB RAM).
 
 | Model ID | Type | Used By | Notes |
 |----------|------|---------|-------|
-| `qwen3.5-9b-mlx` | LLM (9B) | Frontend (primary), Main/Architect/Researcher (fallback) | General + coding, MLX-optimized |
+| `qwen3.5-9b-mlx` | LLM (9B) | Frontend/Architect (offline fallback), Main/Researcher (fallback) | General + coding, MLX-optimized |
 | `google/gemma-4-e4b` | LLM (4B) | Backend + Engineer (fallback) | Different model than frontend to avoid slot conflicts |
 | `text-embedding-nomic-embed-text-v1.5` | Embedding | — | For future RAC/vector search |
 
@@ -25,7 +25,7 @@ Local models running on LMStudio (Mac Mini M4, 24GB RAM).
 
 LMStudio can serve one model at a time (unless multi-model mode is enabled). To avoid conflicts:
 
-- **Frontend** uses `qwen3.5-9b-mlx` as primary local model
+- **Frontend** uses `qwen3.5-9b-mlx` as **offline fallback** (primary is `deepseek/deepseek-v4-flash` via Nous since 2026-08-18)
 - **Backend** falls back to `google/gemma-4-e4b` (different model)
 - This way, if both agents go local simultaneously, they use different models
 
