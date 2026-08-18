@@ -57,6 +57,6 @@ Session created via QR login (scanned from phone). Session file
 
 ## Related
 
-- [[Bookshelf]] — web UI for this library (books.immas.org, built 2026-08-18)
+- [[Bookshelf]] — web UI for this library (**live at https://books.immas.org**, built 2026-08-18)
 - [[Homelab Infrastructure]] — lives in the homelab repo
 - [[Hermes Config]] — cron job is defined in `cron/jobs.json` (symlinked to repo)

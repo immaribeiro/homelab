@@ -31,9 +31,15 @@ Personal e-book library web app — browse covers, search, and download books fr
 
 ## Status (2026-08-18)
 
-- **Planned** — full implementation plan written (18 tasks), repo scaffolded
-- **In progress** — backend (Tasks 1–8, organizer port) + frontend (Tasks 9–14) built in parallel by profile agents; then CI image build, k8s deploy, tunnel route, E2E verification
-- **Related session** — Telegram library organization pass (author folders, recursive dedupe pipeline) finalized in `telegram-downloader/`
+**🟢 DEPLOYED & LIVE — https://books.immas.org**
+
+- Backend + frontend built in parallel by profile agents, reviewed + integrated (7/7 tests green)
+- Multi-arch image built by GitHub Actions CI → `ghcr.io/immaribeiro/bookshelf:latest`
+- Deployed in namespace `books` (pod 1/1 Running), tunnel route + DNS live, homepage card added
+- **Login:** username `imma` / password in k8s secret `bookshelf-auth` (ns `books`)
+- Verified: auth 401/200, covers (JPEG), downloads byte-identical, OPDS valid XML, search
+- **Note:** organization runs on the Mac host (`telegram-downloader` cron pipeline) — Lima VMs mount the Mac home read-only, so the in-app Organize button returns a clean 409 in-cluster (works where the FS is writable)
+- **Known issue:** Docker Desktop on the Mini can't pull images (VM network) — CI builds used instead; restart Docker Desktop to fix local builds
 
 ## Related
 
