@@ -263,7 +263,11 @@ async def download_messages(client, entity, cfg):
             continue
 
         target_path = cfg.download_dir / clean
-        if target_path.exists():
+        # Files may live flat (fresh download) or in author subfolders
+        # (after organize_library.py ran) — dedupe against the whole tree.
+        if target_path.exists() or any(
+            p.name == clean for p in cfg.download_dir.rglob("*") if p.is_file()
+        ):
             duplicates += 1
             consecutive_skips += 1
             continue

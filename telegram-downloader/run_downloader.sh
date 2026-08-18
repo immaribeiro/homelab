@@ -1,7 +1,7 @@
 #!/bin/bash
-# Headless cron wrapper for downloader.py.
-# Sources the external env file, then execs the script so its exit code
-# propagates honestly to the scheduler.
+# Headless cron wrapper: download new e-books, then organize the library
+# into Language/Author/ folders. Exit codes propagate honestly.
+#   0 = success (download + organize), 1 = error, 2 = session needs --login
 
 set -euo pipefail
 
@@ -15,4 +15,9 @@ set +a
 
 PY="$DIR/.venv/bin/python"
 
-exec "$PY" "$DIR/downloader.py" "$@"
+# 1) Download (headless unless --login passed). Exits 2 if session missing.
+"$PY" "$DIR/downloader.py" "$@"
+
+# 2) Organize the library into author folders (idempotent; dedupes by MD5,
+#    moves exact duplicates to _duplicates/).
+"$PY" "$DIR/organize_library.py" --execute --dir "${TELEGRAM_DOWNLOAD_DIR:-/Users/imma/Downloads/ebook-library/PT}"
