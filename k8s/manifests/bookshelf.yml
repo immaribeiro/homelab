@@ -60,8 +60,10 @@ spec:
               value: /data/books
             - name: COVERS_DIR
               value: /data/covers
+            # Organization runs on the Mac host (telegram-downloader cron pipeline);
+            # the Lima VMs mount the Mac home read-only, so in-cluster writes are impossible.
             - name: ORGANIZE_ON_SCAN
-              value: "true"
+              value: "false"
           volumeMounts:
             - name: library
               mountPath: /data/books
