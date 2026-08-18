@@ -42,6 +42,8 @@ data:
         service: http://192.168.8.161:9119
       - hostname: books.immas.org
         service: http://bookshelf.books.svc.cluster.local:80
+      - hostname: nuno.immas.org
+        service: http://nuno-site.nuno.svc.cluster.local:80
       - service: http_status:404
 ---
 apiVersion: apps/v1
