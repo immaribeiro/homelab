@@ -108,15 +108,15 @@
       "schedule_display": "0 20 * * *",
       "repeat": {
         "times": null,
-        "completed": 2
+        "completed": 3
       },
       "enabled": true,
       "state": "scheduled",
       "paused_at": null,
       "paused_reason": null,
       "created_at": "2026-08-16T21:58:53.609313+01:00",
-      "next_run_at": "2026-08-18T20:00:00+01:00",
-      "last_run_at": "2026-08-17T20:00:31.117382+01:00",
+      "next_run_at": "2026-08-19T20:00:00+01:00",
+      "last_run_at": "2026-08-18T20:00:11.247950+01:00",
       "last_status": "ok",
       "last_error": null,
       "last_delivery_error": null,
@@ -125,7 +125,197 @@
       "enabled_toolsets": null,
       "workdir": null,
       "fire_claim": null
+    },
+    {
+      "id": "a3fcc9b718aa",
+      "name": "Reconstruction import watcher",
+      "prompt": "REAL-DATA IMPORT for the house reconstruction app — the monitor fired because the Casa source files just became readable (output: READY <path> <n> files). Run the import now.\n\nCONTEXT: App https://reconstruction.immas.org, k8s namespace reconstruction-app (deployment reconstruction-app, single replica pod), Postgres in namespace reconstruction-db. The import script /Users/imma/GitHub/reconstruction/scripts/import_real_data.py is idempotent (--dry-run / --force), imports documents from a Casa dir + 6 phases + 3 workers + 6 cost categories + 19 costs. It must run INSIDE the app pod (DB + MinIO reachable there); the Casa files must be copied in too. The source Casa tree is at the path in the monitor output (usually /Users/imma/Documents/Casa).\n\nSTEPS:\n1. kubectl -n reconstruction-app get pods to find the pod name.\n2. kubectl -n reconstruction-app cp /Users/imma/GitHub/reconstruction/scripts/import_real_data.py reconstruction-app/<pod>:/tmp/import_real_data.py (idempotent — overwrite is fine).\n3. Copy the Casa dir into the pod: tar czf /tmp/casa.tgz -C <parent> <casa-basename>, kubectl cp the tarball, extract to /tmp/casa inside the pod. If the dir is huge, limit to readable files (skip dataless).\n4. DRY RUN: kubectl exec <pod> -- python3 /tmp/import_real_data.py --casa-dir /tmp/casa --dry-run — expect ~120 documents, 6 phases, 3 workers, 6 categories, ~19 costs. If the count is well under 100 documents, abort and report (files probably still dataless).\n5. REAL RUN without --dry-run. Exit 0 expected.\n6. VERIFY: psql row counts via kubectl -n reconstruction-db exec deploy/reconstruction-postgres (documents, phases, workers, costs, cost_categories); document files in pod storage (/app/storage/documents); app health (curl http://localhost:8000/ from inside the pod, or python urllib — the pod may lack curl).\n7. Clean up /tmp files in the pod.\n8. Report the full summary in your final message (this delivery goes to the user's Telegram).",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "provider_snapshot": "openai-codex",
+      "model_snapshot": "gpt-5.6-luna",
+      "base_url": null,
+      "script": null,
+      "no_agent": false,
+      "monitor_script": "casa_ready.sh",
+      "monitor_url": null,
+      "monitor_state": {
+        "last_output_hash": "8eea306fb2dce575f1002fb8fc33950f8a229487d38b3a3945a6caa9528e6aaf",
+        "last_changed_at": "2026-08-18T14:25:24.788831+01:00"
+      },
+      "context_from": null,
+      "schedule": {
+        "kind": "interval",
+        "minutes": 15,
+        "display": "every 15m"
+      },
+      "schedule_display": "every 15m",
+      "repeat": {
+        "times": null,
+        "completed": 40
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-08-18T14:09:52.944639+01:00",
+      "next_run_at": "2026-08-19T00:29:51.038929+01:00",
+      "last_run_at": "2026-08-19T00:14:51.038929+01:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "telegram:-1004449482428:2",
+      "origin": null,
+      "enabled_toolsets": null,
+      "workdir": null,
+      "fire_claim": null
+    },
+    {
+      "id": "93af739007fa",
+      "name": "iCloud Mac Mini reminder",
+      "prompt": "",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "provider_snapshot": null,
+      "model_snapshot": null,
+      "base_url": null,
+      "script": "remind-icloud-macmini.sh",
+      "no_agent": true,
+      "monitor_script": null,
+      "monitor_url": null,
+      "monitor_state": null,
+      "context_from": null,
+      "schedule": {
+        "kind": "once",
+        "run_at": "2026-08-24T09:00:00+01:00",
+        "display": "once at 2026-08-24 09:00"
+      },
+      "schedule_display": "once at 2026-08-24 09:00",
+      "repeat": {
+        "times": 1,
+        "completed": 0
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-08-18T16:26:46.876052+01:00",
+      "next_run_at": "2026-08-24T09:00:00+01:00",
+      "last_run_at": null,
+      "last_status": null,
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "origin",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "-1004449482428",
+        "chat_name": "Hermes",
+        "thread_id": "2",
+        "user_id": "1022966386"
+      },
+      "enabled_toolsets": null,
+      "workdir": null
+    },
+    {
+      "id": "eb7ea48fe83c",
+      "name": "Homelab vault+memory sync",
+      "prompt": "A homelab ground-truth change was detected (agent configs, SOULs, memories, skills tree, or cron jobs changed since the last tick). Sync the Obsidian vault and repo docs to match, and make sure memory files are committed.\n\nFollow the homelab-vault-sync skill workflow EXACTLY:\n\n1. Batch-read the ground-truth configs: ~/.hermes/config.yaml, every ~/.hermes/profiles/*/config.yaml (and their repo mirrors under ~/GitHub/homelab/hermes/profiles/*/), hermes.json files, SOUL.md files, profile.yaml files.\n2. Batch-read the vault agent notes (~/GitHub/homelab/hermes/vault/agents/*.md) and notes (~/GitHub/homelab/hermes/vault/notes/*.md) that document agents: Agent Overview.md, per-agent notes, Cost Tracking.md, Telegram Routing.md, Hermes Config.md, LMStudio Models.md, Skills Library.md.\n3. Diff field by field: model, provider, fallback chain ORDER, reasoning effort, max turns, disabled toolsets, terminal cwd, Telegram thread, profile list, cost numbers (check nous-model-pricing.md, never guess).\n4. Patch the vault/docs files that drifted. Watch the known traps: new profiles missing from overview count/routing diagrams/config excerpts/setup loops; stale fallback chains; wrong pricing.\n5. Memory: the live memory files (~/.hermes/memories/MEMORY.md, USER.md and ~/.hermes/profiles/*/memories/) are symlinked into the repo — verify symlinks exist and point at ~/GitHub/homelab/hermes/. If a profile's memories/ dir is missing (e.g. researcher), create the symlinks. If MEMORY.md/USER.md content drifted from the repo copy, copy the live content into the repo file (they should be identical via symlink).\n6. ALWAYS refresh the \"Last synced\" line at the top of vault/agents/Agent Overview.md with the current date/time (format: `> 🔄 **Last synced:** YYYY-MM-DD HH:MM (auto-sync watchdog, cron eb7ea48fe83c)`), even if no other drift was found — the line proves the watchdog ran.\n7. Commit ONLY the vault/, docs/, and memories/ files as their own scoped commit with a clear message (e.g. 'docs(vault): sync <what changed>'). Use git add with explicit paths — do NOT stage config.yaml, cron/jobs.json, .env, or unrelated pre-existing changes. Leave unrelated working-tree changes unstaged.\n8. Do NOT restart the gateway, do NOT edit config.yaml, do NOT touch .env or auth.json.\n\nDeliver a concise summary: what changed in ground truth, what vault/docs files were updated, the commit hash, and any drift traps you fixed. If everything was already in sync (no vault changes needed), say so in one line — the memory commit and the Last synced refresh may still be needed.",
+      "skills": [
+        "homelab-vault-sync"
+      ],
+      "skill": "homelab-vault-sync",
+      "model": null,
+      "provider": null,
+      "provider_snapshot": "openai-codex",
+      "model_snapshot": "gpt-5.6-luna",
+      "base_url": null,
+      "script": null,
+      "no_agent": false,
+      "monitor_script": "vault-memory-drift.py",
+      "monitor_url": null,
+      "monitor_state": {
+        "last_output_hash": "ac9d1b7de243fb764984f1d630d335a7661a1afe0972d9a789bef323b5ba46f0",
+        "last_changed_at": "2026-08-18T23:34:44.726298+01:00"
+      },
+      "context_from": null,
+      "schedule": {
+        "kind": "interval",
+        "minutes": 360,
+        "display": "every 360m"
+      },
+      "schedule_display": "every 360m",
+      "repeat": {
+        "times": null,
+        "completed": 2
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-08-18T17:29:56.424581+01:00",
+      "next_run_at": "2026-08-19T05:37:10.027266+01:00",
+      "last_run_at": "2026-08-18T23:37:10.027266+01:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "telegram",
+      "origin": null,
+      "enabled_toolsets": null,
+      "workdir": "/Users/imma/GitHub/homelab",
+      "fire_claim": null
+    },
+    {
+      "id": "e603916439e3",
+      "name": "Events fetch (nuno site)",
+      "prompt": "Fetch Porto/Braga cultural events for the nuno.immas.org site and commit/push when changed.",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "provider_snapshot": null,
+      "model_snapshot": null,
+      "base_url": null,
+      "script": "events-fetch.sh",
+      "no_agent": true,
+      "monitor_script": null,
+      "monitor_url": null,
+      "monitor_state": null,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 6 * * *",
+        "display": "0 6 * * *"
+      },
+      "schedule_display": "0 6 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 0
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-08-18T22:37:47.018201+01:00",
+      "next_run_at": "2026-08-19T06:00:00+01:00",
+      "last_run_at": null,
+      "last_status": null,
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "telegram",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "-1004449482428",
+        "chat_name": "Hermes",
+        "thread_id": "2",
+        "user_id": "1022966386"
+      },
+      "enabled_toolsets": null,
+      "workdir": null
     }
   ],
-  "updated_at": "2026-08-17T21:24:45.594193+01:00"
+  "updated_at": "2026-08-19T00:14:51.039009+01:00"
 }

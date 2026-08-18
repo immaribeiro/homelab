@@ -475,6 +475,7 @@ approvals:
 command_allowlist:
   - script execution via -e/-c flag
   - execute_code
+  - command parser limit or malformed executable payload
   - in-place edit of system config
   - in-place edit of Hermes config/env
   - stop/restart system service
