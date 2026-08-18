@@ -13,6 +13,8 @@ stringData:
   BOOKSHELF_AUTH_ENABLED: "true"
   BOOKSHELF_USERNAME: "imma"
   BOOKSHELF_PASSWORD: "KxrNgvjD7BM3DPO0zTt9KxmcvhbQgrdc"
+  # Multi-user list takes precedence over the single USERNAME/PASSWORD above.
+  BOOKSHELF_USERS: '[{"username":"imma","password":"KxrNgvjD7BM3DPO0zTt9KxmcvhbQgrdc"},{"username":"joaoreis","password":"7Jd5riCMF9nV9IGK"}]'
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -44,6 +46,8 @@ spec:
       labels:
         app: bookshelf
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: k3s-worker-1   # uploads staging dir lives on this node (host sync reads it)
       imagePullSecrets:
         - name: ghcr-secret
       containers:
@@ -60,6 +64,8 @@ spec:
               value: /data/books
             - name: COVERS_DIR
               value: /data/covers
+            - name: UPLOADS_DIR
+              value: /data/uploads
             # Organization runs on the Mac host (telegram-downloader cron pipeline);
             # the Lima VMs mount the Mac home read-only, so in-cluster writes are impossible.
             - name: ORGANIZE_ON_SCAN
@@ -69,6 +75,8 @@ spec:
               mountPath: /data/books
             - name: covers
               mountPath: /data/covers
+            - name: uploads
+              mountPath: /data/uploads
           resources:
             requests:
               cpu: 100m
@@ -96,6 +104,10 @@ spec:
         - name: covers
           persistentVolumeClaim:
             claimName: bookshelf-covers
+        - name: uploads
+          hostPath:
+            path: /home/imma.linux/bookshelf-uploads
+            type: Directory
 ---
 apiVersion: v1
 kind: Service
