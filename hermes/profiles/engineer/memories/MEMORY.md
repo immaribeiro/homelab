@@ -9,3 +9,5 @@ Cluster: 3 Lima VMs (k3s-control-1, k3s-worker-1, k3s-worker-2). K3s with MetalL
 Recovery: `make post-reboot` starts everything. Manual: `make start-vms`, `make kubeconfig`, `make verify-cluster`.
 §
 Owner: Imma (@i6m6m6a). Homelab repo at ~/GitHub/homelab. Terminal cwd: /Users/imma/GitHub/homelab.
+§
+macOS quirk (this Mac): ~/Documents files can be dataless iCloud stubs — stat -f %Sf shows 'dataless', reads fail EDEADLK. Diagnose with: find <dir> -type f -exec stat -f '%Sf' {} \; | grep -c dataless. Aug-2026: iCloud Drive zone detached (brctl: Client zone not found; FPCK: disk<->FSSnapshot failed 248/42667); fix needs sudo fileproviderctl repair, Desktop&Documents toggle, or icloud.com download.

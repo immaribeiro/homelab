@@ -12,7 +12,7 @@ Local models running on LMStudio (Mac Mini M4, 24GB RAM).
 | Model ID | Type | Used By | Notes |
 |----------|------|---------|-------|
 | `qwen3.5-9b-mlx` | LLM (9B) | Frontend (primary), Main/Architect/Researcher (fallback) | General + coding, MLX-optimized |
-| `google/gemma-4-e4b` | LLM (4B) | Backend (fallback) | Different model than frontend to avoid slot conflicts |
+| `google/gemma-4-e4b` | LLM (4B) | Backend + Engineer (fallback) | Different model than frontend to avoid slot conflicts |
 | `text-embedding-nomic-embed-text-v1.5` | Embedding | — | For future RAC/vector search |
 
 ## LMStudio Endpoint

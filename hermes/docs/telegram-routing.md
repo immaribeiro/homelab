@@ -91,7 +91,7 @@ gateway:
 
 ## Important: Telegram Credentials
 
-When multiplexing is enabled, **only the default profile** (`~/.hermes/.env`) should have `TELEGRAM_BOT_TOKEN`. The secondary profiles (architect, backend, frontend, engineer) must NOT have Telegram credentials — the multiplexer handles the single Telegram connection and routes via `profile_routes`.
+When multiplexing is enabled, **only the default profile** (`~/.hermes/.env`) should have `TELEGRAM_BOT_TOKEN`. The secondary profiles (architect, backend, frontend, engineer, researcher) must NOT have Telegram credentials — the multiplexer handles the single Telegram connection and routes via `profile_routes`.
 
 If secondary profiles have Telegram tokens, the gateway will refuse to start with:
 ```
