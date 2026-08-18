@@ -1,12 +1,10 @@
 model:
-  default: qwen3.5-9b-mlx
-  provider: lmstudio
-  base_url: http://localhost:1234/v1
-  api_key_env: LMSTUDIO_API_KEY
+  default: deepseek/deepseek-v4-flash
+  provider: nous
 fallback_providers:
   '0':
-    provider: nous
-    model: deepseek/deepseek-v4-flash
+    provider: lmstudio
+    model: qwen3.5-9b-mlx
   '1':
     provider: nous
     model: z-ai/glm-5.2
