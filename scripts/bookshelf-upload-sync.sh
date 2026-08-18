@@ -28,5 +28,15 @@ if [ "$moved" -gt 0 ]; then
   echo "$(date '+%F %T') synced $moved file(s); organizing…" >> "$LOG"
   (cd "$ORG_DIR" && .venv/bin/python organize_library.py --execute --dir "$DEST") >> "$LOG" 2>&1 || \
     echo "$(date '+%F %T') organizer failed" >> "$LOG"
+  # Trigger a bookshelf rescan so the upload appears in the UI within ~3 min
+  # instead of waiting for the app's 15-min periodic scan.
+  PASS=$(kubectl -n books get secret bookshelf-auth -o jsonpath='{.data.BOOKSHELF_PASSWORD}' 2>/dev/null | base64 -d 2>/dev/null) || PASS=""
+  if [ -n "$PASS" ]; then
+    curl -sf -u "imma:$PASS" -X POST "https://books.immas.org/api/rescan" >> "$LOG" 2>&1 && \
+      echo "$(date '+%F %T') rescan triggered" >> "$LOG" || \
+      echo "$(date '+%F %T') rescan trigger failed" >> "$LOG"
+  else
+    echo "$(date '+%F %T') rescan skipped (no kubectl/secret)" >> "$LOG"
+  fi
 fi
 exit 0
