@@ -85,6 +85,10 @@ data:
             href: https://vault.immas.org
             icon: bitwarden
             description: Password Manager
+        - Books:
+            href: https://books.immas.org
+            icon: mdi-book-open-variant
+            description: E-book Library
     - Infrastructure:
         - ArgoCD:
             href: https://argocd.immas.org

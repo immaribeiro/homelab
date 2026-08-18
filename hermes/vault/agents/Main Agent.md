@@ -13,19 +13,19 @@ The default Hermes agent for general-purpose tasks and daily conversation.
 
 ## Configuration
 
-| Field | Value |
-|-------|-------|
-| **Profile** | default (no profile needed — uses `~/.hermes/`) |
-| **Model** | `gpt-5.6-luna` (ChatGPT Go) |
-| **Provider** | openai-codex (OpenAI OAuth — ChatGPT subscription) |
-| **Cost** | Covered by ChatGPT subscription (no per-token charge) |
-| **Fallback 0** | `deepseek/deepseek-v4-flash` via Nous ($0.05/$0.10) |
-| **Fallback 1** | `lmstudio/qwen3.5-9b-mlx` (local, free) |
-| **Reasoning** | medium |
-| **Max turns** | 90 |
+| Field           | Value                                                                      |
+| --------------- | -------------------------------------------------------------------------- |
+| **Profile**     | default (no profile needed — uses `~/.hermes/`)                            |
+| **Model**       | `gpt-5.6-luna` (ChatGPT Go)                                                |
+| **Provider**    | openai-codex (OpenAI OAuth — ChatGPT subscription)                         |
+| **Cost**        | Covered by ChatGPT subscription (no per-token charge)                      |
+| **Fallback 0**  | `deepseek/deepseek-v4-flash` via Nous ($0.05/$0.10)                        |
+| **Fallback 1**  | `lmstudio/qwen3.5-9b-mlx` (local, free)                                    |
+| **Reasoning**   | medium                                                                     |
+| **Max turns**   | 90                                                                         |
 | **Config file** | `~/.hermes/config.yaml` → symlink to `~/GitHub/homelab/hermes/config.yaml` |
-| **SOUL.md** | `~/.hermes/SOUL.md` → symlink to repo |
-| **Telegram** | Personal DM (chat_id 1022966386) + General topic (thread 1) |
+| **SOUL.md**     | `~/.hermes/SOUL.md` → symlink to repo                                      |
+| **Telegram**    | Personal DM (chat_id 1022966386) + General topic (thread 1)                |
 
 ## Delegation
 

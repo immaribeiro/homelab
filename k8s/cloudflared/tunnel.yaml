@@ -40,6 +40,8 @@ data:
         service: http://reconstruction-app.reconstruction-app.svc.cluster.local:80
       - hostname: hermes.immas.org
         service: http://192.168.8.161:9119
+      - hostname: books.immas.org
+        service: http://bookshelf.books.svc.cluster.local:80
       - service: http_status:404
 ---
 apiVersion: apps/v1

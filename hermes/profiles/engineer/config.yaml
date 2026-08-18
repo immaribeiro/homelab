@@ -19,10 +19,10 @@ agent:
   environment_probe: false
   coding_context: auto
   disabled_toolsets:
-  - tts
-  - image_gen
-  - video
-  - video_gen
+    - tts
+    - image_gen
+    - video
+    - video_gen
 terminal:
   backend: local
   cwd: /Users/imma/GitHub/homelab
@@ -43,9 +43,12 @@ delegation:
   max_concurrent_children: 10
   max_spawn_depth: 1
 custom_providers:
-- name: lmstudio
-  base_url: http://localhost:1234/v1
-  model: google/gemma-4-e4b
-  models:
-  - qwen3.5-9b-mlx
-  - google/gemma-4-e4b
+  - name: lmstudio
+    base_url: http://localhost:1234/v1
+    model: google/gemma-4-e4b
+    models:
+      - qwen3.5-9b-mlx
+      - google/gemma-4-e4b
+onboarding:
+  seen:
+    tool_progress_prompt: true

@@ -1,0 +1,113 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: books
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: bookshelf-auth
+  namespace: books
+type: Opaque
+stringData:
+  BOOKSHELF_AUTH_ENABLED: "true"
+  BOOKSHELF_USERNAME: "imma"
+  BOOKSHELF_PASSWORD: "KxrNgvjD7BM3DPO0zTt9KxmcvhbQgrdc"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bookshelf-covers
+  namespace: books
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bookshelf
+  namespace: books
+  labels:
+    app: bookshelf
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: bookshelf
+  template:
+    metadata:
+      labels:
+        app: bookshelf
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: bookshelf
+          image: ghcr.io/immaribeiro/bookshelf:latest
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - secretRef:
+                name: bookshelf-auth
+          env:
+            - name: LIBRARY_DIR
+              value: /data/books
+            - name: COVERS_DIR
+              value: /data/covers
+            - name: ORGANIZE_ON_SCAN
+              value: "true"
+          volumeMounts:
+            - name: library
+              mountPath: /data/books
+            - name: covers
+              mountPath: /data/covers
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: library
+          hostPath:
+            path: /Users/imma/Downloads/ebook-library
+            type: Directory
+        - name: covers
+          persistentVolumeClaim:
+            claimName: bookshelf-covers
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bookshelf
+  namespace: books
+  labels:
+    app: bookshelf
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: bookshelf

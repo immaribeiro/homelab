@@ -14,7 +14,7 @@ Context: Has Telegram channel configured
 §
 Context: Wants evening check-ins (how was your day, did you train, what did you eat)
 §
-Current location is Japan. Will return home on the 29th of the month/upcoming date.
+Expects the configured profile agents (architect/backend/frontend/engineer) to do real implementation work — main agent orchestrates, reviews, and integrates (pattern started with the Mission Control Agents-tab redesign done by the frontend profile agent).
 §
 User is technically skilled (venvs, absolute paths, cron jobs). Patient during complex troubleshooting. Wants clear status updates.
 §
