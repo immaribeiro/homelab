@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nuno
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nuno-site
+  namespace: nuno
+  labels:
+    app: nuno-site
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nuno-site
+  template:
+    metadata:
+      labels:
+        app: nuno-site
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k3s-worker-1
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: nuno-site
+          image: ghcr.io/immaribeiro/nuno-site:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nuno-site
+  namespace: nuno
+  labels:
+    app: nuno-site
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: nuno-site
