@@ -18,7 +18,7 @@ Private couple site for Imma + Nuno. Static Vite + React + Tailwind v3, deployed
 
 ## Chat with Hermes
 
-Browser → Cloudflare → K3s nginx → `/api/` upstream (dual-IP failover) → **nuno-chat-bridge** on the hub (launchd `ai.hermes.nuno-chat-bridge`, :8643) → **Hermes API server** (:8642, inside the gateway, enabled via `API_SERVER_ENABLED` in `~/.hermes/.env`) → agent session `nuno-site`.
+Browser → Cloudflare → K3s nginx → `/api/` upstream (dual-IP failover) → **nuno-chat-bridge** on the hub (launchd `ai.hermes.nuno-chat-bridge`, :8643) → **Hermes API server** (:8642, inside the gateway, enabled via `gateway.api_server` in `~/.hermes/config.yaml`) → agent session `nuno-site`.
 
 - Secrets: `~/.hermes/env/nuno-chat-bridge.env` (chmod 600) — `HERMES_API_KEY` == `API_SERVER_KEY`, `SITE_TOKEN` == `SITE_TOKEN` in `src/config.js`.
 - Code + docs: `~/GitHub/homelab/nuno-chat-bridge/`.

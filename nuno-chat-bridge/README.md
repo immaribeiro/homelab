@@ -45,7 +45,7 @@ Multi-turn conversations use the API server's named `conversation` (default
 ## Enable / restart
 
 ```bash
-# Hermes gateway env (~/.hermes/.env): API_SERVER_ENABLED=true, API_SERVER_KEY=<key>
+# Hermes config.yaml: gateway.api_server { enabled: true, port: 8642, host: 127.0.0.1, key: <API_SERVER_KEY> }
 launchctl load -w ~/Library/LaunchAgents/ai.hermes.nuno-chat-bridge.plist   # start bridge
 launchctl kickstart -k gui/$(id -u)/ai.hermes.gateway                        # restart gateway
 curl http://127.0.0.1:8642/health                                            # API server up?

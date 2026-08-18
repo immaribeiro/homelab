@@ -13,7 +13,7 @@ exec >>"$LOG" 2>&1
 echo "=== $(date '+%F %T') verify start ==="
 
 # Give the current turn time to finish before the gateway goes down.
-sleep 45
+sleep 75
 
 launchctl kickstart -k "gui/$(id -u)/ai.hermes.gateway" || echo "gateway kickstart failed"
 
