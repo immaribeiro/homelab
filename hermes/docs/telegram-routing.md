@@ -2,7 +2,7 @@
 
 ## Architecture
 
-All five Hermes agents (main, architect, backend, frontend, engineer) share a single Telegram bot (`@ImmaHermesBot`) and a single gateway process. The gateway uses **profile multiplexing** to route messages from different Telegram Topics to different agent profiles.
+All six Hermes agents (main, architect, backend, frontend, engineer, researcher) share a single Telegram bot (`@ImmaHermesBot`) and a single gateway process. The gateway uses **profile multiplexing** to route messages from different Telegram Topics to different agent profiles.
 
 ```
                     ┌──────────────────────────┐
@@ -16,12 +16,12 @@ All five Hermes agents (main, architect, backend, frontend, engineer) share a si
                     │   ai.hermes.gateway       │
                     └──────────┬───────────────┘
                                │
-     ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐
-     │  main         │ │  architect    │ │  backend      │ │  frontend     │ │  engineer     │
-     │  (default)    │ │  (profile)    │ │  (profile)    │ │  (profile)    │ │  (profile)    │
-     │ GPT-5.6 Luna  │ │ DeepSeek V4   │ │ DeepSeek V4   │ │ Qwen 3.5 9B   │ │ DeepSeek V4   │
-     │ ChatGPT Go    │ │ Pro (Nous)    │ │ Flash (Nous)  │ │ LMStudio loc. │ │ Flash (Nous)  │
-     └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘
+     ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐
+     │  main         │ │  architect    │ │  backend      │ │  frontend     │ │  engineer     │ │  researcher   │
+     │  (default)    │ │  (profile)    │ │  (profile)    │ │  (profile)    │ │  (profile)    │ │  (profile)    │
+     │ GPT-5.6 Luna  │ │ DeepSeek V4   │ │ DeepSeek V4   │ │ Qwen 3.5 9B   │ │ DeepSeek V4   │ │ DeepSeek V4   │
+     │ ChatGPT Go    │ │ Pro (Nous)    │ │ Flash (Nous)  │ │ LMStudio loc. │ │ Flash (Nous)  │ │ Flash (Nous)  │
+     └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘
 ```
 
 ## How It Works
@@ -40,6 +40,7 @@ All five Hermes agents (main, architect, backend, frontend, engineer) share a si
 | ⚙️ Backend | 4 | backend | DeepSeek V4 Flash via Nous | $0.05 / $0.10 |
 | 🎨 Frontend | 5 | frontend | Qwen 3.5 9B via LMStudio | FREE |
 | 🔧 Engineer | 14 | engineer | DeepSeek V4 Flash via Nous | $0.05 / $0.10 |
+| 🔬 Research | TBD | researcher | DeepSeek V4 Flash via Nous | $0.05 / $0.10 |
 
 **Group chat ID:** `-1004449482428` (group name: "Hermes")
 

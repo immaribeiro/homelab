@@ -7,7 +7,7 @@ updated: 2026-08-16
 
 ## Summary
 
-Five Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a single gateway with Telegram multiplexing.
+Six Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a single gateway with Telegram multiplexing.
 
 > **Updated 2026-08-16:** main agent primary switched to `openai-codex` (ChatGPT Go).
 
@@ -97,6 +97,24 @@ Five Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a si
 
 → [[Engineer Agent]]
 
+### Researcher
+
+| Field | Value |
+|-------|-------|
+| **Profile** | researcher |
+| **Config** | `~/GitHub/homelab/hermes/profiles/researcher/config.yaml` |
+| **Model** | `deepseek/deepseek-v4-flash` via Nous |
+| **Cost** | $0.05 in / $0.10 out per 1M (ultra-cheap) |
+| **Fallback** | GLM 5.2 via Nous → LMStudio qwen3.5-9b-mlx |
+| **Telegram** | topic pending (thread TBD) |
+| **Role** | Deep research: web research, market/competitor intel, papers, cited reports |
+| **Tools** | No tts, image_gen, video, video_gen |
+| **Reasoning** | medium |
+| **Max turns** | 120 |
+| **Terminal cwd** | `/Users/imma/GitHub` |
+
+→ [[Researcher Agent]]
+
 ## Related Projects
 
 Agents work on these projects:
@@ -115,4 +133,5 @@ Agents work on these projects:
 | backend | ~100K | ~$0.02 |
 | frontend | ~100K (local) | $0.00 |
 | engineer | ~50K | ~$0.01 |
-| **Total** | ~330K | **~$0.06/day** |
+| researcher | ~30K | ~$0.01 |
+| **Total** | ~360K | **~$0.07/day** |

@@ -16,6 +16,7 @@ Model costs and daily estimates for each agent. Prices per 1M tokens (input / ou
 | Backend | `deepseek/deepseek-v4-flash` via Nous | $0.05 | $0.10 | Ultra-cheap |
 | Frontend | `qwen3.5-9b-mlx` (LMStudio local) | $0.00 | $0.00 | FREE |
 | Engineer | `deepseek/deepseek-v4-flash` via Nous | $0.05 | $0.10 | Ultra-cheap |
+| Researcher | `deepseek/deepseek-v4-flash` via Nous | $0.05 | $0.10 | Ultra-cheap |
 
 ## Fallback Models
 
@@ -24,7 +25,7 @@ Model costs and daily estimates for each agent. Prices per 1M tokens (input / ou
 | `deepseek/deepseek-v4-flash` via Nous | $0.05 | $0.10 | Main fallback 0, Frontend fallback 0 |
 | `z-ai/glm-5.2` via Nous | $0.25 | $0.77 | Architect fallback 0, Backend fallback 1, Frontend fallback 1, Engineer fallback 0 |
 | `openai/gpt-5.6-luna` via Nous | $0.10 | $0.60 | Delegation (all profiles) |
-| `lmstudio/qwen3.5-9b-mlx` (local) | $0.00 | $0.00 | Main fallback 1, Architect fallback 1 |
+| `lmstudio/qwen3.5-9b-mlx` (local) | $0.00 | $0.00 | Main fallback 1, Architect fallback 1, Researcher fallback 1 |
 | `lmstudio/google/gemma-4-e4b` (local) | $0.00 | $0.00 | Backend fallback 0, Engineer fallback 1 |
 
 ## Daily Cost Estimate
@@ -38,11 +39,12 @@ Rough estimates — actual cost depends on usage and how often fallbacks fire.
 | backend | ~100K | ~$0.02 |
 | frontend | ~100K (local) | $0.00 |
 | engineer | ~50K | ~$0.01 |
-| **Total** | **~330K** | **~$0.06/day** |
+| researcher | ~30K | ~$0.01 |
+| **Total** | **~360K** | **~$0.07/day** |
 
-**Monthly estimate:** ~$1.80 (if usage is consistent)
+**Monthly estimate:** ~$2.10 (if usage is consistent)
 
-**Comparison:** if all 5 agents ran on GLM 5.2 exclusively: ~$0.34/day ≈ ~$10/month
+**Comparison:** if all 6 agents ran on GLM 5.2 exclusively: ~$0.41/day ≈ ~$12/month
 **Savings:** ~80% reduction by using ChatGPT subscription + cheap/local models.
 
 ## Full Price Reference
