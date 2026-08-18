@@ -1,0 +1,17 @@
+{
+  "api_providers": {
+    "custom": [
+      {
+        "name": "qwen3.5-9b-mlx",
+        "endpoint": "http://localhost:1234",
+        "model_type": "local_llm"
+      },
+      {
+        "name": "google/gemma-4-e4b",
+        "endpoint": "http://localhost:1234",
+        "model_type": "local_llm"
+      }
+    ]
+  },
+  "version": "0.1"
+}
