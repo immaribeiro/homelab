@@ -5,6 +5,8 @@ updated: 2026-08-18
 
 # 🤖 Agent Overview
 
+> 🔄 **Last synced:** 2026-08-18 17:34 (auto-sync watchdog, cron `eb7ea48fe83c`)
+
 ## Summary
 
 Six Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a single gateway with Telegram multiplexing.
