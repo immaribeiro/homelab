@@ -21,7 +21,9 @@ from . import __version__
 from .aggregate import Store
 from .auth import (_is_loopback, auth_enabled, hash_token,
                    load_or_create_token, token_matches)
-from .db import default_hermes_home, discover_state_dbs, load_thread_profile_map
+from .db import (DbError, default_hermes_home, delete_session,
+                 discover_state_dbs, load_thread_profile_map, load_turn_leases,
+                 set_session_archived)
 from .models import SessionStatus
 from .stream import event_stream, POLL_SECONDS
 
@@ -71,6 +73,17 @@ async def require_auth(request: Request,
     if x_auth_token and token_matches(x_auth_token, token):
         return
     raise HTTPException(401, "authentication required")
+
+
+def _same_origin(request: Request) -> None:
+    """Reject browser POSTs whose Origin does not match the request Host."""
+    origin = request.headers.get("origin") or ""
+    if origin:
+        from urllib.parse import urlparse
+        origin_host = urlparse(origin).netloc
+        host = request.headers.get("host") or ""
+        if origin_host and origin_host != host:
+            raise HTTPException(403, "cross-origin request rejected")
 
 
 # ── app ─────────────────────────────────────────────────────────────────
@@ -125,16 +138,8 @@ async def login(request: Request, response: Response):
     provided = (body or {}).get("token", "")
     if not auth_on:
         return {"ok": True}
-    # CSRF hardening: same-origin POSTs only (Origin host must equal the Host
-    # header the browser used — works for localhost, MagicDNS names, and
-    # tailnet IPs alike). Missing Origin (curl/CLI) is fine.
-    origin = request.headers.get("origin") or ""
-    if origin:
-        from urllib.parse import urlparse
-        origin_host = urlparse(origin).netloc
-        host = request.headers.get("host") or ""
-        if origin_host and origin_host != host:
-            raise HTTPException(403, "cross-origin login rejected")
+    # CSRF hardening: same-origin POSTs only. Missing Origin (curl/CLI) is fine.
+    _same_origin(request)
     if not token_matches(provided, token):
         raise HTTPException(401, "invalid token")
     # Bind the session to the token's hash (never the raw token).
@@ -181,6 +186,8 @@ def sessions(
     date_from: Optional[float] = None,
     date_to: Optional[float] = None,
     active: Optional[bool] = None,
+    sort: Literal["last_activity", "started", "messages", "cost"] = "last_activity",
+    include_archived: bool = True,
     limit: int = Query(200, ge=1, le=1000),
     offset: int = Query(0, ge=0),
 ):
@@ -194,8 +201,14 @@ def sessions(
         rows = [s for s in rows if s.source.lower() == source.lower()]
     if model:
         rows = [s for s in rows if model.lower() in (s.model or "").lower()]
+    if not include_archived:
+        rows = [s for s in rows if not s.archived]
     if status:
-        rows = [s for s in rows if s.status.value == status.lower()]
+        wanted = status.lower()
+        if wanted == "hanging":
+            rows = [s for s in rows if s.status == SessionStatus.IDLE and s.ended_at is None]
+        else:
+            rows = [s for s in rows if s.status.value == wanted]
     if q:
         ql = q.lower()
         rows = [s for s in rows if ql in (s.title or "").lower()
@@ -209,7 +222,13 @@ def sessions(
         rows = [s for s in rows if (s.ended_at is None) == active]
 
     total = len(rows)
-    rows.sort(key=lambda s: s.last_activity_at or s.started_at or 0, reverse=True)
+    sort_keys = {
+        "last_activity": lambda s: s.last_activity_at or s.started_at or 0,
+        "started": lambda s: s.started_at or 0,
+        "messages": lambda s: s.message_count or 0,
+        "cost": lambda s: s.estimated_cost_usd or 0,
+    }
+    rows.sort(key=sort_keys[sort], reverse=True)
     page = rows[offset:offset + limit]
     return {
         "total": total,
@@ -233,6 +252,54 @@ def session_detail(session_id: str, include_messages: bool = True,
     if include_children:
         detail["children"] = [c.to_dict() for c in st.children(session_id)]
     return detail
+
+
+@app.post("/api/sessions/{session_id}/archive", dependencies=[Depends(require_auth)])
+async def session_archive(session_id: str, request: Request):
+    _same_origin(request)
+    body = await request.json()
+    archived = (body or {}).get("archived")
+    if not isinstance(archived, bool):
+        raise HTTPException(422, "archived must be a boolean")
+    st = get_store()
+    pair = st.get(session_id)
+    if not pair:
+        if session_id in getattr(st, "_by_id", {}):
+            raise HTTPException(400, "session database unavailable")
+        raise HTTPException(404, "session not found")
+    try:
+        if not set_session_archived(pair[1], session_id, archived):
+            raise HTTPException(404, "session not found")
+    except DbError as exc:
+        raise HTTPException(500, "database write failed") from exc
+    pair[0].archived = archived
+    return {"ok": True, "archived": archived}
+
+
+@app.post("/api/sessions/{session_id}/delete", dependencies=[Depends(require_auth)])
+async def session_delete(session_id: str, request: Request):
+    _same_origin(request)
+    body = await request.json()
+    if (body or {}).get("confirm") != session_id:
+        raise HTTPException(400, "confirmation does not match session id")
+    st = get_store()
+    pair = st.get(session_id)
+    if not pair:
+        raise HTTPException(404, "session not found")
+    s, db = pair
+    if s.status == SessionStatus.WORKING:
+        raise HTTPException(409, "session is working")
+    leases = load_turn_leases(db)
+    lease = leases.get(session_id)
+    if lease and lease[1] > time.time():
+        raise HTTPException(409, "session has a live turn lease")
+    try:
+        if not delete_session(db, session_id):
+            raise HTTPException(404, "session not found")
+    except DbError as exc:
+        raise HTTPException(500, "database write failed") from exc
+    st.refresh()
+    return {"ok": True}
 
 
 # ── session export ──────────────────────────────────────────────────────

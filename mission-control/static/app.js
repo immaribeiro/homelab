@@ -31,9 +31,10 @@ const fmt = (n) => (n ?? 0).toLocaleString("en-US");
 const state = {
   cfg: null,
   overview: null,
-  filters: { agent: "", source: "", model: "", status: "", q: "", active: "" },
+  filters: { agent: "", source: "", model: "", status: "", sort: "last_activity", include_archived: true, q: "", active: "" },
   sse: null,
   live: false,
+  page: 0,
 };
 
 /* ── api client ──────────────────────────────────────────────── */
@@ -221,6 +222,21 @@ function updateGatewayPill() {
   pill.className = "pill " + (working > 0 ? "pill-ok" : "pill-off");
   pill.textContent = working > 0 ? `${working} ACTIVE` : "GATEWAY OK";
   pill.title = `${working} session(s) working right now`;
+  const hanging = ov.stats?.hanging || 0;
+  const chip = $("#hanging-chip");
+  if (chip) chip.textContent = `⚠ ${hanging} hanging`;
+}
+
+function toast(message, error = false) {
+  let host = $("#toast-host");
+  if (!host) { host = el("div", { id: "toast-host", class: "toast-host" }); document.body.append(host); }
+  const item = el("div", { class: `toast${error ? " toast-error" : ""}` }, message);
+  host.append(item);
+  setTimeout(() => item.remove(), 3200);
+}
+
+async function mutate(path, body) {
+  return api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 }
 
 async function refreshOverview() {
@@ -438,9 +454,12 @@ async function fetchSessions() {
   if (f.source) p.set("source", f.source);
   if (f.model) p.set("model", f.model);
   if (f.status) p.set("status", f.status);
+  if (f.sort) p.set("sort", f.sort);
+  p.set("include_archived", String(f.include_archived));
   if (f.q) p.set("q", f.q);
   if (f.active) p.set("active", f.active === "active" ? "true" : f.active === "done" ? "false" : "");
-  p.set("limit", "500");
+  p.set("limit", "200");
+  p.set("offset", String(state.page * 200));
   return api(`/api/sessions?${p.toString()}`);
 }
 function maybeRefreshSessions() {
@@ -452,6 +471,7 @@ async function renderSessions(view) {
   view.dataset.view = "sessions";
   const { params } = parseHash();
   if (params.get("agent")) state.filters.agent = params.get("agent");
+  if (params.get("status")) state.filters.status = params.get("status");
 
   // filter bar
   const ov = state.overview || {};
@@ -462,7 +482,7 @@ async function renderSessions(view) {
   const bar = el("div", { class: "filterbar" });
   const sel = (label, key, options, allLabel) => {
     const wrap = el("div", { style: "display:flex;gap:6px;align-items:center" }, el("label", {}, label));
-    const s = el("select", { onchange: (e) => { state.filters[key] = e.target.value; refreshSessionsView(); } },
+    const s = el("select", { onchange: (e) => { state.filters[key] = e.target.value; state.page = 0; refreshSessionsView(); } },
       el("option", { value: "" }, allLabel));
     for (const o of options) s.append(el("option", { value: o }, o));
     if (state.filters[key]) s.value = state.filters[key];
@@ -472,12 +492,19 @@ async function renderSessions(view) {
   bar.append(sel("AGENT", "agent", agents, "all agents"));
   bar.append(sel("SOURCE", "source", sources, "all sources"));
   bar.append(sel("MODEL", "model", models, "all models"));
-  bar.append(sel("STATUS", "status", STATUS_ORDER, "any status"));
+  bar.append(sel("STATUS", "status", [...STATUS_ORDER, "hanging"], "any status"));
+  bar.append(sel("SORT", "sort", ["last_activity", "started", "messages", "cost"], "last activity"));
+  const archived = el("label", { class: "archive-toggle" },
+    el("input", { type: "checkbox", checked: state.filters.include_archived ? "checked" : null,
+      onchange: (e) => { state.filters.include_archived = e.target.checked; state.page = 0; refreshSessionsView(); } }),
+    " include archived");
+  bar.append(archived);
   bar.append(sel("LIFE", "active", ["active", "done"], "all"));
   const q = el("input", { class: "search-input", placeholder: "filter by title / id / model…", value: state.filters.q || "",
     oninput: debounce((e) => { state.filters.q = e.target.value; refreshSessionsView(); }, 300) });
   bar.append(q);
-  const clear = el("button", { class: "nav-link", onclick: () => { state.filters = { agent: "", source: "", model: "", status: "", q: "", active: "" }; location.hash = "#/sessions"; render(); } }, "clear");
+  bar.append(el("button", { class: "nav-link", onclick: () => { state.page = 0; sessionsCache = null; refreshSessionsView(); } }, "↻ refresh"));
+  const clear = el("button", { class: "nav-link", onclick: () => { state.filters = { agent: "", source: "", model: "", status: "", sort: "last_activity", include_archived: true, q: "", active: "" }; state.page = 0; location.hash = "#/sessions"; render(); } }, "clear");
   bar.append(clear);
   view.append(bar);
 
@@ -490,6 +517,19 @@ function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTi
 function refreshSessionsView() {
   sessionsCache = null;
   fetchSessions().then((d) => { sessionsCache = d; renderSessionsTable($("#view")); }).catch(() => {});
+}
+
+function sessionActions(s) {
+  const actions = el("div", { class: "row-actions" });
+  const archive = el("button", { class: "row-action", onclick: async (e) => {
+    e.stopPropagation();
+    try { await mutate(`/api/sessions/${encodeURIComponent(s.id)}/archive`, { archived: !s.archived }); s.archived = !s.archived; toast(`${s.archived ? "Archived" : "Restored"} ${s.title || s.id}`); renderSessionsTable($("#view")); refreshOverview(); }
+    catch (err) { toast(`Archive failed: ${err.message}`, true); }
+  } }, s.archived ? "Unarchive" : "Archive");
+  const exportLink = el("a", { class: "row-action", href: `/api/sessions/${encodeURIComponent(s.id)}/export?format=md`, target: "_blank", rel: "noopener noreferrer", onclick: (e) => e.stopPropagation() }, "Export");
+  const copy = el("button", { class: "row-action", onclick: async (e) => { e.stopPropagation(); try { await navigator.clipboard.writeText(s.id); toast("Copied session ID"); } catch (_) { toast("Copy failed", true); } } }, "Copy ID");
+  actions.append(archive, exportLink, copy);
+  return actions;
 }
 
 function renderSessionsTable(view) {
@@ -511,7 +551,7 @@ function renderSessionsTable(view) {
   const thead = el("thead", {}, el("tr", {},
     el("th", {}, "SOURCE"), el("th", {}, "AGENT"), el("th", {}, "MODEL"),
     el("th", {}, "STATUS"), el("th", {}, "TITLE"), el("th", {}, "LAST ACTIVE"),
-    el("th", { class: "num" }, "MSGS"), el("th", { class: "num" }, "TOOLS")));
+    el("th", { class: "num" }, "MSGS"), el("th", { class: "num" }, "TOOLS"), el("th", {}, "ACTIONS")));
   table.append(thead);
   const tbody = el("tbody");
   for (const s of data.sessions) {
@@ -523,12 +563,21 @@ function renderSessionsTable(view) {
       el("td", { style: "max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" }, esc(s.title || "(untitled)")),
       el("td", { class: "timeago" }, timeago(s.last_activity_at || s.started_at)),
       el("td", { class: "num muted" }, fmt(s.message_count)),
-      el("td", { class: "num muted" }, fmt(s.tool_call_count)));
+      el("td", { class: "num muted" }, fmt(s.tool_call_count)),
+      el("td", {}, sessionActions(s)));
     tbody.append(tr);
   }
   table.append(tbody);
   panel.append(table);
   view.append(panel);
+  if (data.total > 200) {
+    const pages = Math.ceil(data.total / 200);
+    const pager = el("div", { class: "pager" },
+      el("button", { class: "nav-link", disabled: state.page === 0 ? "disabled" : null, onclick: () => { state.page--; refreshSessionsView(); } }, "← prev"),
+      el("span", { class: "muted" }, `Page ${state.page + 1} of ${pages}`),
+      el("button", { class: "nav-link", disabled: state.page >= pages - 1 ? "disabled" : null, onclick: () => { state.page++; refreshSessionsView(); } }, "next →"));
+    view.append(pager);
+  }
 }
 
 /* ── SESSION DETAIL ──────────────────────────────────────────── */
@@ -608,6 +657,23 @@ function renderSvgGraph(container, nodes) {
   container.append(svg);
 }
 
+function showDeleteModal(d) {
+  const modal = el("div", { class: "modal-backdrop" });
+  const input = el("input", { class: "modal-input", placeholder: "type session ID to confirm" });
+  const close = () => modal.remove();
+  const del = el("button", { class: "danger-button", disabled: "disabled", onclick: async () => {
+    try { await mutate(`/api/sessions/${encodeURIComponent(d.id)}/delete`, { confirm: d.id }); close(); sessionsCache = null; toast(`Deleted ${d.title || d.id}`); navigate("#/sessions"); refreshOverview(); }
+    catch (err) { toast(`Delete failed: ${err.message}`, true); }
+  } }, "Delete permanently");
+  input.addEventListener("input", () => { del.disabled = input.value !== d.id; });
+  modal.append(el("div", { class: "modal-card" }, el("h3", {}, "Delete session?"),
+    el("p", {}, "This permanently removes ", el("strong", {}, d.title || "(untitled)"), " and all messages."),
+    el("p", { class: "muted mono" }, d.id), input,
+    el("div", { class: "modal-actions" }, el("button", { class: "nav-link", onclick: close }, "Cancel"), del)));
+  document.body.append(modal);
+  input.focus();
+}
+
 async function renderSessionDetail(view, id) {
   view.dataset.view = "detail";
   view.append(el("div", { class: "loading" }, el("span", { class: "spinner" }), "loading session…"));
@@ -619,6 +685,14 @@ async function renderSessionDetail(view, id) {
     el("h2", {}, esc(d.title || "(untitled)")),
     agentBadge(d.agent), sourceBadge(d.source), statusBadge(d.status), modelBadge(d.model));
   view.append(head);
+  const detailActions = el("div", { class: "detail-actions" });
+  const archiveBtn = el("button", { class: "nav-link", onclick: async () => {
+    try { await mutate(`/api/sessions/${encodeURIComponent(id)}/archive`, { archived: !d.archived }); d.archived = !d.archived; archiveBtn.textContent = d.archived ? "Unarchive" : "Archive"; toast(`${d.archived ? "Archived" : "Restored"} ${d.title || id}`); refreshOverview(); }
+    catch (err) { toast(`Archive failed: ${err.message}`, true); }
+  } }, d.archived ? "Unarchive" : "Archive");
+  const deleteBtn = el("button", { class: "danger-button", onclick: () => showDeleteModal(d) }, "Delete session");
+  detailActions.append(archiveBtn, deleteBtn);
+  view.append(detailActions);
 
   // export links (JSON / MD)
   const exp = el("div", { class: "detail-head" },

@@ -1,8 +1,10 @@
-"""Read-only data access layer over Hermes state databases.
+"""Data access layer over Hermes state databases.
 
-Every connection is opened with SQLite URI `mode=ro`; no write statement is
-ever issued. If a database is corrupt or locked, it is skipped with a warning
-rather than failing the whole request.
+Read paths use SQLite URI ``mode=ro``. The two narrow write helpers below are
+the ONLY write paths: they touch one session row (and its message pair for
+delete), deliberately avoiding any broader database mutation.
+If a database is corrupt or locked, it is skipped with a warning rather than
+failing the whole request.
 """
 from __future__ import annotations
 
@@ -71,6 +73,46 @@ def _query(path: Path, sql: str, params: tuple = ()) -> List[sqlite3.Row]:
         conn = _connect_ro(path)
         return list(conn.execute(sql, params))
     except sqlite3.Error as exc:
+        raise DbError(f"{path.name}: {exc}") from exc
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def set_session_archived(db: Tuple[str, Path], session_id: str, archived: bool) -> bool:
+    """Set one session's archived flag using the deliberately narrow RW path."""
+    _, path = db
+    conn = None
+    try:
+        conn = sqlite3.connect(str(path), timeout=2.0)
+        conn.execute("PRAGMA busy_timeout = 1500")
+        cur = conn.execute("UPDATE sessions SET archived = ? WHERE id = ?",
+                           (1 if archived else 0, session_id))
+        conn.commit()
+        return cur.rowcount > 0
+    except sqlite3.Error as exc:
+        if conn is not None:
+            conn.rollback()
+        raise DbError(f"{path.name}: {exc}") from exc
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def delete_session(db: Tuple[str, Path], session_id: str) -> bool:
+    """Delete one session and its messages atomically."""
+    _, path = db
+    conn = None
+    try:
+        conn = sqlite3.connect(str(path), timeout=2.0)
+        conn.execute("PRAGMA busy_timeout = 1500")
+        conn.execute("DELETE FROM messages WHERE session_id = ?", (session_id,))
+        cur = conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+        conn.commit()
+        return cur.rowcount > 0
+    except sqlite3.Error as exc:
+        if conn is not None:
+            conn.rollback()
         raise DbError(f"{path.name}: {exc}") from exc
     finally:
         if conn is not None:

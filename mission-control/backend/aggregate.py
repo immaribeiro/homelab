@@ -278,6 +278,8 @@ class Store:
                 "tool_calls": total_tools,
                 "messages": total_msgs,
                 "open_sessions": sum(1 for s in sessions if s.ended_at is None),
+                "hanging": sum(1 for s in sessions if s.status == SessionStatus.IDLE and s.ended_at is None),
+                "archived": sum(1 for s in sessions if s.archived),
             },
             "status_counts": dict(status_counts),
             "source_counts": dict(source_counts),
