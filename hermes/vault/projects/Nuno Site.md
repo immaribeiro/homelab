@@ -26,14 +26,18 @@ Browser → Cloudflare → K3s nginx → `/api/` upstream (dual-IP failover) →
 - Bridge reply path verified by `restart-and-verify.sh` (one-shot launchd job, reports to Telegram).
 - **Persona (2026-08-19):** system prompt defines Imma as a **man** («ele», «o Imma») and Nuno as his partner — gay couple; agent must never use feminine forms for Imma (fixes misgendering in chat replies).
 
-## Photo upload (2026-08-19)
+## Photo upload (2026-08-20 — live, no rebuild)
 
 The archive page has an **"Add a photo +"** button (mobile-friendly file picker) → `POST /api/upload` on the bridge:
 1. Saves to `~/GitHub/nuno-site/src_photos/` (gitignored, originals stay local)
-2. Runs `pipeline.py` → optimized WebP + `public/manifest.json` update
-3. `git commit` + `git push` → GitHub Actions → GHCR → k3s watcher auto-rollout (~5 min)
+2. Runs `pipeline.py` → optimized WebP + atomic manifest (writes both `public/manifest.json` and a live copy `public/photos/manifest.json`)
+3. Response returns **instantly (~0.3 s)** — the pod serves the photo live from a read-only hostPath mount of `public/photos` → `/mnt/photos` (nginx aliases `/photos/` immutable + `/manifest.json` no-cache); git commit+push runs in a **background thread** (backup only)
 
-Auth = same `SITE_TOKEN` as chat; 15 MB cap; JPG/PNG/WebP/HEIC only. nginx `/api/` body limit raised 8k → 20m.
+CI has `paths-ignore` for `public/photos/**` + `public/manifest.json` → photo commits never trigger an image build; code changes still build + rollout as before. Rollback = revert nginx.conf aliases (baked copies still in image).
+
+Auth = same `SITE_TOKEN` as chat; 15 MB cap; JPG/PNG/WebP/HEIC only. nginx `/api/` body limit 20m.
+
+Known tradeoffs: photo serving depends on the Lima home mount (same dependency bookshelf carries); immutable cache can keep a deleted photo alive up to 1 year (deletion not in UI); originals (`src_photos/`) exist only on the Mac by choice.
 
 ## Repo
 
