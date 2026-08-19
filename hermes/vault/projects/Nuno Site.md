@@ -24,6 +24,16 @@ Browser → Cloudflare → K3s nginx → `/api/` upstream (dual-IP failover) →
 - Secrets: `~/.hermes/env/nuno-chat-bridge.env` (chmod 600) — `HERMES_API_KEY` == `API_SERVER_KEY`, `SITE_TOKEN` == `SITE_TOKEN` in `src/config.js`.
 - Code + docs: `~/GitHub/homelab/nuno-chat-bridge/`.
 - Bridge reply path verified by `restart-and-verify.sh` (one-shot launchd job, reports to Telegram).
+- **Persona (2026-08-19):** system prompt defines Imma as a **man** («ele», «o Imma») and Nuno as his partner — gay couple; agent must never use feminine forms for Imma (fixes misgendering in chat replies).
+
+## Photo upload (2026-08-19)
+
+The archive page has an **"Add a photo +"** button (mobile-friendly file picker) → `POST /api/upload` on the bridge:
+1. Saves to `~/GitHub/nuno-site/src_photos/` (gitignored, originals stay local)
+2. Runs `pipeline.py` → optimized WebP + `public/manifest.json` update
+3. `git commit` + `git push` → GitHub Actions → GHCR → k3s watcher auto-rollout (~5 min)
+
+Auth = same `SITE_TOKEN` as chat; 15 MB cap; JPG/PNG/WebP/HEIC only. nginx `/api/` body limit raised 8k → 20m.
 
 ## Repo
 
