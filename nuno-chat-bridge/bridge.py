@@ -24,7 +24,7 @@ import subprocess
 import time
 from collections import defaultdict, deque
 from pathlib import Path
-from threading import Lock
+from threading import Lock, Thread
 
 import httpx
 from fastapi import FastAPI, File, Header, Request, UploadFile
@@ -59,8 +59,10 @@ RATE_WINDOW = 3600.0
 GLOBAL_DAILY_CAP = 300
 MAX_MESSAGE = 2000
 
-# Photo upload: saved to the site repo's src_photos/, converted via pipeline.py,
-# then committed + pushed (CI → GHCR → k3s rollout watcher deploys automatically).
+# Photo upload: saved to the site repo's src_photos/, converted via pipeline.py
+# (which also writes the live public/photos/manifest.json), then committed +
+# pushed in a background thread. The pod serves photos live from a mounted
+# hostPath volume, so the upload response never waits on git or CI.
 NUNO_SITE_DIR = HOME / "GitHub/nuno-site"
 SRC_PHOTOS_DIR = NUNO_SITE_DIR / "src_photos"
 NUNO_SITE_PYTHON = NUNO_SITE_DIR / ".venv" / "bin" / "python"
@@ -87,6 +89,10 @@ _hits = defaultdict(deque)
 _hits_lock = Lock()
 _global_hits = deque()
 _start = time.time()
+
+# Serializes photo uploads: pipeline.py recomputes the full manifest by scanning
+# src_photos, so two near-simultaneous uploads could drop an entry otherwise.
+_upload_lock = Lock()
 
 
 def _log(line: str) -> None:
@@ -230,13 +236,39 @@ def _slug_for(stem: str) -> str:
     return slug or "photo"
 
 
+def _commit_and_push(unique: str) -> None:
+    """Commit + push new photos in the background; failures only get logged."""
+    try:
+        subprocess.run(
+            ["git", "add", "public/photos", "public/manifest.json"],
+            cwd=str(NUNO_SITE_DIR), check=True, capture_output=True, text=True,
+        )
+        # Only commit when the pipeline actually changed something.
+        changed = subprocess.run(
+            ["git", "diff", "--cached", "--quiet", "public/photos", "public/manifest.json"],
+            cwd=str(NUNO_SITE_DIR), capture_output=True, text=True,
+        )
+        if changed.returncode != 0:
+            subprocess.run(
+                ["git", "commit", "-m", f"site photos: add {unique}"],
+                cwd=str(NUNO_SITE_DIR), check=True, capture_output=True, text=True,
+            )
+            subprocess.run(
+                ["git", "push", "origin", "main"],
+                cwd=str(NUNO_SITE_DIR), check=True, capture_output=True, text=True, timeout=60,
+            )
+        _log(f"upload git ok {unique}")
+    except Exception as exc:
+        _log(f"upload git background failed for {unique}: {exc!r}")
+
+
 @app.post("/api/upload")
 async def upload_photo(
     request: Request,
     file: UploadFile = File(...),
     authorization: str = Header(default=""),
 ):
-    """Receive a photo from the site, optimize it, and trigger the deploy pipeline."""
+    """Receive a photo from the site, optimize it, and publish it live."""
     ok, err = _upload_auth_and_ratelimit(request, authorization)
     if not ok:
         return err
@@ -263,64 +295,47 @@ async def upload_photo(
     stem = Path(filename).stem
     unique = f"upload-{time.strftime('%Y%m%d-%H%M%S')}-{_slug_for(stem)}{ext}"
     dest = SRC_PHOTOS_DIR / unique
-    try:
-        dest.write_bytes(data)
-    except OSError as exc:
-        _log(f"upload 500 write failed: {exc!r}")
-        return JSONResponse({"error": "Não foi possível guardar a foto."}, status_code=500)
 
-    # Optimize + regenerate manifest via the site's own pipeline (uses its venv).
+    # The pipeline recomputes the full manifest by scanning src_photos, so two
+    # near-simultaneous uploads could produce a manifest that drops an entry.
+    # Hold the upload lock across the whole write + pipeline critical section.
+    await asyncio.to_thread(_upload_lock.acquire)
     try:
-        proc = await asyncio.to_thread(
-            subprocess.run,
-            [str(NUNO_SITE_PYTHON), "pipeline.py"],
-            cwd=str(NUNO_SITE_DIR),
-            capture_output=True,
-            text=True,
-            timeout=180,
-        )
-    except Exception as exc:
-        _log(f"upload 500 pipeline run failed: {exc!r}")
-        return JSONResponse({"error": "Pipeline de imagem falhou."}, status_code=500)
-    if proc.returncode != 0:
-        _log(f"upload 500 pipeline exit {proc.returncode}: {proc.stderr[-300:]}")
-        return JSONResponse({"error": "Processamento da imagem falhou."}, status_code=500)
+        try:
+            dest.write_bytes(data)
+        except OSError as exc:
+            _log(f"upload 500 write failed: {exc!r}")
+            return JSONResponse({"error": "Não foi possível guardar a foto."}, status_code=500)
 
-    # Commit + push → GitHub Actions → GHCR → k3s rollout watcher deploys.
-    try:
-        def _commit_and_push() -> None:
-            subprocess.run(
-                ["git", "add", "public/photos", "public/manifest.json"],
-                cwd=str(NUNO_SITE_DIR), check=True, capture_output=True, text=True,
+        # Optimize + regenerate manifest via the site's own pipeline (uses its venv).
+        try:
+            proc = await asyncio.to_thread(
+                subprocess.run,
+                [str(NUNO_SITE_PYTHON), "pipeline.py"],
+                cwd=str(NUNO_SITE_DIR),
+                capture_output=True,
+                text=True,
+                timeout=180,
             )
-            # Only commit when the pipeline actually changed something.
-            changed = subprocess.run(
-                ["git", "diff", "--cached", "--quiet", "public/photos", "public/manifest.json"],
-                cwd=str(NUNO_SITE_DIR), capture_output=True, text=True,
-            )
-            if changed.returncode != 0:
-                subprocess.run(
-                    ["git", "commit", "-m", f"site photos: add {unique}"],
-                    cwd=str(NUNO_SITE_DIR), check=True, capture_output=True, text=True,
-                )
-                subprocess.run(
-                    ["git", "push", "origin", "main"],
-                    cwd=str(NUNO_SITE_DIR), check=True, capture_output=True, text=True, timeout=60,
-                )
+        except Exception as exc:
+            _log(f"upload 500 pipeline run failed: {exc!r}")
+            return JSONResponse({"error": "Pipeline de imagem falhou."}, status_code=500)
+        if proc.returncode != 0:
+            _log(f"upload 500 pipeline exit {proc.returncode}: {proc.stderr[-300:]}")
+            return JSONResponse({"error": "Processamento da imagem falhou."}, status_code=500)
+    finally:
+        _upload_lock.release()
 
-        await asyncio.to_thread(_commit_and_push)
-    except Exception as exc:
-        _log(f"upload 500 git failed: {exc!r}")
-        return JSONResponse(
-            {"error": "Foto guardada, mas a publicação falhou — avisa a Hermes."}, status_code=500
-        )
+    # Git commit + push runs in a background daemon thread: the photo is served
+    # live from the mounted volume, so the upload response never waits on git.
+    Thread(target=_commit_and_push, args=(unique,), daemon=True).start()
 
     webp_name = f"{Path(unique).stem}.webp"
     _log(f"upload ok {unique} -> {webp_name}")
     return {
         "ok": True,
         "src": f"/photos/{webp_name}",
-        "message": "Foto enviada! O site atualiza em poucos minutos.",
+        "message": "Foto enviada! A foto aparece já.",
     }
 
 
