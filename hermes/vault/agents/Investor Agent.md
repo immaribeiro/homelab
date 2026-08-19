@@ -21,7 +21,7 @@ Markets & portfolio specialist of the fleet: watches crypto + stocks, turns news
 | **Cost** | $0.05 in / $0.10 out per 1M (ultra-cheap) |
 | **Fallback 0** | `z-ai/glm-5.2` via Nous |
 | **Fallback 1** | `lmstudio/qwen3.5-9b-mlx` (local, free) |
-| **Telegram** | — (no topic/route yet) |
+| **Telegram** | 📈 Investor topic — thread `1016` (`tg-investor` route, live since gateway restart 2026-08-19) |
 | **Reasoning** | medium |
 | **Max turns** | 120 |
 | **Terminal cwd** | `/Users/imma/GitHub` |
@@ -43,13 +43,14 @@ Custom (2026-08-19): signals-not-hype (verify before recommend), data-backed wit
 
 ## Rails (Execution)
 
-- **Crypto:** Revolut X official REST API via the `revolutx` MCP server (private key at `~/.hermes/env/revolut-x-private.pem` — secret, not synced)
-- **Stocks:** IBKR / Trading 212 / eToro — APIs pending account access
+- **Crypto:** Revolut X official REST API via the `revolutx` MCP server (private key at `~/.hermes/env/revolut-x-private.pem` — secret, not synced; API key in `~/.config/revolut-x/config.json` — MCP reads config file, not env vars)
+- **Stocks:** Trading 212 — account created 2026-08-19; API key + secret pending from Imma (Settings → API (Beta) → Generate; Basic auth `API_KEY:API_SECRET`; demo env `demo.trading212.com/api/v0`, live `live.trading212.com/api/v0`). IBKR / eToro still possible alternatives.
+- **News:** Marketaux token set in investor `.env` (verified live 2026-08-19 — use `api_token=` param, not `token=`); RSS fallback (Coindesk/Cointelegraph/The Block)
 - Execution is gated by Imma's approval — the agent proposes, never surprises.
 
 ## Telegram
 
-Not wired yet — no `profile_routes` entry, no topic. Add a topic + route when ready (see `docs/telegram-routing.md`).
+Wired 2026-08-19: **📈 Investor** topic, thread `1016` in the Hermes group → `tg-investor` route in main `config.yaml`. Daily 07:30 briefing + Sat review + price watchdogs deliver here. Gateway restart required after config change (agent cannot restart itself — guard).
 
 ## Related
 

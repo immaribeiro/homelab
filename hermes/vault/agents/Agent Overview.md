@@ -126,8 +126,8 @@ Seven Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a s
 | **Model** | `deepseek/deepseek-v4-flash` via Nous |
 | **Cost** | $0.05 in / $0.10 out per 1M (ultra-cheap) |
 | **Fallback** | GLM 5.2 via Nous → LMStudio qwen3.5-9b-mlx |
-| **Telegram** | — (not wired yet; created 2026-08-19) |
-| **Role** | Markets & portfolio specialist: market/crypto monitoring, news-driven signals, portfolio ops (Revolut X MCP; IBKR/T212 pending) |
+| **Telegram** | 📈 Investor topic (thread 1016, wired 2026-08-19) |
+| **Role** | Markets & portfolio specialist: market/crypto monitoring, news-driven signals, portfolio ops (Revolut X MCP live; Trading 212 API pending) |
 | **Tools** | No tts, image_gen, video, video_gen; MCP `revolutx` |
 | **Reasoning** | medium |
 | **Max turns** | 120 |

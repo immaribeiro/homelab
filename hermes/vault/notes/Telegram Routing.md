@@ -21,7 +21,7 @@ Single Telegram bot (`@ImmaHermesBot`) → single gateway → `profile_routes` d
  main arch back front eng  research
 ```
 
-> **Investor** (created 2026-08-19) — not wired to Telegram yet; no topic or route. Add one via `profile_routes` when ready.
+> **Investor** (created 2026-08-19, wired 2026-08-19 22:57) — 📈 Investor topic, thread `1016` → `tg-investor` route. Live after gateway restart.
 
 ## Live Configuration
 
@@ -36,10 +36,11 @@ Single Telegram bot (`@ImmaHermesBot`) → single gateway → `profile_routes` d
 | 🎨 Frontend | 5 | frontend | [[Frontend Agent]] |
 | 🔧 Engineer | 14 | engineer | [[Engineer Agent]] |
 | 🔬 Research | 431 | researcher | [[Researcher Agent]] |
+| 📈 Investor | 1016 | investor | [[Investor Agent]] |
 
 **Personal DM** (chat_id `1022966386`) → always goes to default (main) — no route needed.
 
-**Investor** — no Telegram topic/route yet (profile created 2026-08-19).
+**Investor** — wired 2026-08-19: 📈 topic, thread `1016` → investor profile.
 
 ## How Routes Work
 
@@ -88,6 +89,11 @@ gateway:
       chat_id: "-1004449482428"
       thread_id: "431"
       profile: researcher
+    - name: tg-investor
+      platform: telegram
+      chat_id: "-1004449482428"
+      thread_id: "1016"
+      profile: investor
 ```
 
 ## Full Documentation
