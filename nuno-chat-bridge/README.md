@@ -28,6 +28,18 @@ Multi-turn conversations use the API server's named `conversation` (default
 - Rate limiting: per-IP sliding window (20/hour) + 300/day global cap.
 - Message length capped at 2000 chars; plain text to the LLM only (no shell,
   no HTML). The assistant itself is the safety gate on actions.
+- Photo uploads (`POST /api/upload`) use the same token gate; files are
+  validated (JPG/PNG/WebP/HEIC, ≤ 15 MB) before the pipeline touches them.
+
+## Endpoints
+
+- `POST /api/chat` — relay a message to the Hermes agent session (`nuno-site`).
+- `POST /api/upload` — accept a photo (multipart field `file`), save it to
+  `~/GitHub/nuno-site/src_photos/`, run the site's `pipeline.py` (WebP
+  optimization + manifest regeneration), then `git commit` + `git push` —
+  GitHub Actions rebuilds the image, GHCR gets a new `latest`, and the
+  `ghcr-deploy-watch` launchd job rolls the k3s Deployment. Photo appears on
+  the site a few minutes later. Same `SITE_TOKEN` auth as chat.
 
 ## Files
 

@@ -16,15 +16,18 @@ Security model:
 Config: ~/.hermes/env/nuno-chat-bridge.env (chmod 600), loaded at startup.
 Logs:   ~/.hermes/logs/nuno-chat-bridge.log
 """
+import asyncio
 import hmac
 import json
+import re
+import subprocess
 import time
 from collections import defaultdict, deque
 from pathlib import Path
 from threading import Lock
 
 import httpx
-from fastapi import FastAPI, Header, Request
+from fastapi import FastAPI, File, Header, Request, UploadFile
 from fastapi.responses import JSONResponse
 
 HOME = Path.home()
@@ -56,10 +59,23 @@ RATE_WINDOW = 3600.0
 GLOBAL_DAILY_CAP = 300
 MAX_MESSAGE = 2000
 
+# Photo upload: saved to the site repo's src_photos/, converted via pipeline.py,
+# then committed + pushed (CI → GHCR → k3s rollout watcher deploys automatically).
+NUNO_SITE_DIR = HOME / "GitHub/nuno-site"
+SRC_PHOTOS_DIR = NUNO_SITE_DIR / "src_photos"
+NUNO_SITE_PYTHON = NUNO_SITE_DIR / ".venv" / "bin" / "python"
+ALLOWED_UPLOAD_EXT = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"}
+MAX_UPLOAD_BYTES = 15 * 1024 * 1024
+
 SYSTEM_PROMPT = (
     "Tu és a Hermes, a assistente pessoal de IA da Imma e do Nuno, integrada no site "
     "nuno.immas.org (que manténs: eventos, notícias, página Us, pipeline diário 06:00). "
-    "O Nuno fala contigo a partir do site. Responde sempre em português de Portugal, "
+    "O Nuno fala contigo a partir do site. "
+    "IMPORTANTE — quem são: o Imma é um HOMEM (pronomes masculinos: «ele», «o Imma»), "
+    "o Nuno é um homem, e os dois formam um casal homossexual. O Imma NÃO é uma mulher: "
+    "nunca te refiras a ele com pronomes ou artigos femininos («ela», «a Imma»), e nunca "
+    "descrevas a relação como heterossexual. Usa sempre o masculino ao falar do Imma. "
+    "Responde sempre em português de Portugal, "
     "com tom caloroso, direto e conciso. Podes usar as tuas ferramentas, memória e skills "
     "para responder e para agir: acrescentar tópicos de notícias, ajustar couple.json, "
     "recomendar eventos, propor mudanças no site. Se um pedido exigir alterações de código, "
@@ -192,6 +208,120 @@ async def chat(request: Request, authorization: str = Header(default="")):
     reply = reply or "(sem resposta)"
     _log(f"replied in {time.time() - t0:.1f}s ({len(reply)} chars)")
     return {"reply": reply, "conversation": CONVERSATION, "at": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
+
+
+def _upload_auth_and_ratelimit(request: Request, authorization: str) -> tuple[bool, JSONResponse | None]:
+    """Shared gate for uploads: token check + per-IP rate limit."""
+    token = authorization.removeprefix("Bearer ").strip()
+    if not SITE_TOKEN or not hmac.compare_digest(token, SITE_TOKEN):
+        _log("upload 401 unauthorized")
+        return False, JSONResponse({"error": "unauthorized"}, status_code=401)
+    if _rate_limited(request.headers.get("X-Real-IP") or (request.client.host if request.client else "?")):
+        _log("upload 429 rate limited")
+        return False, JSONResponse(
+            {"error": "Demasiados pedidos — tenta outra vez daqui a pouco."},
+            status_code=429,
+        )
+    return True, None
+
+
+def _slug_for(stem: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", stem.lower()).strip("-")
+    return slug or "photo"
+
+
+@app.post("/api/upload")
+async def upload_photo(
+    request: Request,
+    file: UploadFile = File(...),
+    authorization: str = Header(default=""),
+):
+    """Receive a photo from the site, optimize it, and trigger the deploy pipeline."""
+    ok, err = _upload_auth_and_ratelimit(request, authorization)
+    if not ok:
+        return err
+
+    filename = (file.filename or "photo.jpg").lower()
+    ext = Path(filename).suffix
+    if ext not in ALLOWED_UPLOAD_EXT:
+        _log(f"upload 400 bad extension {ext}")
+        return JSONResponse(
+            {"error": "Formato não suportado — usa JPG, PNG, WebP ou HEIC."}, status_code=400
+        )
+
+    data = await file.read()
+    if not data or len(data) > MAX_UPLOAD_BYTES:
+        _log(f"upload 413 too large ({len(data)} bytes)")
+        return JSONResponse(
+            {"error": "Ficheiro demasiado grande (máx. 15 MB)."}, status_code=413
+        )
+
+    if not SRC_PHOTOS_DIR.exists():
+        _log("upload 503 nuno-site repo missing")
+        return JSONResponse({"error": "Repositório indisponível — tenta mais tarde."}, status_code=503)
+
+    stem = Path(filename).stem
+    unique = f"upload-{time.strftime('%Y%m%d-%H%M%S')}-{_slug_for(stem)}{ext}"
+    dest = SRC_PHOTOS_DIR / unique
+    try:
+        dest.write_bytes(data)
+    except OSError as exc:
+        _log(f"upload 500 write failed: {exc!r}")
+        return JSONResponse({"error": "Não foi possível guardar a foto."}, status_code=500)
+
+    # Optimize + regenerate manifest via the site's own pipeline (uses its venv).
+    try:
+        proc = await asyncio.to_thread(
+            subprocess.run,
+            [str(NUNO_SITE_PYTHON), "pipeline.py"],
+            cwd=str(NUNO_SITE_DIR),
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+    except Exception as exc:
+        _log(f"upload 500 pipeline run failed: {exc!r}")
+        return JSONResponse({"error": "Pipeline de imagem falhou."}, status_code=500)
+    if proc.returncode != 0:
+        _log(f"upload 500 pipeline exit {proc.returncode}: {proc.stderr[-300:]}")
+        return JSONResponse({"error": "Processamento da imagem falhou."}, status_code=500)
+
+    # Commit + push → GitHub Actions → GHCR → k3s rollout watcher deploys.
+    try:
+        def _commit_and_push() -> None:
+            subprocess.run(
+                ["git", "add", "public/photos", "public/manifest.json"],
+                cwd=str(NUNO_SITE_DIR), check=True, capture_output=True, text=True,
+            )
+            # Only commit when the pipeline actually changed something.
+            changed = subprocess.run(
+                ["git", "diff", "--cached", "--quiet", "public/photos", "public/manifest.json"],
+                cwd=str(NUNO_SITE_DIR), capture_output=True, text=True,
+            )
+            if changed.returncode != 0:
+                subprocess.run(
+                    ["git", "commit", "-m", f"site photos: add {unique}"],
+                    cwd=str(NUNO_SITE_DIR), check=True, capture_output=True, text=True,
+                )
+                subprocess.run(
+                    ["git", "push", "origin", "main"],
+                    cwd=str(NUNO_SITE_DIR), check=True, capture_output=True, text=True, timeout=60,
+                )
+
+        await asyncio.to_thread(_commit_and_push)
+    except Exception as exc:
+        _log(f"upload 500 git failed: {exc!r}")
+        return JSONResponse(
+            {"error": "Foto guardada, mas a publicação falhou — avisa a Hermes."}, status_code=500
+        )
+
+    webp_name = f"{Path(unique).stem}.webp"
+    _log(f"upload ok {unique} -> {webp_name}")
+    return {
+        "ok": True,
+        "src": f"/photos/{webp_name}",
+        "message": "Foto enviada! O site atualiza em poucos minutos.",
+    }
 
 
 if __name__ == "__main__":
