@@ -13,8 +13,9 @@ Private couple site for Imma + Nuno. Static Vite + React + Tailwind v3, deployed
 ## Pipelines (daily 06:00, `~/.hermes/scripts/events-fetch.sh`)
 
 - `fetch_events.py` → `public/events.json` (venues + Eventbrite browse-page scraping, keyless, price enrichment from detail pages).
+- **Curated events**: hand-picked calendar entries live in `MANUAL_EVENTS` inside `fetch_events.py` — they survive the daily refresh and bypass the 14-day window (shown as soon as marked). Used e.g. for Verde Cool (Braga, 7 set–4 out).
 - `fetch_news.py` → `public/news.json` (stdlib RSS/Atom, quotas, idempotent).
-- Only commits+pushes on change → CI builds image → manual `kubectl rollout restart deployment/nuno-site -n nuno`.
+- Only commits+pushes on change → CI builds image → `kubectl rollout restart deployment/nuno-site -n nuno`.
 
 ## Chat with Hermes
 
