@@ -2,7 +2,7 @@
 
 ## Architecture
 
-All six Hermes agents (main, architect, backend, frontend, engineer, researcher) share a single Telegram bot (`@ImmaHermesBot`) and a single gateway process. The gateway uses **profile multiplexing** to route messages from different Telegram Topics to different agent profiles.
+Seven Hermes agent profiles exist (main, architect, backend, frontend, engineer, researcher, investor). The six routed agents share a single Telegram bot (`@ImmaHermesBot`) and a single gateway process. The gateway uses **profile multiplexing** to route messages from different Telegram Topics to different agent profiles. **Investor** was created 2026-08-19 and is not wired to a topic yet.
 
 ```
                     ┌──────────────────────────┐
@@ -22,6 +22,8 @@ All six Hermes agents (main, architect, backend, frontend, engineer, researcher)
      │ GPT-5.6 Luna  │ │ DeepSeek V4   │ │ DeepSeek V4   │ │ DeepSeek V4   │ │ DeepSeek V4   │ │ DeepSeek V4   │
      │ ChatGPT Go    │ │ Pro (Nous)    │ │ Flash (Nous)  │ │ Flash (Nous)  │ │ Flash (Nous)  │ │ Flash (Nous)  │
      └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘
+
+  (investor — profile created 2026-08-19, DeepSeek V4 Flash via Nous — NOT yet wired to a Telegram topic)
 ```
 
 ## How It Works
@@ -45,6 +47,8 @@ All six Hermes agents (main, architect, backend, frontend, engineer, researcher)
 **Group chat ID:** `-1004449482428` (group name: "Hermes")
 
 **Your personal DM** (chat ID `1022966386`) always goes to the default (main) profile — no route needed.
+
+**Investor** — created 2026-08-19, not in `profile_routes` yet; add a topic + route when ready.
 
 ## config.yaml Excerpt (Live)
 
@@ -109,6 +113,7 @@ Each profile has a different SOUL.md personality:
 - **frontend** — talks about UI, CSS, accessibility, components
 - **engineer** — talks about kubectl, clusters, infrastructure
 - **researcher** — talks about sources, citations, confidence, verification
+- **investor** — talks about positions, market signals, risk discipline, portfolio
 
 Ask any agent: "What model are you?" and it will tell you.
 

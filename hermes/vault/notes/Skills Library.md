@@ -1,6 +1,6 @@
 ---
 created: 2026-08-18
-updated: 2026-08-18
+updated: 2026-08-19
 ---
 
 # 📚 Skills Library
@@ -39,6 +39,8 @@ Ported ready-made skills (eval-tested upstream, ship Python scripts):
 | researcher | `deep-research-patterns` | core research workflow |
 | researcher | `llm-memory-patterns` | research context persistence |
 | researcher | `token-optimization` | keep research extract costs down |
+
+**investor** (2026-08-19): standard fleet skill set + custom `finance/` skills — `investment-analysis`, `market-briefing`, `revx-account`, `revx-auth`, `revx-market`, `revx-monitor`, `revx-strategy`, `revx-telegram`, `revx-trading` (Revolut X API workflows; custom, not distilled from awesome-llm-apps) — plus `agent-skills/` (`deep-research-patterns`, `llm-memory-patterns`, `token-optimization`).
 
 ## Related
 

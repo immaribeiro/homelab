@@ -1,6 +1,6 @@
 ---
 created: 2026-08-16
-updated: 2026-08-18
+updated: 2026-08-19
 ---
 
 # 📱 Telegram Routing
@@ -21,6 +21,8 @@ Single Telegram bot (`@ImmaHermesBot`) → single gateway → `profile_routes` d
  main arch back front eng  research
 ```
 
+> **Investor** (created 2026-08-19) — not wired to Telegram yet; no topic or route. Add one via `profile_routes` when ready.
+
 ## Live Configuration
 
 **Group:** "Hermes" (supergroup with forum topics)
@@ -36,6 +38,8 @@ Single Telegram bot (`@ImmaHermesBot`) → single gateway → `profile_routes` d
 | 🔬 Research | 431 | researcher | [[Researcher Agent]] |
 
 **Personal DM** (chat_id `1022966386`) → always goes to default (main) — no route needed.
+
+**Investor** — no Telegram topic/route yet (profile created 2026-08-19).
 
 ## How Routes Work
 

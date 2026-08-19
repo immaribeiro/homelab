@@ -5,11 +5,11 @@ updated: 2026-08-19
 
 # 🤖 Agent Overview
 
-> 🔄 **Last synced:** 2026-08-19 11:40 (auto-sync watchdog, cron `eb7ea48fe83c`)
+> 🔄 **Last synced:** 2026-08-19 17:44 (auto-sync watchdog, cron `eb7ea48fe83c`)
 
 ## Summary
 
-Six Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a single gateway with Telegram multiplexing.
+Seven Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a single gateway with Telegram multiplexing.
 
 > **Updated 2026-08-16:** main agent primary switched to `openai-codex` (ChatGPT Go).
 
@@ -117,6 +117,24 @@ Six Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a sin
 
 → [[Researcher Agent]]
 
+### Investor
+
+| Field | Value |
+|-------|-------|
+| **Profile** | investor |
+| **Config** | `~/GitHub/homelab/hermes/profiles/investor/config.yaml` |
+| **Model** | `deepseek/deepseek-v4-flash` via Nous |
+| **Cost** | $0.05 in / $0.10 out per 1M (ultra-cheap) |
+| **Fallback** | GLM 5.2 via Nous → LMStudio qwen3.5-9b-mlx |
+| **Telegram** | — (not wired yet; created 2026-08-19) |
+| **Role** | Markets & portfolio specialist: market/crypto monitoring, news-driven signals, portfolio ops (Revolut X MCP; IBKR/T212 pending) |
+| **Tools** | No tts, image_gen, video, video_gen; MCP `revolutx` |
+| **Reasoning** | medium |
+| **Max turns** | 120 |
+| **Terminal cwd** | `/Users/imma/GitHub` |
+
+→ [[Investor Agent]]
+
 ## Related Projects
 
 Agents work on these projects:
@@ -136,4 +154,5 @@ Agents work on these projects:
 | frontend | ~100K | ~$0.01 |
 | engineer | ~50K | ~$0.01 |
 | researcher | ~30K | ~$0.01 |
-| **Total** | ~360K | **~$0.08/day** |
+| investor | ~30K | ~$0.01 |
+| **Total** | ~390K | **~$0.09/day** |

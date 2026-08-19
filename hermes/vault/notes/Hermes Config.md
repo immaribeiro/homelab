@@ -1,6 +1,6 @@
 ---
 created: 2026-08-16
-updated: 2026-08-18
+updated: 2026-08-19
 ---
 
 # ⚙️ Hermes Config
@@ -24,6 +24,7 @@ How Hermes configuration files are organized and synced to git.
 │   ├── backend/                   ← backend agent configs
 │   ├── frontend/                  ← frontend agent configs
 │   ├── engineer/                  ← engineer agent configs
+│   ├── investor/                  ← investor agent configs
 │   └── researcher/                ← researcher agent configs
 ├── docs/
 │   └── telegram-routing.md        ← Telegram setup guide
@@ -51,6 +52,7 @@ How Hermes configuration files are organized and synced to git.
     ├── backend/ (same structure)
     ├── frontend/ (same structure)
     ├── engineer/ (same structure)
+    ├── investor/ (same structure)
     └── researcher/ (same structure)
 ```
 
@@ -82,7 +84,7 @@ ln -s ~/GitHub/homelab/hermes/memories/USER.md memories/USER.md
 ln -s ~/GitHub/homelab/hermes/cron/jobs.json cron/jobs.json
 
 # Create profiles with symlinks
-for profile in architect backend frontend engineer researcher; do
+for profile in architect backend frontend engineer investor researcher; do
   hermes profile create $profile
   cd ~/.hermes/profiles/$profile
   ln -sf ~/GitHub/homelab/hermes/profiles/$profile/config.yaml config.yaml

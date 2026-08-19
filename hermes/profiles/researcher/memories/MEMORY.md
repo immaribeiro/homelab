@@ -1,0 +1,1 @@
+Imma is building investment-management agents (planned 'investor' Hermes profile; crypto via Revolut X official API/MCP, stocks via IBKR/Trading 212/eToro). Verified research + blueprint: ~/.hermes/profiles/researcher/outputs/2026-08-19-investment-agents-research.md; condensed facts in skill 'terminal-web-research' references.

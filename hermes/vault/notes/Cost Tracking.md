@@ -1,6 +1,6 @@
 ---
 created: 2026-08-16
-updated: 2026-08-18
+updated: 2026-08-19
 ---
 
 # 💰 Cost Tracking
@@ -17,15 +17,16 @@ Model costs and daily estimates for each agent. Prices per 1M tokens (input / ou
 | Frontend | `deepseek/deepseek-v4-flash` via Nous | $0.05 | $0.10 | Ultra-cheap |
 | Engineer | `deepseek/deepseek-v4-flash` via Nous | $0.05 | $0.10 | Ultra-cheap |
 | Researcher | `deepseek/deepseek-v4-flash` via Nous | $0.05 | $0.10 | Ultra-cheap |
+| Investor | `deepseek/deepseek-v4-flash` via Nous | $0.05 | $0.10 | Ultra-cheap |
 
 ## Fallback Models
 
 | Model | In | Out | Used by |
 |-------|----|-----|---------|
-| `deepseek/deepseek-v4-flash` via Nous | $0.05 | $0.10 | Frontend primary, Main fallback 0, Engineer/Researcher primary |
-| `z-ai/glm-5.2` via Nous | $0.25 | $0.77 | Architect fallback 0, Backend fallback 1, Frontend fallback 1, Engineer fallback 0 |
+| `deepseek/deepseek-v4-flash` via Nous | $0.05 | $0.10 | Frontend primary, Main fallback 0, Engineer/Researcher/Investor primary |
+| `z-ai/glm-5.2` via Nous | $0.25 | $0.77 | Architect fallback 0, Backend fallback 1, Frontend fallback 1, Engineer fallback 0, Investor fallback 0 |
 | `openai/gpt-5.6-luna` via Nous | $0.10 | $0.60 | Delegation (all profiles) |
-| `lmstudio/qwen3.5-9b-mlx` (local) | $0.00 | $0.00 | Frontend fallback 0 (offline), Main fallback 1, Architect fallback 1, Researcher fallback 1 |
+| `lmstudio/qwen3.5-9b-mlx` (local) | $0.00 | $0.00 | Frontend fallback 0 (offline), Main fallback 1, Architect fallback 1, Researcher fallback 1, Investor fallback 1 |
 | `lmstudio/google/gemma-4-e4b` (local) | $0.00 | $0.00 | Backend fallback 0, Engineer fallback 1 |
 
 ## Daily Cost Estimate
@@ -40,11 +41,12 @@ Rough estimates — actual cost depends on usage and how often fallbacks fire.
 | frontend | ~100K | ~$0.01 |
 | engineer | ~50K | ~$0.01 |
 | researcher | ~30K | ~$0.01 |
-| **Total** | **~360K** | **~$0.08/day** |
+| investor | ~30K | ~$0.01 |
+| **Total** | **~390K** | **~$0.09/day** |
 
-**Monthly estimate:** ~$2.40 (if usage is consistent)
+**Monthly estimate:** ~$2.70 (if usage is consistent)
 
-**Comparison:** if all 6 agents ran on GLM 5.2 exclusively: ~$0.41/day ≈ ~$12/month
+**Comparison:** if all 7 agents ran on GLM 5.2 exclusively: ~$0.48/day ≈ ~$14/month
 **Savings:** ~80% reduction by using ChatGPT subscription + cheap/local models.
 
 ## Full Price Reference
