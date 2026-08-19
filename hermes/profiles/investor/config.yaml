@@ -1,0 +1,61 @@
+model:
+  default: deepseek/deepseek-v4-flash
+  provider: nous
+  base_url: ''
+  api_key_env: OPENAI_API_KEY
+fallback_providers:
+  '0':
+    provider: nous
+    model: z-ai/glm-5.2
+  '1':
+    provider: lmstudio
+    model: qwen3.5-9b-mlx
+    base_url: http://localhost:1234/v1
+agent:
+  max_turns: 120
+  tool_use_enforcement: auto
+  task_completion_guidance: true
+  environment_probe: false
+  coding_context: auto
+  disabled_toolsets:
+    - tts
+    - image_gen
+    - video
+    - video_gen
+  reasoning_effort: medium
+terminal:
+  backend: local
+  cwd: /Users/imma/GitHub
+display:
+  personality: analytical
+  interface: cli
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+  write_approval: false
+  memory_char_limit: 2200
+  user_char_limit: 1375
+delegation:
+  model: openai/gpt-5.6-luna
+  provider: nous
+  max_iterations: 250
+  max_concurrent_children: 5
+  max_spawn_depth: 1
+mcp_servers:
+  revolutx:
+    command: "node"
+    args: ["/Users/imma/GitHub/revolut-x-api/mcp/dist/index.js"]
+    env:
+      REVX_API_KEY: ""
+      REVX_PRIVATE_KEY_PATH: "/Users/imma/.hermes/env/revolut-x-private.pem"
+    timeout: 120
+    connect_timeout: 60
+_config_version: 37
+custom_providers:
+  - name: lmstudio
+    base_url: http://localhost:1234/v1
+    model: qwen3.5-9b-mlx
+    models:
+      - qwen3.5-9b-mlx
+      - google/gemma-4-e4b
+      - text-embedding-nomic-embed-text-v1.5
