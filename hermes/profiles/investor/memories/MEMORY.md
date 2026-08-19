@@ -1,0 +1,3 @@
+revx CLI: TypeScript monorepo at /Users/imma/GitHub/revolut-x-api (npm-linked to /opt/homebrew/bin/revx, v1.0.47). Config at ~/.config/revolut-x/config.json; private key at ~/.hermes/env/revolut-x-private.pem.
+§
+Revolut (app, fiat/IBAN) and Revolut X (crypto exchange) are separate balances under one Revolut account. Funding X from the app: Deposit → EUR → 'From Revolut account' (instant, free). revx CLI has NO deposit command — deposits are app-side only.

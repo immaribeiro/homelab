@@ -1,1 +1,3 @@
 Imma is building investment-management agents (planned 'investor' Hermes profile; crypto via Revolut X official API/MCP, stocks via IBKR/Trading 212/eToro). Verified research + blueprint: ~/.hermes/profiles/researcher/outputs/2026-08-19-investment-agents-research.md; condensed facts in skill 'terminal-web-research' references.
+§
+Fleet profiles: main + architect/backend/frontend/engineer/researcher/investor; main orchestrates. Investor (2026-08-19): markets/portfolio — Revolut X official MCP (~/GitHub/revolut-x-api, 22 tools) + revx CLI; keys set, TG topic 1016 routed live, cron ticking (daily 07:30 briefing, Sat review, 15-min price watchdog); finance skills (investment-analysis, market-briefing, revx-*); journal + snapshots in ~/GitHub/homelab/investor/.

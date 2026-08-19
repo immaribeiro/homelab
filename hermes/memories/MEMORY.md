@@ -6,7 +6,7 @@ Mission Control: dashboard ~/GitHub/homelab/mission-control/ (:9118, launchd ai.
 §
 Multi-machine: Mac Mini = hub (imma-mini; LAN 192.168.8.161, tailnet 100.101.63.91), MacBook = client. NordVPN on Mini breaks Tailscale — use LAN fallback; 'localhost' preview = MacBook loopback.
 §
-Profiles: main + architect/backend/frontend/engineer/researcher; main orchestrates/reviews/integrates. Engineer: full autonomy on infra. Researcher: deep research.
+Investor (2026-08-19): Revolut X MCP (~/GitHub/revolut-x-api, 22 tools) + finance skills; cron 07:30 briefing + Sat review + 15-min watchdog; journal ~/GitHub/homelab/investor/; Marketaux in investor .env (param api_token=, not token=); TG tg-investor → thread 1016 LIVE (restarted 08-19); REVX creds ~/.config/revolut-x/config.json (PITFALL: MCP ignores REVX_* env vars; 0600/0700 perms); Trading 212 account created — awaiting API key+secret (Settings→API Beta→Generate; Basic auth API_KEY:API_SECRET; demo/live .trading212.com/api/v0).
 §
 K3s Lima: VMs need `lima:shared` net + `--flannel-iface lima0`; config changes rotate CA certs/node-token — rejoin workers.
 §
@@ -16,4 +16,4 @@ Uploads: k3s-worker-1 staging → bookshelf-upload-sync.sh (launchd, 3min) → P
 §
 Researcher profile (deep research): skills from ~/GitHub/awesome-llm-apps; Telegram 🔬 thread 431 (tg-researcher).
 §
-nuno-site chat: nuno-chat-bridge (homelab repo; launchd ai.hermes.nuno-chat-bridge :8643) relays site /api/ → Hermes API server 127.0.0.1:8642 (gateway.api_server in config.yaml; keys in ~/.hermes/env/nuno-chat-bridge.env + src/config.js). Conversation 'nuno-site'.
+nuno-site: chat via nuno-chat-bridge (homelab; launchd :8643) → Hermes API 127.0.0.1:8642, session 'nuno-site'. Curated calendar events = MANUAL_EVENTS in fetch_events.py (survive 06:00 refresh). Deploy: push → GH Actions → ghcr → kubectl rollout restart deployment/nuno-site -n nuno.

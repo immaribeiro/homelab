@@ -2,7 +2,7 @@
 
 ## Architecture
 
-Seven Hermes agent profiles exist (main, architect, backend, frontend, engineer, researcher, investor). The six routed agents share a single Telegram bot (`@ImmaHermesBot`) and a single gateway process. The gateway uses **profile multiplexing** to route messages from different Telegram Topics to different agent profiles. **Investor** was created 2026-08-19 and is not wired to a topic yet.
+Seven Hermes agent profiles exist (main, architect, backend, frontend, engineer, researcher, investor). The seven routed agents share a single Telegram bot (`@ImmaHermesBot`) and a single gateway process. The gateway uses **profile multiplexing** to route messages from different Telegram Topics to different agent profiles. **Investor** was created 2026-08-19 and wired to the 📈 Investor topic (thread 1016) the same day.
 
 ```
                     ┌──────────────────────────┐
@@ -16,14 +16,12 @@ Seven Hermes agent profiles exist (main, architect, backend, frontend, engineer,
                     │   ai.hermes.gateway       │
                     └──────────┬───────────────┘
                                │
-     ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐
-     │  main         │ │  architect    │ │  backend      │ │  frontend     │ │  engineer     │ │  researcher   │
-     │  (default)    │ │  (profile)    │ │  (profile)    │ │  (profile)    │ │  (profile)    │ │  (profile)    │
-     │ GPT-5.6 Luna  │ │ DeepSeek V4   │ │ DeepSeek V4   │ │ DeepSeek V4   │ │ DeepSeek V4   │ │ DeepSeek V4   │
-     │ ChatGPT Go    │ │ Pro (Nous)    │ │ Flash (Nous)  │ │ Flash (Nous)  │ │ Flash (Nous)  │ │ Flash (Nous)  │
-     └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘
-
-  (investor — profile created 2026-08-19, DeepSeek V4 Flash via Nous — NOT yet wired to a Telegram topic)
+     ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────┐
+     │  main         │ │  architect    │ │  backend      │ │  frontend     │ │  engineer     │ │  researcher   │ │  investor     │
+     │  (default)    │ │  (profile)    │ │  (profile)    │ │  (profile)    │ │  (profile)    │ │  (profile)    │ │  (profile)    │
+     │ GPT-5.6 Luna  │ │ DeepSeek V4   │ │ DeepSeek V4   │ │ DeepSeek V4   │ │ DeepSeek V4   │ │ DeepSeek V4   │ │ DeepSeek V4   │
+     │ ChatGPT Go    │ │ Pro (Nous)    │ │ Flash (Nous)  │ │ Flash (Nous)  │ │ Flash (Nous)  │ │ Flash (Nous)  │ │ Flash (Nous)  │
+     └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘
 ```
 
 ## How It Works
@@ -43,12 +41,13 @@ Seven Hermes agent profiles exist (main, architect, backend, frontend, engineer,
 | 🎨 Frontend | 5 | frontend | DeepSeek V4 Flash via Nous | $0.05/$0.10 |
 | 🔧 Engineer | 14 | engineer | DeepSeek V4 Flash via Nous | $0.05 / $0.10 |
 | 🔬 Research | 431 | researcher | DeepSeek V4 Flash via Nous | $0.05 / $0.10 |
+| 📈 Investor | 1016 | investor | DeepSeek V4 Flash via Nous | $0.05 / $0.10 |
 
 **Group chat ID:** `-1004449482428` (group name: "Hermes")
 
 **Your personal DM** (chat ID `1022966386`) always goes to the default (main) profile — no route needed.
 
-**Investor** — created 2026-08-19, not in `profile_routes` yet; add a topic + route when ready.
+**Investor** — wired 2026-08-19: 📈 topic (thread `1016`) → `tg-investor` route → investor profile.
 
 ## config.yaml Excerpt (Live)
 
@@ -91,11 +90,17 @@ gateway:
       chat_id: "-1004449482428"
       thread_id: "431"
       profile: researcher
+
+    - name: tg-investor
+      platform: telegram
+      chat_id: "-1004449482428"
+      thread_id: "1016"
+      profile: investor
 ```
 
 ## Important: Telegram Credentials
 
-When multiplexing is enabled, **only the default profile** (`~/.hermes/.env`) should have `TELEGRAM_BOT_TOKEN`. The secondary profiles (architect, backend, frontend, engineer, researcher) must NOT have Telegram credentials — the multiplexer handles the single Telegram connection and routes via `profile_routes`.
+When multiplexing is enabled, **only the default profile** (`~/.hermes/.env`) should have `TELEGRAM_BOT_TOKEN`. The secondary profiles (architect, backend, frontend, engineer, researcher, investor) must NOT have Telegram credentials — the multiplexer handles the single Telegram connection and routes via `profile_routes`.
 
 If secondary profiles have Telegram tokens, the gateway will refuse to start with:
 ```

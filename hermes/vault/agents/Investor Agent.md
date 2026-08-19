@@ -37,7 +37,7 @@ Custom (2026-08-19): signals-not-hype (verify before recommend), data-backed wit
 
 ## Skills
 
-- `finance/`: `investment-analysis`, `market-briefing`, `revx-account`, `revx-auth`, `revx-market`, `revx-monitor`, `revx-strategy`, `revx-telegram`, `revx-trading` (Revolut X API workflows)
+- `finance/`: `investment-analysis`, `market-briefing`, `market-data-sources`, `revx-account`, `revx-auth`, `revx-market`, `revx-monitor`, `revx-strategy`, `revx-telegram`, `revx-trading` (Revolut X API workflows)
 - `agent-skills/`: `deep-research-patterns`, `llm-memory-patterns`, `token-optimization`
 - Standard fleet skill categories (apple, creative, github, productivity, research, …)
 

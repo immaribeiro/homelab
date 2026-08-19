@@ -13,19 +13,19 @@ Deep reasoning agent for system design, architecture decisions, and code review.
 
 ## Configuration
 
-| Field | Value |
-|-------|-------|
-| **Profile** | architect |
-| **Model** | `deepseek/deepseek-v4-pro-0813` (reasoning model) |
-| **Provider** | Nous Portal (OAuth) |
-| **Cost** | $0.35 in / $0.70 out per 1M tokens |
-| **Fallback 0** | `z-ai/glm-5.2` via Nous |
-| **Fallback 1** | `lmstudio/qwen3.5-9b-mlx` (local, free) |
+| Field           | Value                                                    |
+| --------------- | -------------------------------------------------------- |
+| **Profile**     | architect                                                |
+| **Model**       | `deepseek/deepseek-v4-pro-0813` (reasoning model)        |
+| **Provider**    | Nous Portal (OAuth)                                      |
+| **Cost**        | $0.35 in / $0.70 out per 1M tokens                       |
+| **Fallback 0**  | `z-ai/glm-5.2` via Nous                                  |
+| **Fallback 1**  | `lmstudio/qwen3.5-9b-mlx` (local, free)                  |
 | **Config file** | `~/GitHub/homelab/hermes/profiles/architect/config.yaml` |
-| **SOUL.md** | `~/GitHub/homelab/hermes/profiles/architect/SOUL.md` |
-| **Telegram** | 🏛 Architecture topic (thread 3) |
-| **Reasoning** | high |
-| **Max turns** | 120 |
+| **SOUL.md**     | `~/GitHub/homelab/hermes/profiles/architect/SOUL.md`     |
+| **Telegram**    | 🏛 Architecture topic (thread 3)                         |
+| **Reasoning**   | high                                                     |
+| **Max turns**   | 120                                                      |
 
 ## Toolset Restrictions
 
