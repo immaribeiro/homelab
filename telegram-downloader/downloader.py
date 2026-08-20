@@ -26,9 +26,10 @@ from telethon.errors import FloodWaitError
 
 DEFAULT_ENV_FILE = "/Users/imma/.hermes/env/telegram-downloader.env"
 DEFAULT_SESSION_NAME = "ebooks_session"
-DEFAULT_DOWNLOAD_DIR = "/Users/imma/Downloads/ebook-library/PT"
+DEFAULT_DOWNLOAD_DIR = "/Users/imma/Downloads/ebook-library"
 DEFAULT_ALLOWED_EXTENSIONS = ".pdf,.epub"
 DEFAULT_MESSAGE_LIMIT = 1000
+LANGUAGE_SUBFOLDERS = ("PT", "ENG")
 
 # Script location, so the session file lands deterministically regardless of cwd.
 REPO_DIR = Path(__file__).resolve().parent
@@ -42,16 +43,16 @@ def env_key(name):
 
 class Config:
     def __init__(self, api_id, api_hash, phone, session_name, download_dir,
-                 allowed_extensions, target_chat, message_limit, target_is_channel):
+                 allowed_extensions, target_chats, message_limit, is_channel):
         self.api_id = api_id
         self.api_hash = api_hash
         self.phone = phone
         self.session_name = session_name
         self.download_dir = Path(download_dir)
         self.allowed_extensions = allowed_extensions
-        self.target_chat = target_chat
+        self.target_chats = target_chats  # list of chat references
         self.message_limit = message_limit
-        self.target_is_channel = target_is_channel
+        self.target_is_channel = is_channel
 
 
 def load_env_file(path):
@@ -102,7 +103,11 @@ def get_config(args):
     phone = resolve(env_key("PHONE"))
     session_name = resolve(env_key("SESSION_NAME"), DEFAULT_SESSION_NAME)
     download_dir = resolve(env_key("DOWNLOAD_DIR"), DEFAULT_DOWNLOAD_DIR)
-    target_chat = resolve(env_key("TARGET_CHAT"))
+    # TARGET_CHATS is the preferred comma-separated setting. Keep accepting
+    # TARGET_CHAT so existing single-chat env files continue to work.
+    target_chats_raw = resolve(env_key("TARGET_CHATS"))
+    if not target_chats_raw:
+        target_chats_raw = resolve(env_key("TARGET_CHAT"))
     message_limit_raw = resolve(env_key("MESSAGE_LIMIT"), DEFAULT_MESSAGE_LIMIT,
                                 cli_value=args.limit)
     is_channel = parse_bool(resolve(env_key("TARGET_IS_CHANNEL"), "false"))
@@ -113,8 +118,8 @@ def get_config(args):
         errors.append(f"{env_key('API_ID')} is not set")
     if not api_hash:
         errors.append(f"{env_key('API_' + 'HASH')} is not set")
-    if not target_chat:
-        errors.append(f"{env_key('TARGET_CHAT')} is not set")
+    if not target_chats_raw:
+        errors.append(f"{env_key('TARGET_CHATS')} is not set (use comma-separated list)")
     if errors:
         print("[error] missing required configuration:")
         for err in errors:
@@ -135,9 +140,17 @@ def get_config(args):
         sys.exit(1)
 
     allowed_extensions = [e.strip().lower() for e in extensions_raw.split(",") if e.strip()]
+    target_chats = [t.strip() for t in re.split(r"[,\n]", target_chats_raw or "") if t.strip()]
+    if not target_chats:
+        print(f"[error] {env_key('TARGET_CHATS')} must contain at least one chat")
+        sys.exit(1)
+    if len(target_chats) > len(LANGUAGE_SUBFOLDERS):
+        print(f"[error] at most {len(LANGUAGE_SUBFOLDERS)} target chats are supported "
+              f"({', '.join(LANGUAGE_SUBFOLDERS)}), got {len(target_chats)}")
+        sys.exit(1)
 
     return Config(api_id, api_hash, phone, session_name, download_dir,
-                  allowed_extensions, target_chat, message_limit, is_channel)
+                  allowed_extensions, target_chats, message_limit, is_channel)
 
 
 def mask_phone(phone):
@@ -155,7 +168,8 @@ def print_config(cfg, session_file):
     print(f"  session_file:       {session_file}")
     print(f"  download_dir:       {cfg.download_dir}")
     print(f"  allowed_extensions: {', '.join(cfg.allowed_extensions)}")
-    print(f"  target_chat:        {cfg.target_chat}")
+    print(f"  target_chats:       {', '.join(cfg.target_chats)}")
+    print(f"  language_folders:   {', '.join(LANGUAGE_SUBFOLDERS[:len(cfg.target_chats)])}")
     print(f"  message_limit:      {cfg.message_limit}")
     print(f"  target_is_channel:  {cfg.target_is_channel}")
 
@@ -236,7 +250,15 @@ async def attempt_download(client, message, target_path, max_attempts=5):
     return False, "unknown error"
 
 
-async def download_messages(client, entity, cfg):
+async def download_messages(client, entity, cfg, target_dir=None):
+    """Download media from one entity into ``target_dir``.
+
+    ``target_dir`` defaults to the configured root for compatibility with
+    callers that use this helper directly. Headless multi-chat runs pass a
+    language-specific subfolder.
+    """
+    target_dir = Path(target_dir) if target_dir is not None else cfg.download_dir
+    target_dir.mkdir(parents=True, exist_ok=True)
     downloaded = 0
     duplicates = 0
     failed = 0
@@ -262,11 +284,11 @@ async def download_messages(client, entity, cfg):
             consecutive_skips += 1
             continue
 
-        target_path = cfg.download_dir / clean
+        target_path = target_dir / clean
         # Files may live flat (fresh download) or in author subfolders
         # (after organize_library.py ran) — dedupe against the whole tree.
         if target_path.exists() or any(
-            p.name == clean for p in cfg.download_dir.rglob("*") if p.is_file()
+            p.name == clean for p in target_dir.rglob("*") if p.is_file()
         ):
             duplicates += 1
             consecutive_skips += 1
@@ -317,29 +339,43 @@ async def headless_main(cfg, session_base):
             print("NO SESSION — run: python downloader.py --login")
             return 2
 
-        print("[info] session authorized, resolving target chat")
-        try:
-            entity = resolve_target(client, cfg.target_chat, cfg.target_is_channel)
-        except Exception as e:
-            print(f"[error] could not resolve target chat from {cfg.target_chat!r}: {e}")
-            return 1
+        totals = {"downloaded": 0, "duplicates": 0, "failed": 0}
+        all_new_files = []
+        all_failures = []
+        had_error = False
 
-        cfg.download_dir.mkdir(parents=True, exist_ok=True)
-        print(f"[info] scanning {entity} (limit={cfg.message_limit})")
-        downloaded, duplicates, failed, new_files, failures = \
-            await download_messages(client, entity, cfg)
+        for language, raw_target in zip(LANGUAGE_SUBFOLDERS, cfg.target_chats):
+            print(f"[info] resolving {language} target chat: {raw_target}")
+            try:
+                entity = resolve_target(client, raw_target, cfg.target_is_channel)
+            except Exception as e:
+                print(f"[error] could not resolve {language} target chat from "
+                      f"{raw_target!r}: {e}")
+                had_error = True
+                continue
+
+            target_dir = cfg.download_dir / language
+            target_dir.mkdir(parents=True, exist_ok=True)
+            print(f"[info] scanning {entity} into {target_dir} (limit={cfg.message_limit})")
+            downloaded, duplicates, failed, new_files, failures = \
+                await download_messages(client, entity, cfg, target_dir)
+            totals["downloaded"] += downloaded
+            totals["duplicates"] += duplicates
+            totals["failed"] += failed
+            all_new_files.extend(f"{language}/{name}" for name in new_files)
+            all_failures.extend(f"{language}/{failure}" for failure in failures)
 
         print("\n===== SUMMARY =====")
-        print(f"downloaded:         {downloaded}")
-        print(f"skipped duplicates: {duplicates}")
-        print(f"failed:             {failed}")
+        print(f"downloaded:         {totals['downloaded']}")
+        print(f"skipped duplicates: {totals['duplicates']}")
+        print(f"failed:             {totals['failed']}")
         print("new files:")
-        for f in new_files:
+        for f in all_new_files:
             print(f"  {f}")
         print("failures:")
-        for f in failures:
+        for f in all_failures:
             print(f"  {f}")
-        return 0
+        return 1 if had_error else 0
     finally:
         try:
             await client.disconnect()
