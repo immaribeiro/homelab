@@ -44,6 +44,7 @@ set -euo pipefail
 APPS=(
   "bookshelf|books|ghcr.io/immaribeiro/bookshelf:latest"
   "reconstruction-app|reconstruction-app|ghcr.io/immaribeiro/reconstruction-app:latest"
+  "nuno-site|nuno|ghcr.io/immaribeiro/nuno-site:latest"
 )
 
 LOG="${GHCR_WATCH_LOG:-/Users/imma/.hermes/logs/ghcr-deploy-watch.log}"
