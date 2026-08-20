@@ -14,12 +14,28 @@ Automated weekly download of e-books from two private Telegram channels (PT + EN
 | Field | Value |
 |-------|-------|
 | **Script** | `~/GitHub/homelab/telegram-downloader/run_downloader.sh` |
-| **Source chats** | Two target chats configured in the env file — PT channel `-1002152949316` (`https://t.me/c/2152949316/3`) + ENG chat |
-| **Download dirs** | `~/Downloads/ebook-library/PT` and `~/Downloads/ebook-library/ENG` (both chats synced) |
+| **Source chat** | One forum channel — **Floresta Encantada** `-1002152949316` (`https://t.me/c/2152949316/3`), two topics: **Livros PT 🇵🇹 = topic 3**, **Livros EN 🇬🇧 = topic 5** |
+| **Download dirs** | `~/Downloads/ebook-library/PT` (topic 3) and `~/Downloads/ebook-library/ENG` (topic 5) |
+| **Byte cap** | `TELEGRAM_MAX_BYTES=1073741824` (1 GiB per run — disk is ~94% full) |
 | **Schedule** | Every Sunday at 07:00 (`0 7 * * 0`) |
 | **Cron job ID** | `17ed147e373f` |
 | **Workdir** | `~/GitHub/homelab/telegram-downloader` |
-| **Env file** | `~/.hermes/env/telegram-downloader.env` (credentials + target chat IDs, outside repo) |
+| **Env file** | `~/.hermes/env/telegram-downloader.env` (credentials + target chat/topic refs, outside repo) |
+
+## Topic-scoped downloads (2026-08-20, commit `7882fa4`)
+
+The channel is a **forum** — PT and ENG books live in different topics, not
+different chats. Before this change the downloader scanned the whole channel
+into both folders (which is why PT contained English books). Now:
+
+- `TELEGRAM_TARGET_CHATS` accepts `chat_ref:topic_id` — e.g.
+  `-1002152949316:3` (PT) and `-1002152949316:5` (EN).
+- `TELEGRAM_LANGUAGE=PT|ENG` forces the destination subfolder for
+  single-chat wrapper runs (wrapper passes the library root; the downloader
+  appends the language dir).
+- `TELEGRAM_MAX_BYTES` / `--max-bytes` stops a run after N bytes
+  downloaded (0 = unlimited). The EN topic holds **911 files / ~2.15 GB**,
+  so backfills run in 1 GiB weekly batches until complete.
 
 ## Status (2026-08-17)
 
