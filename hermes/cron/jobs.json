@@ -3,7 +3,7 @@
     {
       "id": "17ed147e373f",
       "name": "Weekly e-book download sync",
-      "prompt": "Run the script /Users/imma/GitHub/homelab/telegram-downloader/run_downloader.sh and report its stdout verbatim as the completion report. Interpret its exit code: 0 = sync succeeded (may include \"0 new files\" — that is normal when nothing new was posted); 1 = configuration or runtime error, alert the user; 2 = Telegram session missing/invalid, tell the user the one-time interactive login must be re-run (command: cd /Users/imma/GitHub/homelab/telegram-downloader && ./run_downloader.sh --login). The script sources its env file itself and uses the repo venv; do not set environment variables or activate anything manually.",
+      "prompt": "Run the script /Users/imma/GitHub/homelab/telegram-downloader/run_downloader.sh and report its stdout verbatim as the completion report. Interpret its exit code: 0 = sync succeeded (may include \"0 new files\" — that is normal when nothing new was posted); 1 = configuration or runtime error, alert the user; 2 = Telegram session missing/invalid, tell the user the one-time interactive login must be re-run (command: cd /Users/imma/GitHub/homelab/telegram-downloader && ./run_downloader.sh --login). The script sources its env file itself and uses the repo venv; do not set environment variables or activate anything manually. Downloads from both PT and ENG target chats into ~/Downloads/ebook-library/PT and ~/Downloads/ebook-library/ENG respectively.",
       "skills": [
         "terminal"
       ],
@@ -108,15 +108,15 @@
       "schedule_display": "0 20 * * *",
       "repeat": {
         "times": null,
-        "completed": 3
+        "completed": 4
       },
       "enabled": true,
       "state": "scheduled",
       "paused_at": null,
       "paused_reason": null,
       "created_at": "2026-08-16T21:58:53.609313+01:00",
-      "next_run_at": "2026-08-19T20:00:00+01:00",
-      "last_run_at": "2026-08-18T20:00:11.247950+01:00",
+      "next_run_at": "2026-08-20T20:00:00+01:00",
+      "last_run_at": "2026-08-19T20:00:09.289652+01:00",
       "last_status": "ok",
       "last_error": null,
       "last_delivery_error": null,
@@ -154,15 +154,15 @@
       "schedule_display": "every 15m",
       "repeat": {
         "times": null,
-        "completed": 40
+        "completed": 175
       },
       "enabled": true,
       "state": "scheduled",
       "paused_at": null,
       "paused_reason": null,
       "created_at": "2026-08-18T14:09:52.944639+01:00",
-      "next_run_at": "2026-08-19T00:29:51.038929+01:00",
-      "last_run_at": "2026-08-19T00:14:51.038929+01:00",
+      "next_run_at": "2026-08-20T10:21:29.683575+01:00",
+      "last_run_at": "2026-08-20T10:06:29.683575+01:00",
       "last_status": "ok",
       "last_error": null,
       "last_delivery_error": null,
@@ -238,8 +238,8 @@
       "monitor_script": "vault-memory-drift.py",
       "monitor_url": null,
       "monitor_state": {
-        "last_output_hash": "ac9d1b7de243fb764984f1d630d335a7661a1afe0972d9a789bef323b5ba46f0",
-        "last_changed_at": "2026-08-18T23:34:44.726298+01:00"
+        "last_output_hash": "e1d82c7b59dfe56aa2ae039015a80861eeccda50bc8758193c0b511bc511e39f",
+        "last_changed_at": "2026-08-20T05:48:48.305223+01:00"
       },
       "context_from": null,
       "schedule": {
@@ -250,15 +250,15 @@
       "schedule_display": "every 360m",
       "repeat": {
         "times": null,
-        "completed": 2
+        "completed": 7
       },
       "enabled": true,
       "state": "scheduled",
       "paused_at": null,
       "paused_reason": null,
       "created_at": "2026-08-18T17:29:56.424581+01:00",
-      "next_run_at": "2026-08-19T05:37:10.027266+01:00",
-      "last_run_at": "2026-08-18T23:37:10.027266+01:00",
+      "next_run_at": "2026-08-20T11:51:53.261637+01:00",
+      "last_run_at": "2026-08-20T05:51:53.261637+01:00",
       "last_status": "ok",
       "last_error": null,
       "last_delivery_error": null,
@@ -293,16 +293,16 @@
       "schedule_display": "0 6 * * *",
       "repeat": {
         "times": null,
-        "completed": 0
+        "completed": 2
       },
       "enabled": true,
       "state": "scheduled",
       "paused_at": null,
       "paused_reason": null,
       "created_at": "2026-08-18T22:37:47.018201+01:00",
-      "next_run_at": "2026-08-19T06:00:00+01:00",
-      "last_run_at": null,
-      "last_status": null,
+      "next_run_at": "2026-08-21T06:00:00+01:00",
+      "last_run_at": "2026-08-20T06:00:59.727470+01:00",
+      "last_status": "ok",
       "last_error": null,
       "last_delivery_error": null,
       "deliver": "telegram",
@@ -314,8 +314,9 @@
         "user_id": "1022966386"
       },
       "enabled_toolsets": null,
-      "workdir": null
+      "workdir": null,
+      "fire_claim": null
     }
   ],
-  "updated_at": "2026-08-19T00:14:51.039009+01:00"
+  "updated_at": "2026-08-20T10:06:29.683655+01:00"
 }

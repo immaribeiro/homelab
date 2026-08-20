@@ -36,6 +36,9 @@ into both folders (which is why PT contained English books). Now:
 - `TELEGRAM_MAX_BYTES` / `--max-bytes` stops a run after N bytes
   downloaded (0 = unlimited). The EN topic holds **911 files / ~2.15 GB**,
   so backfills run in 1 GiB weekly batches until complete.
+- **Backfill status (2026-08-20):** `ENG/` holds **484 files / 1.1 GB**
+  (~half the topic); **~425 books remain** — the Sunday cron resumes the
+  backfill each week (filename dedupe skips what's already there).
 
 ## Status (2026-08-17)
 

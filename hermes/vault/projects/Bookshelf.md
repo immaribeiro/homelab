@@ -1,6 +1,6 @@
 ---
 created: 2026-08-18
-updated: 2026-08-18
+updated: 2026-08-20
 status: active
 repo: github.com/immaribeiro/bookshelf
 ---

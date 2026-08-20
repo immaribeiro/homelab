@@ -10,7 +10,7 @@ TG tg-investor thread 1016 LIVE
 §
 K3s Lima: VMs need `lima:shared` net + `--flannel-iface lima0`; config changes rotate CA certs/node-token — rejoin workers.
 §
-Telegram ebook downloader: ~/GitHub/homelab/telegram-downloader/ (Telethon downloader.py + run_downloader.sh; creds ~/.hermes/env/telegram-downloader.env). Channel -1002152949316 → ~/Downloads/ebook-library/PT, cron 17ed147e373f Sun 07:00. ~272 author folders.
+Telegram ebook downloader: ~/GitHub/homelab/telegram-downloader/ (downloader.py + run_downloader.sh; creds ~/.hermes/env/telegram-downloader.env). ONE forum channel Floresta Encantada -1002152949316, topic-scoped: PT topic 3 → ~/Downloads/ebook-library/PT (371 files/1.3GB), ENG topic 5 → ENG/ (484 files/1.1GB, backfilling 1GiB/Sun). Cron 17ed147e373f Sun 07:00.
 §
 Uploads: k3s-worker-1 staging → bookshelf-upload-sync.sh (launchd 3min) → PT/ + rescan. Lima mounts Mac home RO; pod pinned k3s-worker-1.
 §

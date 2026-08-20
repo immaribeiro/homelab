@@ -29,7 +29,8 @@ Welcome to your Hermes agent management vault. This vault is synced to the homel
 | [[Life Dashboard]] | Active | Personal dashboard backend (FastAPI + SQLModel) |
 | [[Japan Planner]] | Active | Japan trip planning app |
 | [[FlightScanner]] | Dev | Multi-agent flight price comparison (not deployed) |
-| [[Telegram E-book Downloader]] | Active | Weekly cron job downloading e-books from Telegram |
+| [[Telegram E-book Downloader]] | Active | Weekly PT+ENG e-book sync from Floresta Encantada topics (cron Sun 07:00) |
+| [[Bookshelf]] | Active | E-book library web UI — live at https://books.immas.org |
 
 ## 📋 Reference Notes
 
