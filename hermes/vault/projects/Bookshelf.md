@@ -17,7 +17,7 @@ Personal e-book library web app — browse covers, search, and download books fr
 | **Repo** | `~/GitHub/bookshelf` → `github.com/immaribeiro/bookshelf` (private) |
 | **Plan** | `.hermes/plans/2026-08-18_075836-bookshelf-library.md` (homelab repo) |
 | **Stack** | FastAPI (Python 3.12) + React/Vite/Tailwind, single multi-arch Docker image |
-| **Library** | `~/Downloads/ebook-library/PT` (~358 books, ~272 author folders) — mounted read-only via hostPath (writes happen via host sync / Mac cron; Lima mounts home RO) |
+| **Library** | `~/Downloads/ebook-library/` — `PT/` (topic 3, ~358 books) + `ENG/` (topic 5, backfilling 1 GiB/week since 2026-08-20) — mounted read-only via hostPath (writes happen via host sync / Mac cron; Lima mounts home RO) |
 | **Deploy** | `k8s/manifests/bookshelf.yml` (namespace `books`, pod pinned to `k3s-worker-1`), image `ghcr.io/immaribeiro/bookshelf:latest` |
 | **Auth** | Multi-user HTTP Basic from `BOOKSHELF_USERS` JSON secret — `imma`, `joaoreis` |
 | **Kobo** | OPDS 1.2 feed at `/opds` — future "send to Kobo" path |
