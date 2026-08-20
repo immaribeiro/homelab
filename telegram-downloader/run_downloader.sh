@@ -63,7 +63,7 @@ run_group() {
     for chat in "${chats[@]}"; do
         # Trim leading/trailing whitespace without invoking external tools.
         chat="${chat#"${chat%%[![:space:]]*}"}"
-        chat="${chat%"${chat##*[![:space:]]}"}"
+        chat="${chat%${chat##*[![:space:]]}}"
         [[ -z "$chat" ]] && continue
 
         # Login creates one shared session; do not prompt once per chat.
@@ -74,7 +74,8 @@ run_group() {
         printf '[info] downloading %s chat %s into %s\n' "$language" "$chat" "$language_dir"
         set +e
         TELEGRAM_TARGET_CHATS="$chat" \
-        TELEGRAM_DOWNLOAD_DIR="$language_dir" \
+        TELEGRAM_DOWNLOAD_DIR="$DOWNLOAD_ROOT" \
+        TELEGRAM_LANGUAGE="$language" \
             "$PY" "$DIR/downloader.py" "${DOWNLOADER_ARGS[@]}"
         chat_status=$?
         set -e

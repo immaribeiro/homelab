@@ -43,16 +43,21 @@ def env_key(name):
 
 class Config:
     def __init__(self, api_id, api_hash, phone, session_name, download_dir,
-                 allowed_extensions, target_chats, message_limit, is_channel):
+                 allowed_extensions, target_chats, message_limit, is_channel,
+                 max_bytes=0, language_override=None):
         self.api_id = api_id
         self.api_hash = api_hash
         self.phone = phone
         self.session_name = session_name
         self.download_dir = Path(download_dir)
         self.allowed_extensions = allowed_extensions
-        self.target_chats = target_chats  # list of chat references
+        # Each entry: (chat_ref, topic_id_or_None). topic scopes iteration to
+        # one forum topic (Telethon iter_messages(reply_to=topic)).
+        self.target_chats = target_chats
         self.message_limit = message_limit
         self.target_is_channel = is_channel
+        self.max_bytes = max_bytes  # 0 = unlimited; stop after this many bytes downloaded
+        self.language_override = language_override  # e.g. "ENG" forces that subfolder
 
 
 def load_env_file(path):
@@ -112,6 +117,8 @@ def get_config(args):
                                 cli_value=args.limit)
     is_channel = parse_bool(resolve(env_key("TARGET_IS_CHANNEL"), "false"))
     extensions_raw = resolve(env_key("ALLOWED_EXTENSIONS"), DEFAULT_ALLOWED_EXTENSIONS)
+    max_bytes_raw = resolve(env_key("MAX_BYTES"), "0", cli_value=args.max_bytes)
+    language_override = resolve(env_key("LANGUAGE"))
 
     errors = []
     if not api_id_raw:
@@ -139,8 +146,27 @@ def get_config(args):
         print(f"[error] {env_key('MESSAGE_LIMIT')} must be an integer, got {message_limit_raw!r}")
         sys.exit(1)
 
+    try:
+        max_bytes = int(max_bytes_raw)
+        if max_bytes < 0:
+            raise ValueError("negative")
+    except ValueError:
+        print(f"[error] {env_key('MAX_BYTES')} must be a non-negative integer, got {max_bytes_raw!r}")
+        sys.exit(1)
+
     allowed_extensions = [e.strip().lower() for e in extensions_raw.split(",") if e.strip()]
-    target_chats = [t.strip() for t in re.split(r"[,\n]", target_chats_raw or "") if t.strip()]
+    # Each entry may carry an optional forum-topic id: "chat_ref" or "chat_ref:topic"
+    raw_chats = [t.strip() for t in re.split(r"[,\n]", target_chats_raw or "") if t.strip()]
+    target_chats = []
+    for raw in raw_chats:
+        if ":" in raw:
+            ref, _, topic = raw.rpartition(":")
+            if not topic.isdigit():
+                print(f"[error] topic suffix must be numeric in {raw!r}")
+                sys.exit(1)
+            target_chats.append((ref, int(topic)))
+        else:
+            target_chats.append((raw, None))
     if not target_chats:
         print(f"[error] {env_key('TARGET_CHATS')} must contain at least one chat")
         sys.exit(1)
@@ -150,7 +176,8 @@ def get_config(args):
         sys.exit(1)
 
     return Config(api_id, api_hash, phone, session_name, download_dir,
-                  allowed_extensions, target_chats, message_limit, is_channel)
+                  allowed_extensions, target_chats, message_limit, is_channel,
+                  max_bytes=max_bytes, language_override=language_override)
 
 
 def mask_phone(phone):
@@ -168,9 +195,11 @@ def print_config(cfg, session_file):
     print(f"  session_file:       {session_file}")
     print(f"  download_dir:       {cfg.download_dir}")
     print(f"  allowed_extensions: {', '.join(cfg.allowed_extensions)}")
-    print(f"  target_chats:       {', '.join(cfg.target_chats)}")
+    print(f"  target_chats:       {', '.join(r + (f':{t}' if t is not None else '') for r, t in cfg.target_chats)}")
     print(f"  language_folders:   {', '.join(LANGUAGE_SUBFOLDERS[:len(cfg.target_chats)])}")
     print(f"  message_limit:      {cfg.message_limit}")
+    print(f"  max_bytes:          {cfg.max_bytes or 'unlimited'}")
+    print(f"  language_override:  {cfg.language_override or '(positional)'}")
     print(f"  target_is_channel:  {cfg.target_is_channel}")
 
 
@@ -250,12 +279,13 @@ async def attempt_download(client, message, target_path, max_attempts=5):
     return False, "unknown error"
 
 
-async def download_messages(client, entity, cfg, target_dir=None):
+async def download_messages(client, entity, cfg, target_dir=None, topic=None):
     """Download media from one entity into ``target_dir``.
 
     ``target_dir`` defaults to the configured root for compatibility with
     callers that use this helper directly. Headless multi-chat runs pass a
-    language-specific subfolder.
+    language-specific subfolder. When ``topic`` is set, only messages inside
+    that forum topic are scanned (Telethon ``reply_to`` scoping).
     """
     target_dir = Path(target_dir) if target_dir is not None else cfg.download_dir
     target_dir.mkdir(parents=True, exist_ok=True)
@@ -266,8 +296,11 @@ async def download_messages(client, entity, cfg, target_dir=None):
     failures = []
     consecutive_skips = 0
     index = 0
+    downloaded_bytes = 0
+    capped = False
 
-    async for message in client.iter_messages(entity, limit=cfg.message_limit):
+    async for message in client.iter_messages(entity, limit=cfg.message_limit,
+                                              reply_to=topic):
         index += 1
         file_info = message.file
         name = file_info.name if file_info else None
@@ -294,11 +327,17 @@ async def download_messages(client, entity, cfg, target_dir=None):
             consecutive_skips += 1
             continue
 
-        size = file_info.size if (file_info is not None and file_info.size) else "unknown"
+        size = file_info.size if (file_info is not None and file_info.size) else 0
+        if cfg.max_bytes and downloaded_bytes + size > cfg.max_bytes:
+            print(f"  [{index:>4}] byte cap reached ({downloaded_bytes}/{cfg.max_bytes} bytes); stopping")
+            capped = True
+            break
+
         print(f"  [{index:>4}] {clean} ({size} bytes) ...")
         ok, err = await attempt_download(client, message, target_path)
         if ok:
             downloaded += 1
+            downloaded_bytes += size
             new_files.append(clean)
             print(f"         [done] {clean}")
         else:
@@ -311,7 +350,7 @@ async def download_messages(client, entity, cfg, target_dir=None):
             print("[early-stop] 50 consecutive files skipped; stopping iteration")
             break
 
-    return downloaded, duplicates, failed, new_files, failures
+    return downloaded, duplicates, failed, new_files, failures, downloaded_bytes, capped
 
 
 async def login_main(cfg, session_base):
@@ -339,13 +378,24 @@ async def headless_main(cfg, session_base):
             print("NO SESSION — run: python downloader.py --login")
             return 2
 
-        totals = {"downloaded": 0, "duplicates": 0, "failed": 0}
+        totals = {"downloaded": 0, "duplicates": 0, "failed": 0, "bytes": 0}
         all_new_files = []
         all_failures = []
         had_error = False
+        capped = False
 
-        for language, raw_target in zip(LANGUAGE_SUBFOLDERS, cfg.target_chats):
-            print(f"[info] resolving {language} target chat: {raw_target}")
+        # Language mapping: positional (PT first, then ENG) unless the caller
+        # forces a single language via TELEGRAM_LANGUAGE.
+        if cfg.language_override:
+            languages = [cfg.language_override.upper()]
+            pairs = [(languages[0], cfg.target_chats[0])]
+        else:
+            languages = list(LANGUAGE_SUBFOLDERS)
+            pairs = list(zip(languages, cfg.target_chats))
+
+        for language, (raw_target, topic) in pairs:
+            print(f"[info] resolving {language} target chat: "
+                  f"{raw_target}{f' (topic {topic})' if topic is not None else ' (all)'}")
             try:
                 entity = resolve_target(client, raw_target, cfg.target_is_channel)
             except Exception as e:
@@ -357,18 +407,25 @@ async def headless_main(cfg, session_base):
             target_dir = cfg.download_dir / language
             target_dir.mkdir(parents=True, exist_ok=True)
             print(f"[info] scanning {entity} into {target_dir} (limit={cfg.message_limit})")
-            downloaded, duplicates, failed, new_files, failures = \
-                await download_messages(client, entity, cfg, target_dir)
+            downloaded, duplicates, failed, new_files, failures, dl_bytes, capped_here = \
+                await download_messages(client, entity, cfg, target_dir, topic=topic)
             totals["downloaded"] += downloaded
             totals["duplicates"] += duplicates
             totals["failed"] += failed
+            totals["bytes"] += dl_bytes
             all_new_files.extend(f"{language}/{name}" for name in new_files)
             all_failures.extend(f"{language}/{failure}" for failure in failures)
+            capped = capped or capped_here
+            if capped_here:
+                break  # byte cap reached; stop remaining chats too
 
         print("\n===== SUMMARY =====")
         print(f"downloaded:         {totals['downloaded']}")
         print(f"skipped duplicates: {totals['duplicates']}")
         print(f"failed:             {totals['failed']}")
+        print(f"downloaded bytes:   {totals['bytes']}")
+        if cfg.max_bytes:
+            print(f"byte cap:           {cfg.max_bytes} ({'reached' if capped else 'not reached'})")
         print("new files:")
         for f in all_new_files:
             print(f"  {f}")
@@ -393,6 +450,10 @@ def main():
                         help=f"KEY=VALUE env file (default: {DEFAULT_ENV_FILE})")
     parser.add_argument("--limit", type=int, default=None,
                         help=f"max messages to scan (default: {DEFAULT_MESSAGE_LIMIT})")
+    parser.add_argument("--max-bytes", type=int, default=None,
+                        help="stop after downloading this many bytes total (0 = unlimited)")
+    parser.add_argument("--language", default=None,
+                        help="force one language folder (PT or ENG) instead of positional mapping")
     parser.add_argument("--dry-run", action="store_true",
                         help="print resolved config with secrets masked, then exit without connecting")
     args = parser.parse_args()
