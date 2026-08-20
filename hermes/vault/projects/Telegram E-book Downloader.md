@@ -1,25 +1,25 @@
 ---
 created: 2026-08-16
-updated: 2026-08-17
+updated: 2026-08-20
 status: active
 schedule: "0 7 * * 0"
 ---
 
 # 📚 Telegram E-book Downloader
 
-Automated weekly download of e-books from a private Telegram channel, running as a Hermes cron job.
+Automated weekly download of e-books from two private Telegram channels (PT + ENG), running as a Hermes cron job.
 
 ## Details
 
 | Field | Value |
 |-------|-------|
 | **Script** | `~/GitHub/homelab/telegram-downloader/run_downloader.sh` |
-| **Source channel** | Private channel, chat ID `-1002152949316` (`https://t.me/c/2152949316/3`) |
-| **Download dir** | `~/Downloads/ebook-library/PT` |
+| **Source chats** | Two target chats configured in the env file — PT channel `-1002152949316` (`https://t.me/c/2152949316/3`) + ENG chat |
+| **Download dirs** | `~/Downloads/ebook-library/PT` and `~/Downloads/ebook-library/ENG` (both chats synced) |
 | **Schedule** | Every Sunday at 07:00 (`0 7 * * 0`) |
 | **Cron job ID** | `17ed147e373f` |
 | **Workdir** | `~/GitHub/homelab/telegram-downloader` |
-| **Env file** | `~/.hermes/env/telegram-downloader.env` (credentials, outside repo) |
+| **Env file** | `~/.hermes/env/telegram-downloader.env` (credentials + target chat IDs, outside repo) |
 
 ## Status (2026-08-17)
 

@@ -1,6 +1,6 @@
 ---
 created: 2026-08-18
-updated: 2026-08-19
+updated: 2026-08-20
 ---
 
 # 📚 Skills Library
@@ -41,6 +41,8 @@ Ported ready-made skills (eval-tested upstream, ship Python scripts):
 | researcher | `token-optimization` | keep research extract costs down |
 
 **investor** (2026-08-19): standard fleet skill set + custom `finance/` skills — `investment-analysis`, `market-briefing`, `market-data-sources`, `revx-account`, `revx-auth`, `revx-market`, `revx-monitor`, `revx-strategy`, `revx-telegram`, `revx-trading` (Revolut X API workflows; custom, not distilled from awesome-llm-apps) — plus `agent-skills/` (`deep-research-patterns`, `llm-memory-patterns`, `token-optimization`).
+
+**architect** (2026-08-20): added two custom homelab skills — `homelab-web-deploy` (devops; CI→GHCR→k3s rollout deploy/verify) and `headless-web-ui-verification` (software-development; headless browser/screenshot UI verification with vision_analyze).
 
 ## Related
 

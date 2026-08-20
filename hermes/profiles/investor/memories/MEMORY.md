@@ -1,3 +1,5 @@
 revx CLI: TypeScript monorepo at /Users/imma/GitHub/revolut-x-api (npm-linked to /opt/homebrew/bin/revx, v1.0.47). Config at ~/.config/revolut-x/config.json; private key at ~/.hermes/env/revolut-x-private.pem.
 §
 Revolut (app, fiat/IBAN) and Revolut X (crypto exchange) are separate balances under one Revolut account. Funding X from the app: Deposit → EUR → 'From Revolut account' (instant, free). revx CLI has NO deposit command — deposits are app-side only.
+§
+Play book (~€55 on Revolut X): Imma gave full discretion to trade any liquid coin (no leverage, no meme coins — hard profile rules). Trade without per-trade consent, report each trade in thread + log in play-book.md + decisions journal. Self-imposed limits: max position €25, max daily loss -€10, stop if capital hits -50%. Currently no first trade taken — waiting for European session open.

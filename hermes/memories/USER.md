@@ -14,7 +14,7 @@ Context: Has Telegram channel configured
 §
 Context: Wants evening check-ins (day, training, meals)
 §
-Expects the configured profile agents (architect/backend/frontend/engineer) to do real implementation work — main agent orchestrates, reviews, and integrates (pattern started with the Mission Control Agents-tab redesign done by the frontend profile agent).
+Profile agents (architect/backend/frontend/engineer) do real implementation; main orchestrates, reviews, integrates.
 §
 User is technically skilled (venvs, absolute paths, cron jobs). Patient during complex troubleshooting. Wants clear status updates.
 §
@@ -26,4 +26,6 @@ Prefers planning mode for complex setups — review plans before execution. Full
 §
 Wants everything synced to git; Obsidian = management UI (single source of truth). Expects Hermes memory + Obsidian notes updated whenever changes are made.
 §
-Git identity: Imma Ribeiro <imma.ribeiro@gmail.com> (set globally on Mac Mini 2026-08-16; applies to all agent profiles; set same on Mac Air).
+Git: Imma Ribeiro <imma.ribeiro@gmail.com> (global on Mini 2026-08-16; also on Mac Air).
+§
+Context: Follows format constraints literally — "uma frase curta" must be one short sentence; failing that feels like being ignored.

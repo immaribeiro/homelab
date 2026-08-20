@@ -1,6 +1,6 @@
 ---
 created: 2026-08-16
-updated: 2026-08-19
+updated: 2026-08-20
 ---
 
 # 📱 Telegram Routing
@@ -16,9 +16,9 @@ Single Telegram bot (`@ImmaHermesBot`) → single gateway → `profile_routes` d
        │
   Hermes Gateway (multiplex_profiles: true)
        │
-  ┌────┼────┬────┬────┬────┬────┐
-  │    │    │    │    │    │    │
- main arch back front eng  research
+  ┌────┼────┬────┬────┬────┬────┬────┐
+  │    │    │    │    │    │    │    │
+ main arch back front eng  research inv
 ```
 
 > **Investor** (created 2026-08-19, wired 2026-08-19 22:57) — 📈 Investor topic, thread `1016` → `tg-investor` route. Live after gateway restart.

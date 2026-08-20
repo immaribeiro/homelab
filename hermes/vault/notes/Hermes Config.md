@@ -1,6 +1,6 @@
 ---
 created: 2026-08-16
-updated: 2026-08-19
+updated: 2026-08-20
 ---
 
 # ⚙️ Hermes Config
@@ -67,6 +67,10 @@ How Hermes configuration files are organized and synced to git.
 | memories/USER.md | logs/ |
 | cron/jobs.json | cron/executions.db |
 | profile configs | profile .env files |
+
+## Gateway API Server (2026-08-20)
+
+Main `config.yaml` enables a local Hermes HTTP API (`gateway.api_server`: port `8642`, bound to `127.0.0.1`, token-gated). Used by the nuno-site chat bridge (launchd `nuno-chat-bridge`, port 8643) to talk to the main agent — never exposed publicly.
 
 ## On a New Machine
 
