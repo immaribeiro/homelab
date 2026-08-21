@@ -1,6 +1,6 @@
 ---
 created: 2026-08-16
-updated: 2026-08-16
+updated: 2026-08-21
 status: active
 repo: github.com/immaribeiro/reconstruction-app
 url: https://reconstruction.immas.org
@@ -35,6 +35,8 @@ Web application for logging everything about the house reconstruction — costs,
 
 ## Recent changes (repo)
 
+- **2026-08-21 (frontend agent):** Complete UI redesign — light warm design system (terracotta accent #E8590C, warm paper bg, Inter+Sora), sidebar nav with SVG icons, toasts/confirm dialogs, skeleton loaders, responsive mobile nav. All 10 pages rewritten; same routes/API contracts; new app/static/app.js + rebuilt style.css. Commits 85cf768.
+- **2026-08-21 (backend agent):** iCloud dataless guard in import script — import aborts (or --force skips) dataless placeholders instead of storing empty bytes; new scripts/check_dataless.py + 3 tests. Commit f1d4e1a. **Blocker: all 121 files in ~/Documents/Casa are iCloud dataless (0B on disk) — materialize on the Mac (brctl download / sudo fileproviderctl repair) then check_dataless.py → import.**
 - Portuguese translation of all UI templates
 - IBAN field on workers
 - Fix 401s on PATCH/POST/DELETE (verify_api_key_or_session)
