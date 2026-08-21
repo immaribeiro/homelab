@@ -1,6 +1,6 @@
 ---
 created: 2026-08-16
-updated: 2026-08-16
+updated: 2026-08-21
 ---
 
 # 🏠 Hermes Agent Hub
@@ -11,20 +11,22 @@ Welcome to your Hermes agent management vault. This vault is synced to the homel
 
 | Agent | Profile | Model | Cost (in/out per 1M) | Telegram Topic |
 |-------|---------|-------|----------------------|----------------|
-| Main | default | DeepSeek V4 Flash via Nous | $0.05 / $0.10 | General |
-| Architect | architect | DeepSeek V4 Pro via Nous | $0.35 / $0.70 | 🏛 Architecture |
-| Backend | backend | Qwen3 Coder 30B via Nous | $0.06 / $0.22 | ⚙️ Backend |
-| Frontend | frontend | Qwen 3.5 9B via LMStudio | FREE | 🎨 Frontend |
-| Engineer | engineer | Qwen3 Coder 30B via Nous | $0.06 / $0.22 | 🔧 Engineer |
+| Main | default | GPT-5.6 Luna (ChatGPT Go) | subscription | General |
+| Architect | architect | DeepSeek V4 Pro 0813 via Nous | $0.35 / $0.70 | 🏛 Architecture |
+| Backend | backend | DeepSeek V4 Flash via Nous | $0.05 / $0.10 | ⚙️ Backend |
+| Frontend | frontend | DeepSeek V4 Flash via Nous | $0.05 / $0.10 | 🎨 Frontend |
+| Engineer | engineer | DeepSeek V4 Flash via Nous | $0.05 / $0.10 | 🔧 Engineer |
+| Researcher | researcher | DeepSeek V4 Flash via Nous | $0.05 / $0.10 | 🔬 Research |
+| Investor | investor | DeepSeek V4 Flash via Nous | $0.05 / $0.10 | 📈 Investor |
 
-→ [[Agent Overview]] · [[Main Agent]] · [[Architect Agent]] · [[Backend Agent]] · [[Frontend Agent]] · [[Engineer Agent]]
+→ [[Agent Overview]] · [[Main Agent]] · [[Architect Agent]] · [[Backend Agent]] · [[Frontend Agent]] · [[Engineer Agent]] · [[Researcher Agent]] · [[Investor Agent]]
 
 ## 📂 Projects
 
 | Project | Status | Description |
 |---------|--------|-------------|
 | [[Homelab Infrastructure]] | Active | K3s cluster on Mac Mini M4 via Lima VMs |
-| [[Hermes Multi-Agent System]] | Active | 4-agent setup with Telegram routing + Obsidian vault |
+| [[Hermes Multi-Agent System]] | Active | 7-agent setup with Telegram routing + Obsidian vault |
 | [[Reconstruction App]] | Active | House reconstruction tracker (FastAPI + PostgreSQL) |
 | [[Life Dashboard]] | Active | Personal dashboard backend (FastAPI + SQLModel) |
 | [[Japan Planner]] | Active | Japan trip planning app |
@@ -65,11 +67,17 @@ hermes gateway restart
 hermes -p architect doctor
 hermes -p backend doctor
 hermes -p frontend doctor
+hermes -p engineer doctor
+hermes -p researcher doctor
+hermes -p investor doctor
 
 # Profile chat
 hermes -p architect chat
 hermes -p backend chat
 hermes -p frontend chat
+hermes -p engineer chat
+hermes -p researcher chat
+hermes -p investor chat
 
 # Open vault in Obsidian
 open ~/GitHub/homelab/hermes/vault
