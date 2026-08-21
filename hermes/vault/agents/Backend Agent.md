@@ -1,6 +1,6 @@
 ---
 created: 2026-08-16
-updated: 2026-08-16
+updated: 2026-08-21
 profile: backend
 model: deepseek/deepseek-v4-flash
 provider: nous
@@ -34,6 +34,17 @@ Frontend's primary is `deepseek/deepseek-v4-flash` via Nous (since 2026-08-18); 
 ## Toolset Restrictions
 
 Disabled: `tts`, `image_gen`, `video`, `video_gen`
+
+## MCP Servers (live 2026-08-21)
+
+| Server | Endpoint | Tools | Status |
+|--------|----------|-------|--------|
+| `supabase` | `https://mcp.supabase.com/mcp` | 29 (`mcp__supabase__*`) | ✅ connected (OAuth) |
+
+- **Tools:** docs search, organizations, projects, database + auth + storage management.
+- **Config:** `mcp_servers` in `~/.hermes/profiles/backend/config.yaml` (`auth: oauth`, `enabled: true`).
+- **Tokens:** `~/.hermes/profiles/backend/mcp-tokens/` (`supabase.json`).
+- **Verify:** `HERMES_HOME=~/.hermes/profiles/backend hermes mcp test supabase`
 
 ## Personality
 

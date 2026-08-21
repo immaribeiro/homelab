@@ -1,6 +1,6 @@
 ---
 created: 2026-08-16
-updated: 2026-08-18
+updated: 2026-08-21
 profile: frontend
 model: deepseek/deepseek-v4-flash
 provider: nous
@@ -35,6 +35,18 @@ Frontend's primary is now `deepseek/deepseek-v4-flash` via Nous; `qwen3.5-9b-mlx
 
 Disabled: `tts`, `video`, `video_gen`
 Keeps `image_gen` for UI mockups and design references.
+
+## MCP Servers (live 2026-08-21)
+
+| Server | Endpoint | Tools | Status |
+|--------|----------|-------|--------|
+| `figma` | `https://mcp.figma.com/mcp` | 36 (`mcp__figma__*`) | ✅ connected (OAuth) |
+| `vercel` | `https://mcp.vercel.com` | 38 (`mcp__vercel__*`) | ✅ connected (OAuth) |
+
+- **Tools:** design context, screenshot, generate Figma design, diagram, shaders; Vercel deploy, projects, domains, runtime logs, docs search.
+- **Config:** `mcp_servers` in `~/.hermes/profiles/frontend/config.yaml` (both `auth: oauth`, `enabled: true`).
+- **Tokens:** `~/.hermes/profiles/frontend/mcp-tokens/` (`figma.json`, `vercel.json`).
+- **Verify:** `HERMES_HOME=~/.hermes/profiles/frontend hermes mcp test figma|vercel`
 
 ## Personality
 

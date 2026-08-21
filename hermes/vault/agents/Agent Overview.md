@@ -5,7 +5,7 @@ updated: 2026-08-21
 
 # 🤖 Agent Overview
 
-> 🔄 **Last synced:** 2026-08-21 12:16 (auto-sync watchdog, cron `eb7ea48fe83c`)
+> 🔄 **Last synced:** 2026-08-21 14:45 (manual — MCP OAuth logins completed: figma/vercel/supabase live)
 
 ## Summary
 
@@ -58,7 +58,7 @@ Seven Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a s
 | **Fallback** | LMStudio google/gemma-4-e4b → GLM 5.2 |
 | **Telegram** | ⚙️ Backend (thread 4) |
 | **Role** | Server-side coding, APIs, databases |
-| **Tools** | No tts, image_gen, video, video_gen |
+| **Tools** | No tts, image_gen, video, video_gen; MCP `supabase` (29 tools, live 2026-08-21) |
 | **Reasoning** | low |
 | **Max turns** | 150 |
 
@@ -75,7 +75,7 @@ Seven Hermes agent profiles running on a Mac Mini M4 (24GB), managed through a s
 | **Fallback** | LMStudio qwen3.5-9b-mlx (local, offline) → GLM 5.2 |
 | **Telegram** | 🎨 Frontend (thread 5) |
 | **Role** | UI/UX, React, CSS, accessibility |
-| **Tools** | No tts, video, video_gen |
+| **Tools** | No tts, video, video_gen; MCP `figma` (36 tools) + `vercel` (38 tools), live 2026-08-21 |
 | **Reasoning** | low |
 | **Max turns** | 150 |
 
