@@ -216,13 +216,13 @@ async def chat(request: Request, authorization: str = Header(default="")):
     return {"reply": reply, "conversation": CONVERSATION, "at": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
 
 
-def _upload_auth_and_ratelimit(request: Request, authorization: str) -> tuple[bool, JSONResponse | None]:
-    """Shared gate for uploads: token check + per-IP rate limit."""
+def _upload_auth_and_ratelimit(client_ip: str, authorization: str) -> tuple[bool, JSONResponse | None]:
+    """Shared gate for uploads/refresh: token check + per-IP rate limit."""
     token = authorization.removeprefix("Bearer ").strip()
     if not SITE_TOKEN or not hmac.compare_digest(token, SITE_TOKEN):
         _log("upload 401 unauthorized")
         return False, JSONResponse({"error": "unauthorized"}, status_code=401)
-    if _rate_limited(request.headers.get("X-Real-IP") or (request.client.host if request.client else "?")):
+    if _rate_limited(client_ip or "?"):
         _log("upload 429 rate limited")
         return False, JSONResponse(
             {"error": "Demasiados pedidos — tenta outra vez daqui a pouco."},
@@ -262,6 +262,79 @@ def _commit_and_push(unique: str) -> None:
         _log(f"upload git background failed for {unique}: {exc!r}")
 
 
+# Serializes manual data refreshes: fetch_events.py / fetch_news.py rewrite the
+# live JSON files, so two near-simultaneous refreshes could interleave.
+_refresh_lock = Lock()
+
+
+def _run_fetchers() -> dict:
+    """Run fetch_events.py + fetch_news.py on the host (writes public/*.json).
+
+    The pod serves those files live from the mounted hostPath volume, so this
+    is all that's needed for the site to show fresh data — no git, no CI, no
+    rollout. Returns a summary dict for the API response.
+    """
+    py = "/usr/bin/python3"
+    summary = {"events": None, "news": None, "errors": []}
+    try:
+        events = subprocess.run(
+            [py, "fetch_events.py", "--days", "14"],
+            cwd=str(NUNO_SITE_DIR), capture_output=True, text=True, timeout=180,
+        )
+        if events.returncode != 0:
+            summary["errors"].append(f"fetch_events: {events.stderr[-300:]}")
+        else:
+            last = [ln for ln in events.stdout.strip().splitlines() if ln][-1] if events.stdout.strip() else ""
+            summary["events"] = last
+            _log(f"refresh events ok: {last}")
+    except Exception as exc:
+        summary["errors"].append(f"fetch_events: {exc!r}")
+    try:
+        news = subprocess.run(
+            [py, "fetch_news.py"],
+            cwd=str(NUNO_SITE_DIR), capture_output=True, text=True, timeout=180,
+        )
+        if news.returncode != 0:
+            summary["errors"].append(f"fetch_news: {news.stderr[-300:]}")
+        else:
+            last = [ln for ln in news.stdout.strip().splitlines() if ln][-1] if news.stdout.strip() else ""
+            summary["news"] = last
+            _log(f"refresh news ok: {last}")
+    except Exception as exc:
+        summary["errors"].append(f"fetch_news: {exc!r}")
+    return summary
+
+
+@app.post("/api/refresh")
+async def refresh_data(
+    request: Request,
+    authorization: str = Header(default=""),
+):
+    """Manual 'update now' for the site's events + news (no rebuild needed).
+
+    Reuses the same token gate + rate limit as uploads. The fetchers write the
+    live JSON files on the host; the pod picks them up instantly via the
+    mounted hostPath volume.
+    """
+    ok, err = _upload_auth_and_ratelimit(
+        request.headers.get("X-Real-IP") or (request.client.host if request.client else ""),
+        authorization,
+    )
+    if not ok:
+        return err
+    await asyncio.to_thread(_refresh_lock.acquire)
+    try:
+        summary = await asyncio.to_thread(_run_fetchers)
+    finally:
+        _refresh_lock.release()
+    if summary["errors"]:
+        _log(f"refresh partial errors: {summary['errors']}")
+        return JSONResponse({"ok": False, "errors": summary["errors"]}, status_code=502)
+    # Git backup in the background — CI ignores these files, so no rebuild.
+    Thread(target=_commit_and_push, args=("data-refresh",), daemon=True).start()
+    return {"ok": True, "events": summary["events"], "news": summary["news"]}
+
+
 @app.post("/api/upload")
 async def upload_photo(
     request: Request,
@@ -269,7 +342,10 @@ async def upload_photo(
     authorization: str = Header(default=""),
 ):
     """Receive a photo from the site, optimize it, and publish it live."""
-    ok, err = _upload_auth_and_ratelimit(request, authorization)
+    ok, err = _upload_auth_and_ratelimit(
+        request.headers.get("X-Real-IP") or (request.client.host if request.client else ""),
+        authorization,
+    )
     if not ok:
         return err
 

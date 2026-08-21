@@ -34,6 +34,9 @@ spec:
             - name: photos
               mountPath: /mnt/photos
               readOnly: true
+            - name: site-data
+              mountPath: /mnt/site-data
+              readOnly: true
           ports:
             - containerPort: 80
               name: http
@@ -48,6 +51,10 @@ spec:
         - name: photos
           hostPath:
             path: /Users/imma/GitHub/nuno-site/public/photos
+            type: Directory
+        - name: site-data
+          hostPath:
+            path: /Users/imma/GitHub/nuno-site/public
             type: Directory
 ---
 apiVersion: v1
