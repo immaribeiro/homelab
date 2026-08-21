@@ -5,7 +5,7 @@ Private couple site for Imma + Nuno. Static Vite + React + Tailwind v3, deployed
 ## Pages
 
 1. **The archive** — photo gallery (manifest.json / photos/).
-2. **Events** — Porto/Braga cultural events, prices, jazz/fado focus chips, star pins (personal + shared `pinned.json`).
+2. **Events** — Porto/Braga cultural events, prices, topic chips (user-added; `topics.json` `focus` default is empty since 2026-08-21 — jazz/fado no longer pre-selected), star pins (personal + shared `pinned.json`).
 3. **News** — 5 categories (Portugal / Porto & Braga / Mundo / Música / IA), addable topics, quotas per category.
 4. **Us** — weather (Open-Meteo), days-together counter, date-ideas bucket list (🎲 Surpresa), milestones, songs. Config: `public/couple.json`.
 5. **Hermes** — direct chat with the assistant (see below).
@@ -15,7 +15,8 @@ Private couple site for Imma + Nuno. Static Vite + React + Tailwind v3, deployed
 - `fetch_events.py` → `public/events.json` (venues + Eventbrite browse-page scraping, keyless, price enrichment from detail pages).
 - **Curated events**: hand-picked calendar entries live in `MANUAL_EVENTS` inside `fetch_events.py` — they survive the daily refresh and bypass the 14-day window (shown as soon as marked). Used e.g. for Verde Cool (Braga, 7 set–4 out).
 - `fetch_news.py` → `public/news.json` (stdlib RSS/Atom, quotas, idempotent).
-- Only commits+pushes on change → CI builds image → `kubectl rollout restart deployment/nuno-site -n nuno`.
+- **Live data (2026-08-21):** events/news/topics/pinned/couple/quotes are served from a read-only hostPath mount of `public/` → `/mnt/site-data` (nginx exact-match aliases, no-cache) — **the same pattern as photos**. The daily fetch commits+pushes as backup only; CI has `paths-ignore` for all data JSONs, so **data refreshes never build an image**. New data goes live the instant the host file changes (~1 s). Code changes still build + the `ghcr-deploy-watch` launchd agent (`~/.hermes/scripts/ghcr-deploy-watch.sh`, every 180 s) auto-rolls the deployment — nuno-site was added to its `APPS` list (2026-08-21).
+- **Manual refresh:** Events and News pages have an **"Update now ↻"** button → `POST /api/refresh` on the bridge (same SITE_TOKEN auth) → runs both fetchers on the host → live immediately.
 
 ## Chat with Hermes
 
